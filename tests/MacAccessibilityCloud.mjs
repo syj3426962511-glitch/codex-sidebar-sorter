@@ -67,8 +67,7 @@ async function trustCreatedFixtureFolder() {
   const allowed = ['Zulu AX background project', 'Alpha AX background project'].map(name => path.join(process.env.HOME, 'Documents', 'ChatGPT', name));
   const directory = allowed.find(candidate => state.nodes.some(node => node.AXValue === candidate));
   if (!directory) throw new Error('The folder trust prompt belongs to another directory.');
-  fs.mkdirSync(directory, {recursive:true});
-  const files = fs.readdirSync(directory);
+  const files = fs.existsSync(directory) ? fs.readdirSync(directory) : [];
   if (files.some(name => name !== '.git')) throw new Error('The new fixture folder contains files that require inspection.');
   const result = activateAccessibilityButton(trust, 'fixture-trust-submitted');
   report.fixtureFolderTrust = {directory,files,before:state.before,after:result.after};
@@ -77,6 +76,10 @@ async function trustCreatedFixtureFolder() {
 
 async function createProjectWithAccessibility(name, sequence) {
   const label = 'fixture-' + sequence;
+  const fixtureDirectory = path.join(process.env.HOME, 'Documents', 'ChatGPT', name);
+  if (fs.existsSync(fixtureDirectory) && fs.readdirSync(fixtureDirectory).length === 0) {
+    fs.rmdirSync(fixtureDirectory);
+  }
   const before = inspect(label + '-before');
   const menu = before.nodes.find(node => node.AXRole === 'AXButton' && node.AXTitle === 'Add new project' && node.actions?.includes('AXPress'))
     ?? before.nodes.find(node => node.AXRole === 'AXMenuItem' && node.AXTitle === 'New Project…' && node.actions?.includes('AXPress'));
@@ -91,10 +94,11 @@ async function createProjectWithAccessibility(name, sequence) {
   await trustCreatedFixtureFolder();
   await delay(1000);
   const text = await readCurrentPage(page => page.evaluate(() => document.body?.innerText ?? ''));
+  const verified = inspect(label + '-verified');
   const result = {
     name, nameAccepted:filled.setStatus === 0, activationMethod:button.actions?.includes('AXPress') ? 'AXPress' : 'targeted-key',
-    dialogClosed:!submitted.nodes.some(node => node.AXRole === 'AXTextField' && node.AXTitle === 'Project name'),
-    visible:text.includes(name), before:opened.before, after:submitted.after,
+    dialogClosed:!verified.nodes.some(node => node.AXRole === 'AXTextField' && node.AXTitle === 'Project name'),
+    visible:text.includes(name), before:before.before, after:verified.after, pageText:text.slice(0,10000),
   };
   report.accessibilityProjectSetup ??= [];
   report.accessibilityProjectSetup.push(result);
