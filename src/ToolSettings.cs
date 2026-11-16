@@ -6,6 +6,7 @@ namespace SidebarSorter;
 internal sealed record ToolSettings
 {
     public string Language { get; init; } = "system";
+    public bool AutomaticNameSorting { get; init; } = true;
     public int ProjectSortMode { get; init; }
     public int ChatSortMode { get; init; }
 }

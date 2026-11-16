@@ -1,4 +1,6 @@
 using System.IO.Pipes;
+using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -8,7 +10,7 @@ namespace SidebarSorter;
 internal sealed class NativeBridge : IDisposable
 {
     private const int MaximumFrameBytes = 8 * 1024 * 1024;
-    private readonly NamedPipeClientStream stream;
+    private readonly Stream stream;
     private readonly string callerThreadId;
     private int nextRequestId;
 
@@ -18,7 +20,7 @@ internal sealed class NativeBridge : IDisposable
         ?? Environment.GetEnvironmentVariable("CODEX_HOME", EnvironmentVariableTarget.User)
         ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".codex");
 
-    internal NativeBridge(NamedPipeClientStream stream, string callerThreadId)
+    internal NativeBridge(Stream stream, string callerThreadId)
     {
         this.stream = stream;
         this.callerThreadId = callerThreadId;
@@ -27,13 +29,31 @@ internal sealed class NativeBridge : IDisposable
     public static async Task<NativeBridge> ConnectAsync(CancellationToken cancellationToken = default)
     {
         string caller = FindCallerThread();
-        string[] candidates = Directory.GetFiles(@"\\.\pipe\", "codex-app-tools-*");
+        string[] candidates = FindEndpoints();
+        Exception? lastError = null;
         foreach (string candidate in candidates)
         {
-            var stream = new NamedPipeClientStream(".", Path.GetFileName(candidate), PipeDirection.InOut, PipeOptions.Asynchronous);
+            Stream? stream = null;
             try
             {
-                await stream.ConnectAsync(800, cancellationToken);
+                using var connectionTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                connectionTimeout.CancelAfter(800);
+                if (OperatingSystem.IsWindows())
+                {
+                    var pipe = new NamedPipeClientStream(".", Path.GetFileName(candidate), PipeDirection.InOut, PipeOptions.Asynchronous);
+                    stream = pipe;
+                    await pipe.ConnectAsync(connectionTimeout.Token);
+                }
+                else
+                {
+                    var socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
+                    try
+                    {
+                        await socket.ConnectAsync(new UnixDomainSocketEndPoint(candidate), connectionTimeout.Token);
+                        stream = new NetworkStream(socket, ownsSocket: true);
+                    }
+                    catch { socket.Dispose(); throw; }
+                }
                 var bridge = new NativeBridge(stream, caller);
                 JsonObject catalog = await bridge.RequestAsync("tools/list", new JsonObject { ["threadStartKind"] = "all" });
                 foreach (JsonNode? tool in catalog["tools"]!.AsArray())
@@ -45,13 +65,25 @@ internal sealed class NativeBridge : IDisposable
                     throw new InvalidDataException(Localization.Text("客户端返回的工具目录缺少列表读取能力。"));
                 return bridge;
             }
-            catch (Exception error) when (error is IOException or TimeoutException or InvalidDataException)
+            catch (Exception error) when (error is IOException or TimeoutException or SocketException or OperationCanceledException)
             {
-                stream.Dispose();
+                stream?.Dispose();
+                cancellationToken.ThrowIfCancellationRequested();
+                lastError = error;
             }
         }
-        throw new IOException(Localization.Text("客户端连接尚未就绪。打开客户端后点击刷新。"));
+        throw new IOException(Localization.Text("客户端连接尚未就绪。打开客户端后点击刷新。"), lastError);
     }
+
+    internal static string[] FindEndpoints()
+    {
+        if (OperatingSystem.IsWindows()) return Directory.GetFiles(@"\\.\pipe\", "codex-app-tools-*");
+        string directory = OperatingSystem.IsMacOS() ? "/tmp/codex-app-tools" : "/tmp/codex-app-tools-" + geteuid();
+        return Directory.Exists(directory) ? Directory.GetFiles(directory, "*.sock") : [];
+    }
+
+    [DllImport("libc", CallingConvention = CallingConvention.Cdecl)]
+    private static extern uint geteuid();
 
     public async Task<JsonObject> CallAsync(string tool, JsonObject arguments)
     {

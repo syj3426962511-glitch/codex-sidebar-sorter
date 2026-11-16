@@ -1,0 +1,75 @@
+name: Independent native endpoint acceptance
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  macos:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Publish the independent self-contained protocol probe
+        run: dotnet publish tests/NativeEndpointProbe.csproj -c Release -r osx-arm64 --self-contained true -o artifacts/probe
+      - name: Install the unmodified official Mac client in the cloud
+        run: |
+          curl --fail --location --retry 2 --max-time 300 https://persistent.oaistatic.com/codex-app-prod/Codex.dmg -o "$RUNNER_TEMP/Codex.dmg"
+          mkdir -p "$RUNNER_TEMP/codex-mount"
+          hdiutil attach "$RUNNER_TEMP/Codex.dmg" -nobrowse -readonly -mountpoint "$RUNNER_TEMP/codex-mount"
+          app=$(find "$RUNNER_TEMP/codex-mount" -maxdepth 1 -name '*.app' -print -quit)
+          ditto "$app" "$RUNNER_TEMP/OfficialCodex.app"
+          codesign --verify --deep --strict "$RUNNER_TEMP/OfficialCodex.app"
+          open -na "$RUNNER_TEMP/OfficialCodex.app"
+      - name: Verify native catalog access from the standalone program
+        run: |
+          for attempt in $(seq 1 60); do
+            if find /tmp/codex-app-tools -type s -name '*.sock' -print -quit 2>/dev/null | grep -q .; then break; fi
+            sleep 1
+          done
+          mkdir -p artifacts/native
+          screencapture -x artifacts/native/official-client-macos.png
+          artifacts/probe/NativeEndpointProbe artifacts/native/native-macos.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: standalone-native-macos
+          path: artifacts/native/*
+  linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Publish the independent self-contained protocol probe
+        run: dotnet publish tests/NativeEndpointProbe.csproj -c Release -r linux-x64 --self-contained true -o artifacts/probe
+      - name: Install the official Linux desktop package in the cloud
+        run: |
+          curl --fail --location --retry 2 --max-time 300 https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_amd64.deb -o "$RUNNER_TEMP/chatgpt.deb"
+          sudo apt-get update -qq
+          sudo apt-get install -y "$RUNNER_TEMP/chatgpt.deb" xvfb scrot
+      - name: Verify native catalog access from the standalone program
+        run: |
+          mkdir -p artifacts/native
+          xvfb-run -a -s '-screen 0 1400x900x24' bash -c '
+            chatgpt > artifacts/native/official-client-linux.log 2>&1 &
+            client_pid=$!
+            for attempt in $(seq 1 60); do
+              if find "/tmp/codex-app-tools-$(id -u)" -type s -name "*.sock" -print -quit 2>/dev/null | grep -q .; then break; fi
+              sleep 1
+            done
+            scrot artifacts/native/official-client-linux.png
+            artifacts/probe/NativeEndpointProbe artifacts/native/native-linux.json
+            probe_exit=$?
+            kill -TERM "$client_pid" 2>/dev/null || true
+            exit "$probe_exit"
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: standalone-native-linux
+          path: artifacts/native/*

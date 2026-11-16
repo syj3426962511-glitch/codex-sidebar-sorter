@@ -14,6 +14,7 @@
     <Compile Include="../src/WorkspacePreview.cs" />
     <Compile Include="../src/Localization.cs" />
     <Compile Include="../src/ToolSettings.cs" />
+    <Compile Include="../src/AutomaticSorter.cs" />
     <EmbeddedResource Include="../src/Assets/English.json" LogicalName="SidebarSorter.English" />
   </ItemGroup>
 </Project>

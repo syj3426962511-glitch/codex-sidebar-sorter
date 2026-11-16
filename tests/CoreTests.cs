@@ -76,6 +76,8 @@ internal static class CoreTests
         await CheckAction("current-history-schema-readonly-attached-filter", () => VerifyHistory(Path.Combine(temporary, "current"), true));
         await CheckAction("older-history-schema-readonly", () => VerifyHistory(Path.Combine(temporary, "older"), false));
         await Check("native-pipe-framing-and-split-response", VerifyPipeAsync);
+        await Check("automatic-watch-coalesces-writes-and-idles", () => VerifyAutomaticWatchAsync(Path.Combine(temporary, "automatic")));
+        await Check("automatic-stop-waits-for-current-operation", () => VerifyAutomaticStopAsync(Path.Combine(temporary, "automatic-stop")));
         Directory.CreateDirectory(Path.GetDirectoryName(report)!);
         string json = JsonSerializer.Serialize(new
         {
@@ -94,6 +96,39 @@ internal static class CoreTests
     {
         SorterService.Sort(rows, mode);
         Require(rows.Select(row => row.Id).SequenceEqual(expected), "Unexpected sorted order.");
+    }
+
+    private static async Task VerifyAutomaticWatchAsync(string root)
+    {
+        Directory.CreateDirectory(root);
+        int calls = 0;
+        await using var watcher = new AutomaticSorter(root, () => { Interlocked.Increment(ref calls); return Task.CompletedTask; });
+        await WaitForAsync(() => Volatile.Read(ref calls) == 1);
+        for (int index = 0; index < 8; index++)
+            await File.WriteAllTextAsync(Path.Combine(root, ".codex-global-state.json"), index.ToString());
+        await WaitForAsync(() => Volatile.Read(ref calls) == 2);
+        await Task.Delay(1100);
+        Require(calls == 2, "A burst requires one synchronization and idle watching requires none.");
+    }
+
+    private static async Task VerifyAutomaticStopAsync(string root)
+    {
+        Directory.CreateDirectory(root);
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var finish = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var watcher = new AutomaticSorter(root, async () => { entered.SetResult(); await finish.Task; });
+        await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Task stopping = watcher.DisposeAsync().AsTask();
+        Require(!stopping.IsCompleted, "Stopping waits for the current native transaction.");
+        finish.SetResult();
+        await stopping.WaitAsync(TimeSpan.FromSeconds(5));
+    }
+
+    private static async Task WaitForAsync(Func<bool> condition)
+    {
+        DateTime deadline = DateTime.UtcNow.AddSeconds(5);
+        while (!condition() && DateTime.UtcNow < deadline) await Task.Delay(30);
+        Require(condition(), "Automatic synchronization timed out.");
     }
 
     private static void VerifyWorkspace()
