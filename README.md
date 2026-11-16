@@ -1,29 +1,54 @@
-# Codex Sidebar Sorter
+# Codex 聊天排序工具
 
-A standalone Windows sidebar sorting application for Codex Desktop, with Chinese and English UI. The application uses its own process, bundled runtime and installer. Sorting requests use the running desktop client's native local tools. Local history is read using a read-only SQLite connection.
+独立运行的 Windows 桌面工具，支持中文、英文切换，并把排序结果应用到 Codex 原侧边栏。项目列表和项目内对话的默认选项均为名称升序。安装包自带运行时和托盘后台，支持自选安装路径。
 
-This repository is a private 1.3.0 candidate while cloud acceptance runs. Formal public release follows the required acceptance results.
+1.3.0 当前处于私有候选验收阶段。正式安装包在云端验收完成后发布。
 
-## Candidate scope
+[English guide](README.en.md)
 
-- Chinese and English UI with an in-app language selector.
-- Project lists and project chats default to ascending name order.
-- Seven sorting choices, two-level previews, pinned-slot handling and manual arrangement.
-- A self-contained Windows x64 installer with a selectable installation path.
-- Windows, macOS and Ubuntu cloud tests for production ordering, translations, settings, read-only history and native message framing.
-- Windows application, installer and client-lifecycle acceptance run in disposable cloud machines.
+## 安装与使用
 
-## Runtime requirements
+1. 在 Windows x64 电脑上安装并登录 Codex Desktop，准备至少一条本机聊天。
+2. 下载本项目 Releases 中的安装包，双击后选择安装目录。
+3. 打开工具，按需要在“语言”中选择中文、English 或跟随系统。
+4. 查看项目和对话预览，选择范围及两级排序规则，点击“应用到侧栏”。
 
-Codex Desktop provides the native local sidebar tools. The application discovers that local interface on each connection. Its installer bundles the .NET runtime and the native tray component. Language and tool preferences are stored under the current user's Local AppData/CodexSidebarSorter directory.
+安装包包含程序运行所需的 .NET 运行时及资源。工具通过正在运行的 Codex 获取和提交侧栏顺序。
 
-## Source layout
+## 排序方式
 
-- src contains the application, history reader and native tray host.
-- packaging contains the bilingual installer definition.
-- tests contains cross-platform checks of the production core.
-- .github/workflows contains the cloud build and verification workflow.
+| 方式 | 行为 |
+| --- | --- |
+| 名称升序 | 按名称正序排列，中文使用 zh-CN 比较规则 |
+| 名称降序 | 按名称倒序排列 |
+| 数字自然升序 | 名称中的数字按自然顺序排列，例如 2、10、20 |
+| 数字自然降序 | 按自然数字倒序排列 |
+| 最近更新优先 | 更新时间从新到旧，缺少时间的条目放在最后 |
+| 最早更新优先 | 更新时间从旧到新，缺少时间的条目放在最后 |
+| 手动顺序 | 拖动或使用上移、下移、移至顶部、移至底部 |
 
-## License
+项目和项目内对话可分别选择排序规则。置顶条目的既有位置按客户端接口支持范围处理。附属对话继续由其父对话管理，独立侧栏列表显示可单独排序的对话。
 
-MIT.
+名称及自然数字排序按次应用。新增对话、项目或改名后，刷新并再次应用即可更新。客户端的项目内对话与最近聊天共享聊天排序模式。
+
+## 后台与客户端生命周期
+
+关闭工具窗口后，界面进程和托管运行时释放，原生托盘后台继续等待系统事件。双击托盘或再次打开程序可显示界面，托盘菜单提供退出入口。Codex 关闭后，托盘后台可继续运行，实际读取和排序在 Codex 打开时执行。
+
+程序和运行时安装在工具自身目录，语言偏好保存在当前用户的 `LocalAppData/CodexSidebarSorter/settings.json`。侧栏顺序通过客户端现有本地工具提交，历史 SQLite 索引使用只读连接。每次连接重新发现本地管道。客户端原生接口或索引结构变更时，需要相应适配。
+
+## 云端验收
+
+核心排序、翻译、设置、只读历史读取及消息分帧在 Windows、macOS、Ubuntu 的 GitHub 托管环境运行。Windows 另行执行中英文界面、安装、覆盖升级、卸载和托盘生命周期验收。官方客户端的正常启动、关闭和商店更新检查使用独立 Windows 云端任务。
+
+macOS 和 Ubuntu 的结果覆盖共享核心逻辑。当前可安装的图形程序面向 Windows x64。各项实际结果和覆盖范围见本仓库 Actions 回执。
+
+## 源码与构建
+
+`src` 包含界面、排序服务、只读索引和原生托盘。`packaging` 包含双语安装定义。`tests` 和 `.github/workflows` 包含云端测试及构建流程。
+
+源码构建需要 .NET 10 SDK、Visual Studio C++ 构建工具和 Inno Setup。完整命令保存在 `.github/workflows/cloud-validation.yml`。安装后的日常使用由安装包自带的运行环境支持。
+
+## 许可
+
+MIT，详见 LICENSE。
