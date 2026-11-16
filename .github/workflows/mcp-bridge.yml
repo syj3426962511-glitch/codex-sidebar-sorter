@@ -1,12 +1,17 @@
 name: MCP desktop bridge acceptance
 on:
   workflow_dispatch:
+    inputs:
+      cloud_login:
+        type: boolean
+        default: false
+        description: Issue a one-time device code and wait for the owner to authorize cloud acceptance
 permissions:
   contents: read
 jobs:
   macos:
     runs-on: macos-latest
-    timeout-minutes: 12
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,6 +31,18 @@ jobs:
           ditto "$app" "$RUNNER_TEMP/SorterMcpOfficial.app"
           hdiutil detach "$RUNNER_TEMP/sorter-mcp-mount"
           codesign --verify --deep --strict "$RUNNER_TEMP/SorterMcpOfficial.app"
+      - name: Issue the official cloud-only device authorization
+        if: inputs.cloud_login
+        run: python tests/CloudDeviceLogin.py start "$RUNNER_TEMP/SorterMcpOfficial.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex"
+      - uses: actions/upload-artifact@v4
+        if: inputs.cloud_login
+        with:
+          name: mcp-login-macos
+          path: artifacts/login/public-login.json
+          retention-days: 1
+      - name: Wait for the owner to complete device authorization
+        if: inputs.cloud_login
+        run: python tests/CloudDeviceLogin.py wait
       - name: Verify desktop-owned MCP process authorization
         run: node tests/McpCloudAcceptance.mjs "$RUNNER_TEMP/SorterMcpOfficial.app" "$(command -v python)"
       - uses: actions/upload-artifact@v4

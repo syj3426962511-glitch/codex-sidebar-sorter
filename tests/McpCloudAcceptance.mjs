@@ -18,7 +18,7 @@ for (const directory of [codexHome, profile, receipts]) fs.mkdirSync(directory, 
 const require = createRequire(path.join(process.env.RUNNER_TEMP, 'sorter-test-tools/package.json'));
 const {chromium} = require('playwright');
 const probe = path.resolve('tests/McpBridgeProbe.py');
-const config = `[mcp_servers.sidebar_sorter_cloud_probe]\ncommand = ${JSON.stringify(python)}\nargs = ${JSON.stringify([probe, receipts])}\nrequired = false\nstartup_timeout_sec = 5\ntool_timeout_sec = 10\n[mcp_servers.sidebar_sorter_cloud_probe.env]\nGITHUB_ACTIONS = "true"\n`;
+const config = `cli_auth_credentials_store = "file"\n[mcp_servers.sidebar_sorter_cloud_probe]\ncommand = ${JSON.stringify(python)}\nargs = ${JSON.stringify([probe, receipts])}\nrequired = false\nstartup_timeout_sec = 5\ntool_timeout_sec = 10\n[mcp_servers.sidebar_sorter_cloud_probe.env]\nGITHUB_ACTIONS = "true"\n`;
 fs.writeFileSync(path.join(codexHome, 'config.toml'), config);
 const executableName = execFileSync('/usr/libexec/PlistBuddy', ['-c', 'Print :CFBundleExecutable', path.join(app, 'Contents/Info.plist')], {encoding:'utf8'}).trim();
 const executable = path.join(app, 'Contents/MacOS', executableName);
