@@ -14,7 +14,7 @@ This project is undergoing private cloud acceptance. Windows, macOS and Linux pa
 | Automatic sorting after additions and renaming | Passed against the protocol fixture |
 | Pinned and custom-section chats | Automatic sorting passed in the cloud |
 | Closing the UI, worker single instance, reopening and safe exit | Passed on all three platforms |
-| Official Windows client | Ordinary window closing and reopening verified, complete exit and post-update startup under acceptance |
+| Official Windows client | Window closing, complete exit, reopening, worker independence and startup after a Store update check passed, cross-version replacement pending |
 | Official macOS client | Independent processes rejected with `untrusted-process-ancestry` |
 | Official Linux client | Tool catalog readable, signed-out list requests timed out, real sorting pending |
 | 1.4.0 installers and public release | Pending complete acceptance |

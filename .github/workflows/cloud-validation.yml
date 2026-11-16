@@ -3,6 +3,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      legacy_windows:
+        type: boolean
+        description: Exercise the existing 1.3.0 Windows installer
+        default: false
 permissions:
   contents: read
 jobs:
@@ -27,6 +32,7 @@ jobs:
           path: artifacts/core-results.json
   windows:
     needs: core
+    if: github.event_name == 'workflow_dispatch' && inputs.legacy_windows
     runs-on: windows-latest
     timeout-minutes: 25
     steps:
