@@ -1,0 +1,35 @@
+name: Windows installed desktop upgrade
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Publish the self-contained production entry point
+        run: dotnet publish desktop/SidebarSorter.Desktop.csproj -c Release -r win-x64 --self-contained true -o artifacts/windows
+      - name: Build the native notification menu
+        run: ./desktop/NativeTray/build-windows.ps1 -OutputDirectory artifacts/windows
+      - name: Install the cloud-only setup compiler
+        run: choco install innosetup --yes --no-progress
+      - name: Compile the current Windows installer
+        shell: pwsh
+        run: |
+          $compiler = Get-ChildItem 'C:/Program Files (x86)/Inno Setup */ISCC.exe' | Select-Object -Last 1
+          & $compiler.FullName packaging/windows.iss
+          if ($LASTEXITCODE -ne 0) { throw 'Installer compilation failed.' }
+      - name: Verify the installed production program and running upgrade
+        run: dotnet run --project tests/InstalledDesktopAcceptance.csproj -c Release -- artifacts/installer/CodexSidebarSorter-1.4.0-Windows-Setup.exe artifacts/installed
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-desktop-upgrade
+          path: |
+            artifacts/installer/*.exe
+            artifacts/installed/*

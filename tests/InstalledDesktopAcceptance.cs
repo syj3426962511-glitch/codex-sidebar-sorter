@@ -1,0 +1,136 @@
+using System.Diagnostics;
+using System.IO.Pipes;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+
+namespace SidebarSorter;
+
+internal static class InstalledDesktopAcceptance
+{
+    private static async Task<int> Main(string[] arguments)
+    {
+        if (Environment.GetEnvironmentVariable("GITHUB_ACTIONS") != "true" || !OperatingSystem.IsWindows())
+            throw new InvalidOperationException("Use a disposable cloud Windows installation.");
+        string installer = Path.GetFullPath(arguments[0]);
+        string output = Path.GetFullPath(arguments[1]);
+        string directory = Path.Combine(Path.GetTempPath(), "排序安装验收", "Application With Spaces");
+        string program = Path.Combine(directory, "SidebarSorter.exe");
+        Directory.CreateDirectory(output);
+        using var server = new FixtureNativeServer();
+        Environment.SetEnvironmentVariable("CODEX_HOME", server.Root);
+        var settingsStore = new ToolSettingsStore();
+        Directory.CreateDirectory(Path.GetDirectoryName(settingsStore.PathName)!);
+        File.WriteAllText(settingsStore.PathName, "{\"language\":\"zh-CN\",\"projectSortMode\":2,\"chatSortMode\":5}");
+        var report = new JsonObject
+        {
+            ["success"] = false,
+            ["dataKind"] = "installed production executable with fictional native-protocol fixture",
+            ["installDirectory"] = directory
+        };
+        try
+        {
+            await RunAsync(installer, "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/SP-", "/TASKS=", "/DIR=" + directory);
+            Require(FileVersionInfo.GetVersionInfo(program).ProductVersion?.StartsWith("1.4.0") == true, "Install the current desktop version.");
+            Require(File.Exists(Path.Combine(directory, "coreclr.dll")), "Install the bundled runtime.");
+            Require(File.Exists(Path.Combine(directory, "Source", "desktop", "SidebarSorter.Desktop.csproj")), "Install the complete current source tree.");
+            Require(File.Exists(Path.Combine(directory, "Source", "src", "NativeBridge.cs")), "Include shared source dependencies.");
+            report["customUnicodeInstallPath"] = true;
+            report["bundledRuntimeAndSource"] = true;
+            Environment.SetEnvironmentVariable("DOTNET_ROOT", Path.Combine(Path.GetTempPath(), "no-system-dotnet"));
+            Environment.SetEnvironmentVariable("DOTNET_MULTILEVEL_LOOKUP", "0");
+            await RunAsync(program, "--capture", Path.Combine(output, "01-installed-chinese.png"));
+            await WaitAsync(server.IsSortedByName, "The installed background must adopt automatic ascending name order.");
+            await WaitAsync(server.AreSectionsSortedByName, "Sort pinned and custom sections through the installed background.");
+            report["normalEntryPointAutomaticSorting"] = true;
+            report["olderSettingsMigration"] = true;
+            JsonObject status = await ReadStatusAsync(server.Root);
+            int workerId = status["ProcessId"]!.GetValue<int>();
+            using Process worker = Process.GetProcessById(workerId);
+            string project = server.Projects[0].Id;
+            server.AddChat(project, "000 installed background chat");
+            server.RenameProject(project, "000 installed renamed project");
+            await WaitAsync(server.IsSortedByName, "Keep sorting additions and renames after closing the installed window.");
+            report["closeKeepsBackgroundAndAutomaticChanges"] = true;
+            await RunAsync(program, "--background");
+            Require((await ReadStatusAsync(server.Root))["ProcessId"]!.GetValue<int>() == workerId, "Keep one installed background instance.");
+            int writes = server.WriteCount;
+            worker.Refresh();
+            TimeSpan cpu = worker.TotalProcessorTime;
+            await Task.Delay(10000);
+            worker.Refresh();
+            Require(writes == server.WriteCount, "Idle monitoring performs zero sorting writes.");
+            report["idleCpuMilliseconds"] = (worker.TotalProcessorTime - cpu).TotalMilliseconds;
+            report["idleWorkingSetBytes"] = worker.WorkingSet64;
+            report["idleSortingWrites"] = 0;
+            await RunAsync(program, "--exit");
+            settingsStore.Save(new ToolSettings { Language = "en", AutomaticNameSorting = false, ProjectSortMode = 2, ChatSortMode = 5 });
+            await RunAsync(program, "--capture", Path.Combine(output, "02-installed-english.png"));
+            int previousWorker = (await ReadStatusAsync(server.Root))["ProcessId"]!.GetValue<int>();
+            await RunAsync(installer, "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/SP-", "/TASKS=", "/DIR=" + directory);
+            Require(!IsRunning(previousWorker), "Finish the old background before replacing its files.");
+            ToolSettings retained = settingsStore.Load();
+            Require(retained.Language == "en" && !retained.AutomaticNameSorting && retained.ProjectSortMode == 2 && retained.ChatSortMode == 5, "Keep existing tool preferences across upgrade.");
+            report["runningUpgradeAndSettingsRetention"] = true;
+            await RunAsync(program, "--background");
+            await RunAsync(Path.Combine(directory, "unins000.exe"), "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART");
+            Require(!File.Exists(program), "Remove the installed program during uninstall.");
+            Require(File.Exists(settingsStore.PathName), "Retain user preferences for a later installation.");
+            report["runningUninstallAndPreferenceRetention"] = true;
+            report["success"] = true;
+        }
+        catch (Exception error) { report["error"] = error.ToString(); }
+        finally
+        {
+            if (File.Exists(program))
+            {
+                try { await RunAsync(program, "--exit"); }
+                catch (Exception error) { report["cleanupError"] = error.Message; }
+            }
+            report["checkedAt"] = DateTimeOffset.UtcNow.ToString("O");
+            File.WriteAllText(Path.Combine(output, "installed-results.json"), report.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+        }
+        Console.WriteLine(report.ToJsonString());
+        return report["success"]!.GetValue<bool>() ? 0 : 1;
+    }
+
+    private static bool IsRunning(int processId)
+    {
+        try { using Process process = Process.GetProcessById(processId); return !process.HasExited; }
+        catch (ArgumentException) { return false; }
+    }
+
+    private static async Task<JsonObject> ReadStatusAsync(string dataRoot)
+    {
+        string identity = "sst-" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(Path.GetFullPath(dataRoot).ToUpperInvariant())))[..12];
+        await using var pipe = new NamedPipeClientStream(".", identity + "-bg", PipeDirection.InOut, PipeOptions.Asynchronous);
+        await pipe.ConnectAsync(10000);
+        using var writer = new StreamWriter(pipe, leaveOpen:true) { AutoFlush = true };
+        await writer.WriteLineAsync("status");
+        using var reader = new StreamReader(pipe, leaveOpen:true);
+        return JsonNode.Parse((await reader.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(20)))!)!.AsObject();
+    }
+
+    private static async Task RunAsync(string executable, params string[] arguments)
+    {
+        var start = new ProcessStartInfo(executable) { UseShellExecute = false, CreateNoWindow = true };
+        foreach (string argument in arguments) start.ArgumentList.Add(argument);
+        using Process process = Process.Start(start)!;
+        await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(120));
+        Require(process.ExitCode == 0, Path.GetFileName(executable) + " returned " + process.ExitCode);
+    }
+
+    private static async Task WaitAsync(Func<bool> condition, string failure)
+    {
+        DateTime deadline = DateTime.UtcNow.AddSeconds(40);
+        while (!condition() && DateTime.UtcNow < deadline) await Task.Delay(100);
+        Require(condition(), failure);
+    }
+
+    private static void Require(bool condition, string failure)
+    {
+        if (!condition) throw new InvalidOperationException(failure);
+    }
+}
+
