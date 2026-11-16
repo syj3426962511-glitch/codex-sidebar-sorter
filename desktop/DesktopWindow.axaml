@@ -37,7 +37,8 @@
           <ListBox Grid.Row="2" Name="Rows" Background="White" BorderThickness="0" SelectionMode="Single">
             <ListBox.ItemTemplate>
               <DataTemplate x:DataType="local:SidebarDisplayRow">
-                <Grid ColumnDefinitions="42,*,120,130" MinHeight="40" Background="{Binding Background}">
+                <Grid ColumnDefinitions="42,*,120,130" MinHeight="40" Background="{Binding Background}"
+                      PointerPressed="RowPressed" PointerMoved="RowMoved" PointerReleased="RowReleased">
                   <Button Grid.Column="0" Content="{Binding Marker}" Padding="0" Background="Transparent" BorderThickness="0" Click="ToggleProject" />
                   <TextBlock Grid.Column="1" Text="{Binding Title}" Margin="{Binding Indent}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" FontWeight="{Binding Weight}" ToolTip.Tip="{Binding Title}" />
                   <TextBlock Grid.Column="2" Text="{Binding Detail}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />

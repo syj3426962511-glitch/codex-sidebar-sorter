@@ -2,7 +2,7 @@ name: Cross-platform desktop candidate
 on:
   push:
     branches: [main]
-    paths: ['desktop/**', 'src/**', '.github/workflows/desktop.yml']
+    paths: ['desktop/**', 'src/**', 'tests/DesktopSmokeTests.cs', 'tests/FixtureNativeServer.cs', '.github/workflows/desktop.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -19,7 +19,7 @@ jobs:
           - os: ubuntu-latest
             rid: linux-x64
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v5
@@ -27,3 +27,21 @@ jobs:
           dotnet-version: '10.0.x'
       - name: Build the shared desktop application
         run: dotnet build desktop/SidebarSorter.Desktop.csproj -c Release -r ${{ matrix.rid }}
+      - name: Prepare the Linux desktop session
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y xvfb libice6 libsm6 libfontconfig1 fonts-noto-cjk libx11-6
+      - name: Build the cloud-only desktop acceptance executable
+        run: dotnet publish desktop/SidebarSorter.Desktop.csproj -c Release -r ${{ matrix.rid }} -p:CloudSmoke=true -o artifacts/smoke
+      - name: Exercise the real cross-platform desktop and automatic engine
+        if: runner.os != 'Linux'
+        run: ./artifacts/smoke/SidebarSorter artifacts/desktop
+      - name: Exercise the Linux desktop and automatic engine
+        if: runner.os == 'Linux'
+        run: xvfb-run -a -s '-screen 0 1440x1000x24' ./artifacts/smoke/SidebarSorter artifacts/desktop
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: desktop-${{ matrix.rid }}
+          path: artifacts/desktop/*

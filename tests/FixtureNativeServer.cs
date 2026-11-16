@@ -1,4 +1,6 @@
 using System.IO.Pipes;
+using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json.Nodes;
@@ -15,6 +17,7 @@ internal sealed class FixtureNativeServer : IDisposable
     private readonly JsonObject sorting = new() { ["projects"] = "manual", ["chats"] = "manual", ["pinned"] = "manual" };
     public string Root { get; } = Path.Combine(Path.GetTempPath(), "sidebar-cloud-fixture-" + Guid.NewGuid().ToString("N"));
     private readonly string pipeName = "codex-app-tools-fixture-" + Guid.NewGuid().ToString("N");
+    private string? socketPath;
     public List<(string Id, string Name)> Projects { get; } = [];
     public Dictionary<string, List<SortRow>> Chats { get; } = new();
     private readonly List<string> projectOrder = [];
@@ -23,6 +26,7 @@ internal sealed class FixtureNativeServer : IDisposable
 
     public FixtureNativeServer()
     {
+        RuntimeHelpers.RunClassConstructor(typeof(LocalHistoryReader).TypeHandle);
         Directory.CreateDirectory(Root);
         var assignments = new JsonObject();
         var backendIds = new JsonObject();
@@ -79,6 +83,21 @@ internal sealed class FixtureNativeServer : IDisposable
     {
         try
         {
+            if (!OperatingSystem.IsWindows())
+            {
+                string directory = OperatingSystem.IsMacOS() ? "/tmp/codex-app-tools" : "/tmp/codex-app-tools-" + geteuid();
+                Directory.CreateDirectory(directory);
+                socketPath = Path.Combine(directory, "fixture-" + Guid.NewGuid().ToString("N")[..12] + ".sock");
+                using var socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
+                socket.Bind(new UnixDomainSocketEndPoint(socketPath));
+                socket.Listen(20);
+                while (!stopping.IsCancellationRequested)
+                {
+                    Socket connection = await socket.AcceptAsync(stopping.Token);
+                    connections.Add(ServeAsync(new NetworkStream(connection, ownsSocket: true)));
+                }
+                return;
+            }
             while (!stopping.IsCancellationRequested)
             {
                 var pipe = new NamedPipeServerStream(pipeName, PipeDirection.InOut, NamedPipeServerStream.MaxAllowedServerInstances, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
@@ -90,7 +109,7 @@ internal sealed class FixtureNativeServer : IDisposable
         catch (OperationCanceledException) { }
     }
 
-    private async Task ServeAsync(NamedPipeServerStream pipe)
+    private async Task ServeAsync(Stream pipe)
     {
         await using (pipe)
         {
@@ -202,11 +221,72 @@ internal sealed class FixtureNativeServer : IDisposable
         }
     }
 
+    public void RenameProject(string id, string name)
+    {
+        lock (modelLock)
+        {
+            int index = Projects.FindIndex(project => project.Id == id);
+            Projects[index] = (id, name);
+            SaveState();
+        }
+    }
+
+    public void RenameChat(string projectId, string id, string title)
+    {
+        lock (modelLock)
+        {
+            List<SortRow> rows = Chats[projectId];
+            int index = rows.FindIndex(row => row.Id == id);
+            rows[index] = rows[index] with { Title = title };
+            ExecuteSql("UPDATE threads SET name='" + title.Replace("'", "''") + "' WHERE id='" + id + "';");
+        }
+    }
+
+    public string AddProject(string title)
+    {
+        lock (modelLock)
+        {
+            string id = Guid.NewGuid().ToString();
+            Projects.Add((id, title));
+            projectOrder.Add(id);
+            Chats[id] = [];
+            chatOrders[id] = [];
+            globalState["app-server-project-id-by-legacy-project-id-by-host"]!["local:" + Root]![id] = Guid.NewGuid().ToString();
+            globalState["sidebar-project-thread-orders"]![id] = new JsonObject { ["threadIds"] = new JsonArray() };
+            SaveState();
+            return id;
+        }
+    }
+
+    public string AddChat(string projectId, string title)
+    {
+        lock (modelLock)
+        {
+            string id = Guid.NewGuid().ToString();
+            Chats[projectId].Add(new SortRow(id, title, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
+            chatOrders[projectId].Add(id);
+            globalState["thread-project-assignments"]![id] = new JsonObject { ["projectId"] = projectId, ["projectKind"] = "local" };
+            globalState["sidebar-project-thread-orders"]![projectId]!["threadIds"] = SorterService.StringArray(chatOrders[projectId]);
+            string backend = globalState["app-server-project-id-by-legacy-project-id-by-host"]!["local:" + Root]![projectId]!.GetValue<string>();
+            ExecuteSql("INSERT INTO threads VALUES('" + id + "','" + title.Replace("'", "''") + "','Fixture',1790000000000,1790000000,'" + backend + "',0,'vscode',NULL,NULL);");
+            SaveState();
+            return id;
+        }
+    }
+
+    private void ExecuteSql(string sql)
+    {
+        Require(sqlite3_open_v2(Path.Combine(Root, "state_1.sqlite"), out IntPtr database, 0x10006, IntPtr.Zero) == 0, "Open fixture history.");
+        try { Require(sqlite3_exec(database, sql, IntPtr.Zero, IntPtr.Zero, out _) == 0, "Update fixture history."); }
+        finally { sqlite3_close(database); }
+    }
+
     public void Dispose()
     {
         stopping.Cancel();
         listener.GetAwaiter().GetResult();
         Task.WhenAll(connections).GetAwaiter().GetResult();
+        if (socketPath != null) File.Delete(socketPath);
         stopping.Dispose();
     }
 
@@ -216,4 +296,6 @@ internal sealed class FixtureNativeServer : IDisposable
     private static extern int sqlite3_exec(IntPtr database, [MarshalAs(UnmanagedType.LPUTF8Str)] string sql, IntPtr callback, IntPtr argument, out IntPtr error);
     [DllImport("winsqlite3.dll", CallingConvention = CallingConvention.Cdecl)]
     private static extern int sqlite3_close(IntPtr database);
+    [DllImport("libc", CallingConvention = CallingConvention.Cdecl)]
+    private static extern uint geteuid();
 }

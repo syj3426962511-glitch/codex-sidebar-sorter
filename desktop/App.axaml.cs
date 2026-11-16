@@ -33,7 +33,7 @@ internal sealed partial class DesktopApp : Application
             {
                 if (!Settings.AutomaticNameSorting) return;
                 await OperationGate.WaitAsync();
-                try { await AutomaticSorter.SynchronizeByNameAsync(new SorterService()); }
+                try { if (Settings.AutomaticNameSorting) await AutomaticSorter.SynchronizeByNameAsync(new SorterService()); }
                 finally { OperationGate.Release(); }
             });
             automatic.Completed += error => Dispatcher.UIThread.Post(async () =>
@@ -44,6 +44,7 @@ internal sealed partial class DesktopApp : Application
             });
             BuildTray();
             if (!DesktopProgram.Arguments.Contains("--background")) ShowWindow();
+            DesktopProgram.Ready.TrySetResult(this);
         }
         base.OnFrameworkInitializationCompleted();
     }

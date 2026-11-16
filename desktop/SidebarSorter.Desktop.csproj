@@ -20,8 +20,17 @@
     <Compile Include="../src/Localization.cs" />
     <Compile Include="../src/ToolSettings.cs" />
     <Compile Include="../src/AutomaticSorter.cs" />
+    <Compile Include="../src/IndependentLaunch.cs" />
     <EmbeddedResource Include="../src/Assets/English.json" LogicalName="SidebarSorter.English" />
     <AvaloniaResource Include="../src/Assets/聊天排序.ico" Link="Assets/app.ico" />
     <AvaloniaResource Include="../src/Assets/聊天排序-Logo-256.png" Link="Assets/logo.png" />
+  </ItemGroup>
+  <PropertyGroup Condition="'$(CloudSmoke)' == 'true'">
+    <OutputType>Exe</OutputType>
+    <StartupObject>SidebarSorter.DesktopSmokeTests</StartupObject>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(CloudSmoke)' == 'true'">
+    <Compile Include="../tests/DesktopSmokeTests.cs" />
+    <Compile Include="../tests/FixtureNativeServer.cs" />
   </ItemGroup>
 </Project>

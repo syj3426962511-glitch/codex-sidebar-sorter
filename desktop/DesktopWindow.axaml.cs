@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Input;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -25,6 +26,10 @@ internal sealed partial class DesktopWindow : Window
     private List<SortRow> originalSectionRows = [];
     private bool updating;
     private bool busy;
+    private static readonly DataFormat<SidebarDisplayRow> RowFormat = DataFormat.CreateInProcessFormat<SidebarDisplayRow>("sidebar-sorter-row");
+    private PointerPressedEventArgs? dragPress;
+    private SidebarDisplayRow? dragRow;
+    private Point dragOrigin;
     private int tab;
     private SortScope? Scope => Box("ScopeBox").SelectedItem as SortScope;
     private ComboBox Box(string name) => this.FindControl<ComboBox>(name)!;
@@ -39,6 +44,21 @@ internal sealed partial class DesktopWindow : Window
     {
         this.app = app;
         AvaloniaXamlLoader.Load(this);
+        DragDrop.SetAllowDrop(RowList, true);
+        DragDrop.AddDragOverHandler(RowList, (_, args) =>
+        {
+            var source = args.DataTransfer.TryGetValue(RowFormat);
+            var target = (args.Source as Control)?.DataContext as SidebarDisplayRow;
+            args.DragEffects = source != null && target != null && CanMove(source.Entry, target.Entry) ? DragDropEffects.Move : DragDropEffects.None;
+            args.Handled = true;
+        });
+        DragDrop.AddDropHandler(RowList, (_, args) =>
+        {
+            if (args.DataTransfer.TryGetValue(RowFormat) is SidebarDisplayRow source
+                && (args.Source as Control)?.DataContext is SidebarDisplayRow target)
+                MoveRow(source.Entry, target.Entry);
+            args.Handled = true;
+        });
         SetCaptions();
         Box("LanguageBox").SelectionChanged += (_, _) =>
         {
@@ -260,28 +280,65 @@ internal sealed partial class DesktopWindow : Window
         if (workspace == null || RowList.SelectedItem is not SidebarDisplayRow selected) return;
         PauseAutomatic();
         TreeEntry source = selected.Entry;
+        List<SortRow> movable = Scope?.Kind == "section" ? sectionRows
+            : source.IsProject ? workspace.Groups.Where(group => group.CanReorder).Select(group => group.Row).ToList()
+            : source.Group?.Chats.Where(row => !row.IsPinned).ToList() ?? [];
+        int from = movable.FindIndex(row => row.Id == source.Row.Id);
+        if (from < 0) return;
+        int to = edge ? direction < 0 ? 0 : movable.Count - 1 : Math.Clamp(from + direction, 0, movable.Count - 1);
+        MoveRow(source, source with { Row = movable[to] });
+    }
+
+    private bool CanMove(TreeEntry source, TreeEntry target) => !busy && source.Key != target.Key
+        && (Scope?.Kind == "section" || source.IsProject && target.IsProject && source.Group?.CanReorder == true && target.Group?.CanReorder == true
+            || !source.IsProject && !target.IsProject && source.Group != null && source.Group == target.Group && !source.Row.IsPinned && !target.Row.IsPinned);
+
+    private void MoveRow(TreeEntry source, TreeEntry target)
+    {
+        if (workspace == null || !CanMove(source, target)) return;
+        PauseAutomatic();
         if (Scope?.Kind == "section")
         {
             int from = sectionRows.FindIndex(row => SorterService.RowKey(row) == source.Key);
-            int to = edge ? direction < 0 ? 0 : sectionRows.Count - 1 : Math.Clamp(from + direction, 0, sectionRows.Count - 1);
+            int to = sectionRows.FindIndex(row => SorterService.RowKey(row) == target.Key);
+            if (from < 0 || to < 0) return;
             SortRow item = sectionRows[from];
             sectionRows.RemoveAt(from);
             sectionRows.Insert(to, item);
         }
         else
         {
-            List<SortRow> movable = source.IsProject ? workspace.Groups.Where(group => group.CanReorder).Select(group => group.Row).ToList()
-                : source.Group?.Chats.Where(row => !row.IsPinned).ToList() ?? [];
-            int from = movable.FindIndex(row => row.Id == source.Row.Id);
-            if (from < 0) return;
-            int to = edge ? direction < 0 ? 0 : movable.Count - 1 : Math.Clamp(from + direction, 0, movable.Count - 1);
-            workspace.MoveTo(source, source with { Row = movable[to] });
+            if (!workspace.MoveTo(source, target)) return;
         }
         updating = true;
         Box(source.IsProject ? "ProjectModeBox" : "ChatModeBox").SelectedIndex = 6;
         updating = false;
         Render();
     }
+
+    public void RowPressed(object? sender, PointerPressedEventArgs args)
+    {
+        if (busy || !args.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
+        dragPress = args;
+        dragOrigin = args.GetPosition(this);
+        dragRow = (sender as Control)?.DataContext as SidebarDisplayRow;
+    }
+
+    public async void RowMoved(object? sender, PointerEventArgs args)
+    {
+        if (dragPress == null || dragRow == null || !args.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
+        if ((args.GetPosition(this) - dragOrigin).Length < 6) return;
+        PointerPressedEventArgs pressed = dragPress;
+        SidebarDisplayRow row = dragRow;
+        dragPress = null;
+        dragRow = null;
+        RowList.SelectedItem = row;
+        var data = new DataTransfer();
+        data.Add(DataTransferItem.Create(RowFormat, row));
+        await DragDrop.DoDragDropAsync(pressed, data, DragDropEffects.Move);
+    }
+
+    public void RowReleased(object? sender, PointerReleasedEventArgs args) { dragPress = null; dragRow = null; }
 
     private void Restore()
     {
