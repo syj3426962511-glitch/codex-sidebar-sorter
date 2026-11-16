@@ -4,11 +4,13 @@ Updated on November 16, 2026.
 
 ## Current 1.4.2 cloud candidate
 
-The 1.4.2 candidate from `23f9d67` passed 25 core checks on each cloud platform, all three desktop jobs, and Windows installed-upgrade acceptance. Its Windows installer is 44,319,278 bytes. The six history-schema cases cover the fields consumed from historical data generations.
+The 1.4.2 preview installer from `43ee877` includes the production changes from `fa6ec55`, which passed 26 core checks on each cloud platform and all three desktop jobs. Windows installed-upgrade acceptance passed for `43ee877`. The installer is 44,327,746 bytes. The six history-schema cases cover historical data generations, and the new regression checks missing-operation preflight before grouped mutations.
 
-Windows installed acceptance used the production executable with fictional native-protocol fixtures. It covered the normal entry point, custom Unicode paths, bundled runtime and source, automatic sorting, older preferences, closing the window while the worker keeps sorting, upgrades, uninstall, and retained preferences. An approximately ten-second idle sample recorded 76,578,816 working-set bytes, 187.5 ms accumulated CPU time, and zero sorting writes.
+Windows installed acceptance used the production executable with fictional native-protocol fixtures. It covered the normal entry point, custom Unicode paths, bundled runtime and source, automatic sorting, older preferences, closing the window while the worker keeps sorting, upgrades, uninstall, and retained preferences. An approximately ten-second idle sample recorded 71,782,400 working-set bytes, 312.5 ms accumulated CPU time, and zero sorting writes.
 
-[Core acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43883906361) · [Desktop acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43883914547) · [Windows installed-upgrade acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43883922669)
+[Core acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43888466005) · [Desktop acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43888466496) · [Windows installed-upgrade acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43888952292)
+
+The public Windows preview download returned HTTP 200 without authentication and the expected 44,327,746-byte content length. [Windows preview release](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-preview)
 
 ## Locally installed Windows package
 

@@ -6,12 +6,13 @@ The owner requires client-version compatibility and cloud-only functional accept
 
 | Item | Current evidence |
 | --- | --- |
-| Accepted companion installer | Windows 1.4.1 from `036f029` |
+| Current public preview installer | Windows 1.4.2 from `43ee877`, cloud installed-upgrade acceptance passed |
+| Locally installed companion | Windows 1.4.1 from `036f029` |
 | Official Windows client build | `26.1111.2228.0` lifecycle run |
 | Authenticated Windows sidebar ordering | Cloud acceptance pending |
 | Original client version replacement | Cloud acceptance pending |
 | macOS and Linux real-sidebar ordering | Cloud acceptance pending |
-| Candidate source | 1.4.2, 25 shared-core checks passed on each cloud platform and Windows installed-upgrade acceptance passed |
+| Candidate source | 1.4.2, 26 shared-core checks passed on each cloud platform and Windows installed-upgrade acceptance passed |
 
 ## Existing integration mechanisms
 
@@ -38,9 +39,9 @@ Before database project identifiers are available, project membership is read fr
 
 ## Candidate regression coverage
 
-The expanded core suite contains 25 checks, including six history-schema generations. These cases check title fallback, name precedence, timestamp precision, early millisecond values, legacy project mapping, archived and agent filtering, attached-child filtering, and unchanged history bytes.
+The expanded core suite contains 26 checks, including six history-schema generations and operation-name preflight. These cases check title fallback, name precedence, timestamp precision, early millisecond values, legacy project mapping, archived and agent filtering, attached-child filtering, and unchanged history bytes. The desktop regression checks a missing chat operation before a grouped project's first mutation.
 
-The earlier accepted suite contained 21 checks. Its older-schema fixture covered the attached-parent difference. The expanded 25-check suite passed on Windows, macOS, and Linux in cloud run `43883906361`.
+The earlier accepted suite contained 21 checks. Its older-schema fixture covered the attached-parent difference. The expanded 26-check suite passed on Windows, macOS, and Linux in cloud run `43888466005`. The three desktop jobs passed in `43888466496`.
 
 ## Per-build release acceptance
 
@@ -50,7 +51,7 @@ A client authorization or contract change requires an adapter update and the aff
 
 ## Publication status
 
-On November 16, 2026, the owner authorized direct GitHub and marketplace publication while retaining cloud-only testing. The source repository is now public, and the standard cloud jobs run again. The English Agensi draft is saved at USD 9.50 one-time. Authenticated real-sidebar acceptance, actual client version replacement, public consumer-installer delivery, and marketplace submission remain open.
+On November 16, 2026, the owner authorized direct GitHub and marketplace publication while retaining cloud-only testing. The source repository and Windows 1.4.2 preview installer are public. The English Agensi Windows companion skill is live at USD 9.50 one-time, with the preview scope and pending acceptance stated on its page. Authenticated real-sidebar acceptance, actual client version replacement, and production acceptance remain open. [Windows preview release](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-preview) · [Agensi product](https://www.agensi.io/skills/codex-sidebar-sorter-for-windows)
 
 ## Future-version design
 

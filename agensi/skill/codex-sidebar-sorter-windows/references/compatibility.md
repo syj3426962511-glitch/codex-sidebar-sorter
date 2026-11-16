@@ -2,7 +2,17 @@
 
 Updated on November 16, 2026.
 
-## Accepted Windows package
+## Current 1.4.2 cloud candidate
+
+The 1.4.2 preview installer from `43ee877` includes the production changes from `fa6ec55`, which passed 26 core checks on each cloud platform and all three desktop jobs. Windows installed-upgrade acceptance passed for `43ee877`. The installer is 44,327,746 bytes. The six history-schema cases cover historical data generations, and the new regression checks missing-operation preflight before grouped mutations.
+
+Windows installed acceptance used the production executable with fictional native-protocol fixtures. It covered the normal entry point, custom Unicode paths, bundled runtime and source, automatic sorting, older preferences, closing the window while the worker keeps sorting, upgrades, uninstall, and retained preferences. An approximately ten-second idle sample recorded 71,782,400 working-set bytes, 312.5 ms accumulated CPU time, and zero sorting writes.
+
+[Core acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43888466005) · [Desktop acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43888466496) · [Windows installed-upgrade acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43888952292)
+
+The public Windows preview download returned HTTP 200 without authentication and the expected 44,327,746-byte content length. [Windows preview release](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-preview)
+
+## Locally installed Windows package
 
 The accepted installer is `CodexSidebarSorter-1.4.1-Windows-Setup.exe`, built from `036f029`, with a size of 44,062,557 bytes.
 
@@ -41,7 +51,7 @@ Linux returned its tool catalog. Signed-out list calls timed out, and signed-in 
 - macOS and Linux consumer installers with installation and upgrade acceptance.
 - Public installer delivery and a verified Agensi buyer path.
 
-GitHub billing prevented the latest Windows and Linux follow-up jobs from starting. The additional Mac rendering run passed. The accepted Windows package above remains the current installer evidence.
+Cloud execution resumed after source publication. The current candidate results appear above. The locally installed companion remains 1.4.1, and local functional tests remain outside the owner's test scope.
 
 ## Marketplace status
 

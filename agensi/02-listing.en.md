@@ -1,12 +1,6 @@
 # Codex Sidebar Sorter for Windows
 
-## Summary
-
 Set up and operate the standalone Codex Sidebar Sorter Windows companion with seven sorting modes, twelve interface languages, automatic name ordering, previews, and an independent background worker.
-
-## Price
-
-USD 9.50, one-time purchase.
 
 ## Organize Codex projects and chats
 
@@ -24,7 +18,7 @@ The companion supplies the desktop interface and background worker. Your agent c
 
 ## Getting started
 
-1. Install the companion from the verified Windows download supplied with the listing.
+1. Download and install the self-contained Windows preview. [Windows installer](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.2-preview/CodexSidebarSorter-1.4.2-Windows-Setup.exe)
 2. Open a compatible, signed-in Codex Desktop on the same computer.
 3. Load this skill through Agensi and describe the project, chat scope, language, and sorting rule.
 4. Review the companion's preview and apply the selected order.
@@ -37,11 +31,17 @@ Keep names sorted A to Z enables continuous alphabetical synchronization for sup
 
 ## Compatibility
 
-This listing targets Windows x64 and the Codex Sidebar Sorter 1.4.1 companion. The desktop installer includes its runtime. Codex Desktop compatibility depends on the client's available local interface and authorization.
+This listing targets Windows x64 and the Codex Sidebar Sorter 1.4.2 preview companion. The desktop installer includes its runtime. Codex Desktop compatibility depends on the client's available local interface and authorization.
 
 Shared logic and desktop tests passed on Windows x64, macOS ARM64, and Linux x64 with fictional projects and chats. Mac and Linux consumer installers, authenticated real-client sorting acceptance, and actual client version replacement have remaining validation work.
 
 Current ordering support covers unpinned projects in the default Projects section, supported Codex project chats, and chats in pinned or custom sections. Additional client support is needed for ChatGPT project-chat ordering, independent alphabetical Recents ordering, and pinned project placement.
+
+## Current release and adaptation
+
+The public Windows package is a preview. Windows, macOS, and Linux each passed 26 core checks, and the Windows installed-upgrade checks passed. Authenticated official-client sidebar ordering and actual client version replacement remain pending.
+
+Historical field detection and grouped operation-name preflight are implemented. Full parameter negotiation, independent adapter packages, and signed adapter updates are specified in the published design and remain implementation work. New client builds receive their own compatibility result. [Compatibility design](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/blob/main/docs/05-future-compatibility.md)
 
 ## Purchase
 
@@ -49,11 +49,11 @@ USD 9.50, one-time. The purchase supplies this agent skill through Agensi. The W
 
 The project uses the MIT license. Product support and download access are described in the linked documentation.
 
-## Demonstration request
+## Example request
 
 Use Codex Sidebar Sorter for Windows to help me select German, keep my projects and their chats in ascending name order, and explain how to temporarily sort one project by natural numbers.
 
-## Demonstration result
+## Guided example
 
 ## Requested configuration
 
@@ -85,24 +85,8 @@ Read the companion's status and refreshed saved order after applying. Check the 
 
 This is a guided example of the delivered workflow. The visible desktop screenshots use fictional test projects and chats.
 
-## Frequently asked questions
+## Price and publication
 
-### What does the purchase include?
+USD 9.50, one-time. Live on Agensi.
 
-A complete agent skill for installing, configuring, operating, and troubleshooting the Windows companion. The companion installer is a separate prerequisite supplied at no additional charge.
-
-### Which languages are available?
-
-Simplified Chinese, Traditional Chinese, English, Japanese, Korean, French, German, Spanish, Portuguese, Italian, Russian, and Arabic. Arabic uses a right-to-left interface.
-
-### Can it run after I close its window?
-
-The desktop companion has a separate worker and native tray. Closing its window retains those components. Exit in the tray stops the companion.
-
-### Which systems does this listing target?
-
-Windows x64. The shared code and fictional-data tests cover macOS and Linux, while their consumer installers and authenticated real-client sorting require further acceptance.
-
-### Does the AI operate the application directly?
-
-An agent with an authorized desktop-control surface can operate the companion. Other compatible agents can guide the same controls and explain the resulting status.
+[Public product](https://www.agensi.io/skills/codex-sidebar-sorter-for-windows)

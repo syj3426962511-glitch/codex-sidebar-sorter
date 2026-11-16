@@ -40,7 +40,7 @@ Choosing a custom rule, moving rows, or resetting the preview pauses automatic n
 
 ## Getting started
 
-1. Obtain the Windows 1.4.1 installer from the maintainer's verified release channel.
+1. Obtain the self-contained Windows 1.4.2 preview installer from the public release page. Authenticated official-client sidebar ordering and actual client version replacement remain open acceptance items for this preview. [Windows preview](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-preview)
 2. Choose an installation directory and install the bundled application.
 3. Open a compatible, signed-in Codex Desktop client.
 4. Open Codex Sidebar Sorter and select **Refresh**.
@@ -49,13 +49,13 @@ Choosing a custom rule, moving rows, or resetting the preview pauses automatic n
 
 Close the companion window to keep its worker and tray running. Use **Open Sidebar Sorter** in the tray to reopen the window and **Exit** to stop the companion.
 
-The source repository is public. Public consumer-installer delivery and marketplace submission are tracked with the real-client acceptance work.
+The source repository and Windows preview installer are public. The installer download was checked without authentication. The Agensi Windows companion skill is live at USD 9.50 one-time. Authenticated real-client production acceptance remains in progress. [Agensi product](https://www.agensi.io/skills/codex-sidebar-sorter-for-windows)
 
 ## Compatibility and verification
 
 | Component | Verified scope |
 | --- | --- |
-| Windows x64, macOS ARM64, Linux x64 shared core | 25 checks per platform in 1.4.2, including six historical data-schema generations |
+| Windows x64, macOS ARM64, Linux x64 shared core | 26 checks per platform in 1.4.2, including six historical data-schema generations and missing-operation preflight |
 | Multilingual desktop and automatic worker | Twelve languages, 30 fictional projects, 360 fictional chats |
 | Windows 1.4.2 installer | Cloud installed-upgrade acceptance passed, including custom paths, bundled runtime, retained settings, full exit and reopening, uninstall |
 | Official Windows client 26.1111.2228.0 | Window close, full exit, reopening, worker independence, update check, and unchanged client files |
@@ -70,9 +70,9 @@ Native project ordering covers unpinned projects in the default Projects section
 
 Cloud execution resumed after the repository became public. The last locally installed Windows companion remains `036f029`, version `1.4.1`. Local functional testing remains outside the owner's authorized test scope.
 
-The 1.4.2 candidate detects historical name, timestamp, project, agent-path, and attached-parent fields. Its expanded 25-check suite passed on all three cloud platforms. Client-build support is tracked in the compatibility record. The future-version design specifies consumed-contract matching, independent adapters, signed adapter updates, interrupted-batch recovery, and per-build cloud acceptance. These additional mechanisms have their implementation status recorded in the design. [Compatibility record](docs/04-compatibility.md) · [Future compatibility design](docs/05-future-compatibility.md)
+The 1.4.2 candidate detects historical name, timestamp, project, agent-path, and attached-parent fields. Its expanded 26-check suite passed on all three cloud platforms. Grouped project and chat submissions preflight required operation names before the first write. Client-build support is tracked in the compatibility record. The future-version design specifies consumed-contract matching, independent adapters, signed adapter updates, interrupted-batch recovery, and per-build cloud acceptance. These additional mechanisms have their implementation status recorded in the design. [Compatibility record](docs/04-compatibility.md) · [Future compatibility design](docs/05-future-compatibility.md)
 
-[Shared core results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43883906361) · [Desktop results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43883914547) · [Windows installer results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43883922669) · [Windows client lifecycle](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43854854495)
+[Shared core results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43888466005) · [Desktop results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43888466496) · [Windows installer results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43888952292) · [Windows client lifecycle](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43854854495)
 
 ## Architecture
 
@@ -99,7 +99,7 @@ dotnet run --project tests/CoreTests.csproj -c Release -- src artifacts/core-res
 
 ## Marketplace companion
 
-The Agensi submission provides an English agent skill for installing, configuring, and operating the Windows companion. The requested price is **USD 9.50 for a one-time purchase**. Its package, listing copy, compatibility requirements, and submission status are maintained in `agensi/`.
+The live Agensi listing provides an English agent skill for installing, configuring, and operating the Windows preview companion. Its price is **USD 9.50 for a one-time purchase**. Its package, listing copy, compatibility requirements, and publication record are maintained in `agensi/`. [Agensi product](https://www.agensi.io/skills/codex-sidebar-sorter-for-windows)
 
 ## License
 

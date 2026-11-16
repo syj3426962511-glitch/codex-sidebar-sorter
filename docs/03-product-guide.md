@@ -2,7 +2,7 @@
 
 ## Installation
 
-Use the verified Windows 1.4.1 installer, choose an installation path, and open the companion from its application shortcut. The installer includes the runtime and dependencies.
+Use the public Windows 1.4.2 preview installer, choose an installation path, and open the companion from its application shortcut. The installer includes the runtime and dependencies. Its cloud-installed acceptance has passed. Authenticated official-client ordering and actual client version replacement remain open acceptance items. [Windows preview](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-preview)
 
 Open a compatible, signed-in Codex Desktop client on the same computer. Select Refresh in the companion and check the listed projects, chats, and any connection message.
 

@@ -4,7 +4,7 @@
 
 语言包括简体中文、繁体中文、英语、日语、韩语、法语、德语、西班牙语、葡萄牙语、意大利语、俄语和阿拉伯语。界面、菜单和工具自身提示随选择切换，偏好保存于工具自身设置。阿拉伯语使用从右到左的布局。
 
-源码已公开。1.4.2 在三平台各通过 25 项核心检查，Windows 安装候选已通过旧版运行中升级、设置保留及卸载验收。登录后的真实排序、实际客户端版本替换、macOS 和 Linux 安装包继续验收。
+源码与 Windows 1.4.2 预览安装包已公开。1.4.2 在三平台各通过 26 项核心检查，Windows 安装候选已通过旧版运行中升级、设置保留及卸载验收。登录后的真实排序、实际客户端版本替换、macOS 和 Linux 安装包继续验收。[Windows 预览版](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-preview)
 
 [English guide](README.md)
 
@@ -22,9 +22,11 @@
 | macOS 官方客户端 | 原生侧栏接口以 `untrusted-code-signing-identity` 拒绝请求。辅助功能权限和控件读取通过，登录后排序待验收 |
 | Linux 官方客户端 | 工具目录读取通过，登录前的列表调用超时，真实排序待验收 |
 | Windows 1.4.2 安装候选 | 自带运行时、12 个语言选项、中文与空格路径、旧版运行中升级、设置保留、完整退出后重开及卸载通过 |
-| macOS、Linux 安装包及公开发布 | 待完整验收 |
+| macOS、Linux 安装包与对应版本发布 | 待完整验收 |
 
 功能与安装验收使用 GitHub 托管的独立云端环境。
+
+Windows 工作流技能已在 Agensi 上架，定价 9.50 美元一次性。公开商品页提供 Windows 预览安装包入口和具体兼容范围。[Agensi 商品](https://www.agensi.io/skills/codex-sidebar-sorter-for-windows)
 
 ## 使用行为
 

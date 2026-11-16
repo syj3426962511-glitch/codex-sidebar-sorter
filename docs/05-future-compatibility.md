@@ -135,11 +135,11 @@ A release watcher compares official client distribution metadata once daily and 
 | Step | Deliverable | Current status |
 | --- | --- | --- |
 | 1 | Independent worker, tray, runtime, preferences, endpoint discovery | Implemented |
-| 2 | Historical read-only field negotiation | Implemented in 1.4.2, 25 core checks passed on three cloud platforms |
-| 3 | Full tool descriptors, consumed-contract matching, per-scope preflight | Planned |
+| 2 | Historical read-only field negotiation | Implemented in 1.4.2, 26 core checks passed on three cloud platforms |
+| 3 | Full tool descriptors, consumed-contract matching, per-scope preflight | Operation-name preflight implemented for grouped submissions, full descriptor and schema matching planned |
 | 4 | Shared adapter boundary and verified platform Accessibility routes | Planned, macOS read probe available |
 | 5 | Signed data-only adapter updates with atomic activation | Planned |
 | 6 | Automated official-build detection and real-client regression matrix | Planned, existing cloud workflows provide the starting point |
-| 7 | Public consumer installer and Agensi buyer delivery | Source public, installer publication and paid handoff pending real-client acceptance |
+| 7 | Public consumer installer and Agensi buyer delivery | Source and Windows preview installer public, Windows workflow skill live at USD 9.50, production acceptance and actual paid-buyer delivery open |
 
-The source repository is public. The current successful core run is `43883906361`, and Windows 1.4.2 installed-upgrade acceptance is `43883922669`. Authenticated real-sidebar ordering and actual client version replacement remain open. [Core acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43883906361) · [Windows installed-upgrade acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43883922669)
+The source repository and Windows preview installer are public. The current successful core run is `43888466005`, and Windows 1.4.2 installed-upgrade acceptance is `43888952292`. Authenticated real-sidebar ordering and actual client version replacement remain open. [Core acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43888466005) · [Windows installed-upgrade acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43888952292)

@@ -3,7 +3,7 @@ name: codex-sidebar-sorter-windows
 description: Help install, configure, and operate the independent Codex Sidebar Sorter Windows companion. Use for project and chat ordering, seven sort modes, twelve interface languages, automatic name sorting, tray operation, and companion connection or upgrade problems.
 license: MIT
 metadata:
-  version: "1.4.1"
+  version: "1.4.2"
   product: "Codex Sidebar Sorter for Windows"
   platform: "Windows x64"
 ---
@@ -14,11 +14,11 @@ Help the user operate the installed Codex Sidebar Sorter desktop companion. The 
 
 ## Required environment
 
-Use a Windows x64 computer, an installed Codex Sidebar Sorter 1.4.1 companion, and a compatible signed-in Codex Desktop on that computer. The companion installer includes its runtime.
+Use a Windows x64 computer, an installed Codex Sidebar Sorter 1.4.2 companion, and a compatible signed-in Codex Desktop on that computer. The companion installer includes its runtime. The current public package is a preview with authenticated real-client ordering and actual client replacement acceptance still pending.
 
 Determine the installed companion path from the user's shortcut or installation record. The examples use the application name, so adapt to the user's chosen installation directory.
 
-Public installer availability is recorded in the product documentation. Resolve an accessible, verified installer download before guiding a new installation.
+The public Windows preview installer has 44,327,746 bytes and includes its runtime and source. Read the current compatibility record when explaining its supported scope. [Windows preview download](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.2-preview/CodexSidebarSorter-1.4.2-Windows-Setup.exe) · [Validation record](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/blob/main/docs/02-validation.md)
 
 ## Interpret the request
 
