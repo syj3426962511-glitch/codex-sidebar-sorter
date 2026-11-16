@@ -2,7 +2,7 @@
 
 A standalone chat sorter with Chinese and English UI and automatic ascending-name order. The current 1.4.0 candidate uses a shared desktop interface, a separate sorting worker, and platform-native tray menus.
 
-This project is undergoing private cloud acceptance. Windows, macOS and Linux packages and public sharing links follow successful real-client integration and lifecycle acceptance.
+This project is undergoing private cloud acceptance. The Windows 1.4.0 installer candidate passed installation, running legacy upgrades, preference retention and uninstall acceptance. macOS and Linux packages and public sharing links await complete real-client acceptance.
 
 [中文说明](README.md)
 
@@ -15,11 +15,12 @@ This project is undergoing private cloud acceptance. Windows, macOS and Linux pa
 | Pinned and custom-section chats | Automatic sorting passed in the cloud |
 | Closing the UI, worker single instance, reopening and safe exit | Passed on all three platforms |
 | Official Windows client | Window closing, complete exit, reopening, worker independence and startup after a Store update check passed, cross-version replacement pending |
-| Official macOS client | Independent processes rejected with `untrusted-process-ancestry` |
+| Official macOS client | MCP service initialization passed, native sidebar requests rejected with `untrusted-code-signing-identity` |
 | Official Linux client | Tool catalog readable, signed-out list requests timed out, real sorting pending |
-| 1.4.0 installers and public release | Pending complete acceptance |
+| Windows 1.4.0 installer candidate | Bundled runtime, Unicode paths, running legacy upgrades, preferences, full exit/reopen and uninstall passed |
+| macOS and Linux packages and public release | Pending complete acceptance |
 
-Runtime and installation tests use disposable GitHub-hosted systems. Local work in this development round is limited to source editing, historical records and cloud receipts.
+Functional and installation acceptance use disposable GitHub-hosted systems.
 
 ## Behavior
 
@@ -59,9 +60,9 @@ Separate workflows exercise official clients. Protocol-fixture results, official
 
 ## Source and build
 
-`desktop` contains the cross-platform UI, background controller and native trays. `src` provides shared ordering, read-only history, settings and translation, along with the existing Windows implementation. `tests` and `.github/workflows` contain cloud acceptance. `packaging` retains the existing Windows installer definition.
+`desktop` contains the cross-platform UI, background controller and native trays. `src` provides shared ordering, read-only history, settings and translation, along with the preceding Windows implementation used for upgrade acceptance. `tests` and `.github/workflows` contain cloud acceptance. `packaging/windows.iss` defines the current Windows installer.
 
-Source builds use .NET 10. Native trays use Windows C++, macOS Cocoa and Linux Ayatana AppIndicator. Current build and runtime commands are in `.github/workflows/desktop.yml`. Release packages are planned to include the runtime and resources.
+Source builds use .NET 10. Native trays use Windows C++, macOS Cocoa and Linux Ayatana AppIndicator. Desktop commands are in `.github/workflows/desktop.yml`, and Windows packaging and running-upgrade acceptance are in `.github/workflows/windows-update.yml`. The Windows installer includes the runtime, icons, resources and complete source.
 
 ## License
 

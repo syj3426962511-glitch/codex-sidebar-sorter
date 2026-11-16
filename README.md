@@ -2,7 +2,7 @@
 
 独立运行的聊天排序工具，提供中文、英文界面，默认自动保持名称升序。当前 1.4.0 候选采用共享的三平台界面、独立排序后台和系统原生托盘。
 
-项目仍处于私有云端验收阶段。Windows、macOS、Linux 安装包及公开共享链接将在真实客户端接入和生命周期验收完成后发布。
+项目仍处于私有云端验收阶段。Windows 1.4.0 安装候选已通过安装、旧版运行中升级、设置保留及卸载验收。macOS、Linux 安装包及公开共享链接等待完整真实客户端验收。
 
 [English guide](README.en.md)
 
@@ -15,11 +15,12 @@
 | 置顶与自定义分区内的对话 | 云端自动排序测试通过 |
 | 关窗后台、后台单实例、重新打开界面、安全退出 | 三平台云端通过 |
 | Windows 官方客户端 | 普通关窗、完整退出、重开、后台独立保留和商店更新检查后启动通过，跨版本替换待验证 |
-| macOS 官方客户端 | 拒绝独立进程接入，日志为 `untrusted-process-ancestry` |
+| macOS 官方客户端 | MCP 服务加载成功，原生侧栏接口继续以 `untrusted-code-signing-identity` 拒绝请求 |
 | Linux 官方客户端 | 工具目录读取通过，登录前的列表调用超时，真实排序待验收 |
-| 1.4.0 安装包、公开发布 | 待完整验收 |
+| Windows 1.4.0 安装候选 | 自带运行时、中文与空格路径、旧版运行中升级、设置保留、完整退出后重开及卸载通过 |
+| macOS、Linux 安装包及公开发布 | 待完整验收 |
 
-所有运行与安装测试均在 GitHub 托管的独立云端环境执行。本轮本机工作限于源码编辑、历史查阅和云端回执读取。
+功能与安装验收使用 GitHub 托管的独立云端环境。
 
 ## 使用行为
 
@@ -59,9 +60,9 @@ ChatGPT 项目内的对话顺序及最近聊天的独立名称重排仍受原生
 
 ## 源码与构建
 
-`desktop` 包含当前三平台界面、后台控制和系统原生托盘。`src` 提供共享排序、只读索引、设置和翻译，并保留既有 Windows 实现。`tests` 和 `.github/workflows` 提供云端验收流程，`packaging` 保留既有 Windows 安装定义。
+`desktop` 包含当前三平台界面、后台控制和系统原生托盘。`src` 提供共享排序、只读索引、设置和翻译，并保留升级验收所需的既有 Windows 实现。`tests` 和 `.github/workflows` 提供云端验收流程，`packaging/windows.iss` 定义当前 Windows 安装包。
 
-源码构建使用 .NET 10 SDK。原生托盘分别由 Windows C++、macOS Cocoa 和 Linux Ayatana AppIndicator 构建。当前完整构建与运行命令见 `.github/workflows/desktop.yml`。正式安装包计划自带运行时与资源。
+源码构建使用 .NET 10 SDK。原生托盘分别由 Windows C++、macOS Cocoa 和 Linux Ayatana AppIndicator 构建。三平台桌面命令见 `.github/workflows/desktop.yml`，Windows 安装与运行中升级验收见 `.github/workflows/windows-update.yml`。Windows 安装候选包含运行时、图标、资源和完整源码。
 
 ## 许可
 
