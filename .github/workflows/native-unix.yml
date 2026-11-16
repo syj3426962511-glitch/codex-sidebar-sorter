@@ -24,6 +24,8 @@ jobs:
           codesign --verify --deep --strict "$RUNNER_TEMP/OfficialCodex.app"
           open -na "$RUNNER_TEMP/OfficialCodex.app"
       - name: Verify native catalog access from the standalone program
+        id: standalone
+        continue-on-error: true
         run: |
           for attempt in $(seq 1 60); do
             if find /tmp/codex-app-tools -type s -name '*.sock' -print -quit 2>/dev/null | grep -q .; then break; fi
@@ -32,6 +34,29 @@ jobs:
           mkdir -p artifacts/native
           screencapture -x artifacts/native/official-client-macos.png
           artifacts/probe/NativeEndpointProbe artifacts/native/native-macos.json
+      - name: Check the signed standard .NET host and collect native authorization diagnostics
+        if: always()
+        run: |
+          codesign -dv --verbose=4 artifacts/probe/NativeEndpointProbe 2> artifacts/native/probe-signature.txt || true
+          codesign -dv --verbose=4 "$DOTNET_ROOT/dotnet" 2> artifacts/native/dotnet-signature.txt || true
+          if [ '${{ steps.standalone.outcome }}' != 'success' ]; then
+            dotnet artifacts/probe/NativeEndpointProbe.dll artifacts/native/native-macos-dotnet-host.json || true
+          fi
+          python3 - <<'PY'
+          import pathlib,re
+          roots=[pathlib.Path.home()/'Library/Logs',pathlib.Path.home()/'Library/Application Support/Codex/logs',pathlib.Path.home()/'Library/Application Support/ChatGPT/logs']
+          found=[]
+          for root in roots:
+              if not root.exists(): continue
+              for file in root.rglob('*'):
+                  if not file.is_file() or file.stat().st_size>20_000_000: continue
+                  try:
+                      for line in file.read_text(errors='ignore').splitlines():
+                          if re.search(r'dynamic_app_tools_peer_authorization_failed|native pipe peer authorization|dynamic_app_tools_listening',line): found.append(line[:2000])
+                  except OSError: pass
+          pathlib.Path('artifacts/native/native-authorization.log').write_text('\n'.join(found[-60:]))
+          PY
+          if [ '${{ steps.standalone.outcome }}' != 'success' ]; then exit 1; fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
