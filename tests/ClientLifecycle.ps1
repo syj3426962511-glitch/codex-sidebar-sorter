@@ -67,6 +67,7 @@ function Quit-Client($Client) {
     Start-Sleep -Milliseconds 300
     [Windows.Forms.SendKeys]::SendWait('^q')
     if ($Client.WaitForExit(3000)) { $report.nativeQuitShortcut = 'Ctrl+Q'; return }
+    if ($Client.CloseMainWindow() -and $Client.WaitForExit(3000)) { $report.nativeQuitMethod = 'normal-window-close'; return }
     $root = [Windows.Automation.AutomationElement]::RootElement
     $buttons = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::ControlTypeProperty,[Windows.Automation.ControlType]::Button)
     $icon = @($root.FindAll([Windows.Automation.TreeScope]::Descendants,$buttons) | Where-Object { $_.Current.Name -match '^(?:Codex|ChatGPT)(?:\r?\n|$)' }) | Select-Object -First 1
@@ -78,7 +79,10 @@ function Quit-Client($Client) {
         }
         $icon = @($root.FindAll([Windows.Automation.TreeScope]::Descendants,$buttons) | Where-Object { $_.Current.Name -match '^(?:Codex|ChatGPT)(?:\r?\n|$)' }) | Select-Object -First 1
     }
-    if (!$icon) { throw 'The native Codex notification-area icon was unavailable.' }
+    if (!$icon) {
+        $report.notificationAreaButtonNames = @($root.FindAll([Windows.Automation.TreeScope]::Descendants,$buttons) | ForEach-Object { $_.Current.Name } | Select-Object -Last 50)
+        throw 'The native Codex notification-area icon was unavailable.'
+    }
     $icon.SetFocus()
     [Windows.Forms.SendKeys]::SendWait('+{F10}')
     $quit = Wait-Condition {
