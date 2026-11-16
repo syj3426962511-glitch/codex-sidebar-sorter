@@ -78,6 +78,18 @@ try {
     text:document.body?.innerText?.slice(0,12000),
     buttons:[...document.querySelectorAll('button')].map(button => ({text:button.innerText, label:button.getAttribute('aria-label'), title:button.title})),
   })));
+  report.desktopSignInRequired = report.page.text?.includes('Sign in to ChatGPT') === true;
+  if (report.desktopSignInRequired) {
+    await readCurrentPage(async page => {
+      await page.getByRole('button', {name:'Sign in another way', exact:true}).click();
+    });
+    await delay(1000);
+    await readCurrentPage(page => page.screenshot({path:path.join(output, '02b-desktop-sign-in-options.png')}));
+    report.desktopSignInOptions = await readCurrentPage(page => page.evaluate(() => ({
+      text:document.body?.innerText?.slice(0,12000),
+      buttons:[...document.querySelectorAll('button')].map(button => ({text:button.innerText, label:button.getAttribute('aria-label')})),
+    })));
+  }
   const snapshot = inspect('03-accessibility-tree');
   report.accessibilityNodes = snapshot.nodes.length;
   report.accessibilityActions = [...new Set(snapshot.nodes.flatMap(node => node.actions ?? []))];
