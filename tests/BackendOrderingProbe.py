@@ -115,17 +115,20 @@ try:
         if "error" in unsectioned and "error" in project_section:
             report["projectChatOrderingPassed"] = False
             section = request("threadSection/create", {"name": "Cloud fixture section"})["section"]
+            ordering_section = section["id"]
             request("thread/section/move", {"threadId": threads[0]["id"], "sectionId": section["id"]})
             request("thread/section/move", {"threadId": threads[1]["id"], "sectionId": section["id"],
                                              "beforeThreadId": threads[0]["id"]})
         elif "error" not in project_section:
+            ordering_section = projects[0]["id"]
             request("thread/section/move", {"threadId": threads[1]["id"], "sectionId": projects[0]["id"],
                                             "beforeThreadId": threads[0]["id"]})
             report["projectChatOrderingPassed"] = True
         else:
+            ordering_section = None
             report["projectChatOrderingPassed"] = True
         ordered = request("thread/list", {"projectId": projects[0]["id"], "sortKey": "section_position",
-                                          "sortDirection": "asc", "useStateDbOnly": True, "limit": 50})
+                                          "sectionId": ordering_section, "sortDirection": "asc", "useStateDbOnly": True, "limit": 50})
         report["threadIdsAfter"] = [thread["id"] for thread in ordered["data"]]
         report["threadOrderPassed"] = report["threadIdsAfter"] == [threads[1]["id"], threads[0]["id"]]
         if not report["threadOrderPassed"]:

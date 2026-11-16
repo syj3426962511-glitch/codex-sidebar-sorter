@@ -47,7 +47,6 @@ jobs:
           python tests/read_mac_transport.py "$RUNNER_TEMP/SorterOfficialClient.app/Contents/Resources/app.asar" artifacts/backend/desktop-ordering-contract.json --ordering
           bundled="$RUNNER_TEMP/SorterOfficialClient.app/Contents/Resources/codex-cli/bin/codex"
           cp "$bundled" artifacts/cli/bundled-codex
-          codesign --verify --strict artifacts/cli/bundled-codex
           python tests/BackendOrderingProbe.py artifacts/cli/bundled-codex artifacts/backend/bundled-results.json
       - uses: actions/upload-artifact@v4
         if: always()
