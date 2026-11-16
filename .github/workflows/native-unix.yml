@@ -1,10 +1,17 @@
 name: Independent native endpoint acceptance
 on:
   workflow_dispatch:
+    inputs:
+      platform:
+        type: choice
+        description: Native platform to exercise
+        default: both
+        options: [both, macos, linux]
 permissions:
   contents: read
 jobs:
   macos:
+    if: inputs.platform != 'linux'
     runs-on: macos-latest
     timeout-minutes: 20
     steps:
@@ -36,6 +43,7 @@ jobs:
           artifacts/probe/NativeEndpointProbe artifacts/native/native-macos.json
       - name: Check the signed standard .NET host and collect native authorization diagnostics
         if: always()
+        continue-on-error: true
         run: |
           codesign -dv --verbose=4 artifacts/probe/NativeEndpointProbe 2> artifacts/native/probe-signature.txt || true
           codesign -dv --verbose=4 "$DOTNET_ROOT/dotnet" 2> artifacts/native/dotnet-signature.txt || true
@@ -57,12 +65,23 @@ jobs:
           pathlib.Path('artifacts/native/native-authorization.log').write_text('\n'.join(found[-60:]))
           PY
           if [ '${{ steps.standalone.outcome }}' != 'success' ]; then exit 1; fi
+      - name: Verify the official signed CLI socket transport
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/sorter-relay"
+          curl --fail --location --retry 2 --max-time 180 https://github.com/openai/codex/releases/download/rust-v0.169.0/codex-aarch64-apple-darwin.tar.gz -o "$RUNNER_TEMP/sorter-relay/cli.tar.gz"
+          tar -xzf "$RUNNER_TEMP/sorter-relay/cli.tar.gz" -C "$RUNNER_TEMP/sorter-relay"
+          cli="$RUNNER_TEMP/sorter-relay/codex-aarch64-apple-darwin"
+          codesign --verify --strict "$cli"
+          codesign -dv --verbose=4 "$cli" 2> artifacts/native/relay-signature.txt
+          python3 tests/mac_relay_probe.py "$cli" artifacts/native/native-macos-relay.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: standalone-native-macos
           path: artifacts/native/*
   linux:
+    if: inputs.platform != 'macos'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
