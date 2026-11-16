@@ -65,6 +65,21 @@ finally:
         except subprocess.TimeoutExpired:
             process.terminate()
             process.wait(timeout=3)
+        report["relayExitCode"] = process.returncode
+        report["relayStderr"] = process.stderr.read().decode(errors="replace")[-8000:]
+    if not report["success"]:
+        try:
+            payload = json.dumps({"id": 2, "jsonrpc": "2.0", "method": "tools/list", "params": {"threadStartKind": "all"}}).encode()
+            completed = subprocess.run([cli, "stdio-to-uds", sockets[0]], input=struct.pack("<I", len(payload)) + payload,
+                                       capture_output=True, timeout=25)
+            report["eofProbe"] = {"exitCode": completed.returncode, "stdoutBytes": len(completed.stdout),
+                                  "stderr": completed.stderr.decode(errors="replace")[-8000:]}
+            if len(completed.stdout) >= 4:
+                response = json.loads(completed.stdout[4:4+struct.unpack("<I", completed.stdout[:4])[0]])
+                report["eofProbe"]["response"] = response
+                report["success"] = "result" in response
+        except Exception as error:
+            report["eofProbe"] = {"error": str(error)}
     pathlib.Path(output).write_text(json.dumps(report, indent=2))
 print(json.dumps(report))
 sys.exit(0 if report["success"] else 1)
