@@ -104,6 +104,23 @@ try {
   report.accessibilityActions = [...new Set(snapshot.nodes.flatMap(node => node.actions ?? []))];
   report.inputState = {before:snapshot.before, after:snapshot.after};
   report.credentialsPresent = fs.existsSync(path.join(codexHome, 'auth.json'));
+  report.dataLocations = [codexHome, path.join(process.env.HOME, '.codex')].map(directory => ({
+    fixtureHome:directory === codexHome,
+    exists:fs.existsSync(directory),
+    databases:fs.existsSync(directory) ? fs.readdirSync(directory).filter(name => /^state_\d+\.sqlite$/.test(name)).map(name => {
+      const file = path.join(directory, name);
+      try { return {name, threads:Number(execFileSync('/usr/bin/sqlite3', ['-readonly', file, 'SELECT count(*) FROM threads;'], {encoding:'utf8',timeout:5000}).trim())}; }
+      catch (error) { return {name,error:String(error.message)}; }
+    }) : [],
+  }));
+  if (report.credentialsPresent && report.page.text?.includes('No projects')) {
+    const newProject = snapshot.nodes.find(node => node.AXRole === 'AXMenuItem' && node.AXTitle === 'New Project…' && node.actions?.includes('AXPress'));
+    if (newProject) {
+      const opened = inspect('04-new-project-dialog', 'action', newProject.path, 'AXPress');
+      report.newProjectDialog = {actionStatus:opened.actionStatus,before:opened.before,after:opened.after};
+      await readCurrentPage(page => page.screenshot({path:path.join(output, '04-new-project-dialog.png')}));
+    }
+  }
 } catch (error) {
   report.error = String(error.stack ?? error);
 } finally {
