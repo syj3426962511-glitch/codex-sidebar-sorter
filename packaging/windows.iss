@@ -68,6 +68,39 @@ Name: "{autoprograms}\Codex Sidebar Sorter"; Filename: "{app}\SidebarSorter.exe"
 Filename: "{app}\SidebarSorter.exe"; Description: "{cm:OpenApplication}"; Flags: nowait postinstall skipifsilent
 
 [Code]
+function WaitForPreviousTool(): Boolean;
+var
+  Services: Variant;
+  Processes: Variant;
+  PreviousProcess: Variant;
+  Index: Integer;
+  Attempt: Integer;
+  Found: Boolean;
+  InstallDirectory: String;
+begin
+  InstallDirectory := AddBackslash(ExpandConstant('{app}'));
+  Services := CreateOleObject('WbemScripting.SWbemLocator').ConnectServer('.', 'root\cimv2');
+  Result := False;
+  for Attempt := 1 to 240 do
+  begin
+    Found := False;
+    Processes := Services.ExecQuery('SELECT ExecutablePath FROM Win32_Process WHERE Name=''聊天排序工具.exe'' OR Name=''聊天排序后台.exe''');
+    for Index := 0 to Processes.Count - 1 do
+    begin
+      PreviousProcess := Processes.ItemIndex(Index);
+      if not VarIsNull(PreviousProcess.ExecutablePath) then
+        if CompareText(ExtractFilePath(PreviousProcess.ExecutablePath), InstallDirectory) = 0 then
+          Found := True;
+    end;
+    if not Found then
+    begin
+      Result := True;
+      Exit;
+    end;
+    Sleep(250);
+  end;
+end;
+
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   PreviousUninstaller: String;
@@ -84,6 +117,11 @@ begin
       Exit;
     end;
     if ExitCode <> 0 then
+    begin
+      Result := CustomMessage('ExitBeforeUpdate');
+      Exit;
+    end;
+    if not WaitForPreviousTool() then
     begin
       Result := CustomMessage('ExitBeforeUpdate');
       Exit;

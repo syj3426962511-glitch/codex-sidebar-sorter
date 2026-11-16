@@ -31,7 +31,20 @@ internal static class InstalledDesktopAcceptance
         };
         try
         {
+            if (arguments.Length == 3)
+            {
+                await RunAsync(Path.GetFullPath(arguments[2]), "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/SP-", "/TASKS=", "/DIR=" + directory);
+                string legacyBackground = Path.Combine(directory, "聊天排序后台.exe");
+                await RunAsync(legacyBackground, "--background");
+                await WaitAsync(() => IsProgramRunning(legacyBackground), "Run the preceding background before the upgrade.");
+            }
             await RunAsync(installer, "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/SP-", "/TASKS=", "/DIR=" + directory);
+            if (arguments.Length == 3)
+            {
+                Require(!IsProgramRunning(Path.Combine(directory, "聊天排序后台.exe")), "Stop the preceding native background before replacement.");
+                Require(!File.Exists(Path.Combine(directory, "聊天排序后台.exe")), "Remove the preceding native background files.");
+                report["legacyRunningUpgradePassed"] = true;
+            }
             Require(FileVersionInfo.GetVersionInfo(program).ProductVersion?.StartsWith("1.4.0") == true, "Install the current desktop version.");
             Require(File.Exists(Path.Combine(directory, "coreclr.dll")), "Install the bundled runtime.");
             Require(File.Exists(Path.Combine(directory, "Source", "desktop", "SidebarSorter.Desktop.csproj")), "Install the complete current source tree.");
@@ -99,6 +112,16 @@ internal static class InstalledDesktopAcceptance
     {
         try { using Process process = Process.GetProcessById(processId); return !process.HasExited; }
         catch (ArgumentException) { return false; }
+    }
+
+    private static bool IsProgramRunning(string program)
+    {
+        foreach (Process process in Process.GetProcessesByName(Path.GetFileNameWithoutExtension(program)))
+        {
+            using (process)
+                if (string.Equals(process.MainModule?.FileName, program, StringComparison.OrdinalIgnoreCase)) return true;
+        }
+        return false;
     }
 
     private static async Task<JsonObject> ReadStatusAsync(string dataRoot)

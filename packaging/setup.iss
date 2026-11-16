@@ -1,4 +1,7 @@
 #define ProductVersion "1.3.0"
+#ifndef ProgramDirectory
+  #define ProgramDirectory "..\artifacts\windows"
+#endif
 [Setup]
 AppId={{57DA4787-4BE0-43CB-9BFC-FE83679E370F}
 AppName=Codex Sidebar Sorter
@@ -50,7 +53,7 @@ Name: "{app}"; Permissions: everyone-full
 Name: "desktopicon"; Description: "{cm:DesktopShortcut}"; Flags: checkedonce
 
 [Files]
-Source: "..\artifacts\windows\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#ProgramDirectory}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\src\*"; DestDir: "{app}\Source"; Excludes: "bin\*,obj\*"; Flags: ignoreversion recursesubdirs createallsubdirs
 
