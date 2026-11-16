@@ -71,9 +71,24 @@ Filename: "{app}\SidebarSorter.exe"; Description: "{cm:OpenApplication}"; Flags:
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   PreviousUninstaller: String;
+  PreviousBackground: String;
   ExitCode: Integer;
 begin
   Result := '';
+  PreviousBackground := ExpandConstant('{app}\聊天排序后台.exe');
+  if FileExists(PreviousBackground) then
+  begin
+    if not Exec(PreviousBackground, '--exit', '', SW_HIDE, ewWaitUntilTerminated, ExitCode) then
+    begin
+      Result := CustomMessage('ExitBeforeUpdate');
+      Exit;
+    end;
+    if ExitCode <> 0 then
+    begin
+      Result := CustomMessage('ExitBeforeUpdate');
+      Exit;
+    end;
+  end;
   PreviousUninstaller := ExpandConstant('{app}\unins000.exe');
   if FileExists(PreviousUninstaller) then
   begin

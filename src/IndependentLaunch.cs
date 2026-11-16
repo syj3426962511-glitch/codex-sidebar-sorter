@@ -24,6 +24,7 @@ internal static class IndependentLaunch
 
     public static int? HandoffIfNeeded(string[] arguments, bool relaunched)
     {
+        if (arguments.Length == 1 && arguments[0] == "--exit") return null;
         if (!IsInJob()) return null;
         if (relaunched)
             throw new InvalidOperationException(Localization.Text("独立启动尚未就绪，请从桌面快捷方式或资源管理器打开工具。"));
