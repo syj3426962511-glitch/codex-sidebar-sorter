@@ -87,8 +87,7 @@ internal sealed class NativeBridge : IDisposable
 
     public async Task<JsonObject> CallAsync(string tool, JsonObject arguments)
     {
-        if (!Tools.Contains(tool))
-            throw new InvalidOperationException(Localization.Text("当前客户端尚未提供这项排序操作。"));
+        RequireTools(tool);
 
         JsonObject response = await RequestAsync("tools/call", new JsonObject
         {
@@ -107,6 +106,13 @@ internal sealed class NativeBridge : IDisposable
         if (response["success"]?.GetValue<bool>() != true)
             throw new InvalidOperationException(text);
         return JsonNode.Parse(text) as JsonObject ?? throw new InvalidDataException(Localization.Text("客户端返回了无法读取的排序回执。"));
+    }
+
+    public void RequireTools(params string[] required)
+    {
+        string[] missing = required.Distinct(StringComparer.Ordinal).Where(tool => !Tools.Contains(tool)).ToArray();
+        if (missing.Length > 0)
+            throw new InvalidOperationException(Localization.Text("当前客户端尚未提供这项排序操作。") + "\n" + string.Join(", ", missing));
     }
 
     private async Task<JsonObject> RequestAsync(string method, JsonObject parameters)

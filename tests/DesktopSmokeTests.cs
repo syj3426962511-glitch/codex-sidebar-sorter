@@ -193,6 +193,21 @@ internal sealed partial class DesktopWindow
         int writes = server.WriteCount;
         await RunAsync(ApplyAsync);
         DesktopSmokeTests.Require(server.WriteCount == writes, "An unchanged application makes no native writes.");
+        server.UnavailableTool = "move_thread_to_project";
+        try
+        {
+            var service = new SorterService();
+            List<SortScope> scopes = await service.RefreshAsync();
+            SortScope projectScope = scopes.First(scope => scope.Kind == "project");
+            List<SortRow> projectRows = await service.GetRowsAsync(scopes[0]);
+            List<SortRow> chatRows = await service.GetRowsAsync(projectScope);
+            bool rejected = false;
+            try { await service.ApplyWorkspaceAsync(projectRows, true, [new(projectScope, chatRows)], false); }
+            catch (InvalidOperationException error) when (error.Message.Contains("move_thread_to_project", StringComparison.Ordinal)) { rejected = true; }
+            DesktopSmokeTests.Require(rejected && server.WriteCount == writes, "A missing chat operation must be detected before any project write.");
+            report["missingOperationPreflightPreservesOrder"] = true;
+        }
+        finally { server.UnavailableTool = null; }
         report["manualRulePausesAutomaticSorting"] = true;
         report["repeatedApplyMakesZeroWrites"] = true;
         RowList.SelectedIndex = 0;

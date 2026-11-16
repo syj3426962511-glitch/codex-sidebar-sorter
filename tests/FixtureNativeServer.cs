@@ -24,6 +24,7 @@ internal sealed class FixtureNativeServer : IDisposable
     private readonly Dictionary<string, List<string>> chatOrders = new();
     private readonly Dictionary<string, List<string>> sectionOrders = new();
     public int WriteCount { get; private set; }
+    public string? UnavailableTool { get; set; }
 
     public FixtureNativeServer()
     {
@@ -145,7 +146,7 @@ internal sealed class FixtureNativeServer : IDisposable
     {
         string[] tools = ["list_projects", "list_threads", "reorder_sidebar_projects", "move_thread_to_project", "update_sidebar_preferences", "reorder_section"];
         if (request["method"]!.GetValue<string>() == "tools/list")
-            return new JsonObject { ["tools"] = new JsonArray(tools.Select(name => (JsonNode)new JsonObject { ["namespace"] = "codex_app", ["name"] = name }).ToArray()) };
+            return new JsonObject { ["tools"] = new JsonArray(tools.Where(name => name != UnavailableTool).Select(name => (JsonNode)new JsonObject { ["namespace"] = "codex_app", ["name"] = name }).ToArray()) };
         JsonObject parameters = request["params"]!.AsObject();
         string tool = parameters["tool"]!.GetValue<string>();
         JsonObject args = parameters["arguments"]!.AsObject();

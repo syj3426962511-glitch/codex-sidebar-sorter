@@ -116,6 +116,17 @@ internal static class CoreTests
         await CheckAction("agent-path-history-schema-readonly", () => VerifyHistory(Path.Combine(temporary, "agent-path"), 1));
         await CheckAction("millisecond-history-schema-readonly", () => VerifyHistory(Path.Combine(temporary, "millisecond"), 2));
         await CheckAction("named-history-schema-before-projects-readonly", () => VerifyHistory(Path.Combine(temporary, "named"), 3));
+        await CheckAction("missing-native-capability-preflight", () =>
+        {
+            using var stream = new MemoryStream();
+            using var bridge = new NativeBridge(stream, "fixture-caller");
+            bridge.Tools.Add("reorder_sidebar_projects");
+            bool rejected = false;
+            try { bridge.RequireTools("reorder_sidebar_projects", "move_thread_to_project"); }
+            catch (InvalidOperationException error) when (error.Message.Contains("move_thread_to_project", StringComparison.Ordinal)) { rejected = true; }
+            Require(rejected && stream.Length == 0, "Missing capabilities must be detected before a request is written.");
+            bridge.RequireTools("reorder_sidebar_projects");
+        });
         await Check("native-pipe-framing-and-split-response", VerifyPipeAsync);
         await Check("automatic-watch-coalesces-writes-and-idles", () => VerifyAutomaticWatchAsync(Path.Combine(temporary, "automatic")));
         await Check("automatic-stop-waits-for-current-operation", () => VerifyAutomaticStopAsync(Path.Combine(temporary, "automatic-stop")));

@@ -167,6 +167,11 @@ internal sealed class SorterService
         string mode = recentMode ? "updated_at" : "manual";
         bool modeChanged = (applyChatMode || chatPlans.Count > 0)
             && Snapshot["sidebarPreferences"]?["sorting"]?["chats"]?.GetValue<string>() != mode;
+        var requiredTools = new List<string>();
+        if (applyProjects && projectRows.Count > 0) requiredTools.Add("reorder_sidebar_projects");
+        if (modeChanged) requiredTools.Add("update_sidebar_preferences");
+        if (!recentMode && chatPlans.Any(plan => plan.Rows.Count > 0)) requiredTools.Add("move_thread_to_project");
+        bridge.RequireTools(requiredTools.ToArray());
         int total = (applyProjects && projectRows.Count > 0 ? 1 : 0) + (modeChanged ? 1 : 0)
             + (recentMode ? 0 : chatPlans.Sum(plan => plan.Rows.Count));
         int completed = 0;
@@ -248,6 +253,9 @@ internal sealed class SorterService
             return;
         }
         string preferenceKey = scope.Id == "pinned" ? "pinned" : "chats";
+        bridge.RequireTools("update_sidebar_preferences");
+        if (!recentMode && scope.Kind == "section") bridge.RequireTools("reorder_section");
+        if (!recentMode && scope.Kind == "project" && rows.Count > 0) bridge.RequireTools("move_thread_to_project");
         await bridge.CallAsync("update_sidebar_preferences", new JsonObject
         {
             ["sorting"] = new JsonObject { [preferenceKey] = recentMode ? "updated_at" : "manual" }
