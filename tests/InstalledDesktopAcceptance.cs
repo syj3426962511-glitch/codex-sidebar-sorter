@@ -59,6 +59,8 @@ internal static class InstalledDesktopAcceptance
             Require(File.Exists(Path.Combine(directory, "coreclr.dll")), "Install the bundled runtime.");
             Require(File.Exists(Path.Combine(directory, "Source", "desktop", "SidebarSorter.Desktop.csproj")), "Install the complete current source tree.");
             Require(File.Exists(Path.Combine(directory, "Source", "src", "NativeBridge.cs")), "Include shared source dependencies.");
+            Require(File.Exists(Path.Combine(directory, "Source", "README.md")) && File.Exists(Path.Combine(directory, "Source", "LICENSE")), "Include the root files required to rebuild the installer.");
+            Require(File.Exists(Path.Combine(directory, "Source", ".github", "workflows", "windows-update.yml")), "Include the source build and upgrade acceptance workflow.");
             report["customUnicodeInstallPath"] = true;
             report["bundledRuntimeAndSource"] = true;
             Environment.SetEnvironmentVariable("DOTNET_ROOT", Path.Combine(Path.GetTempPath(), "no-system-dotnet"));

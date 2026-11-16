@@ -55,6 +55,11 @@ Source: "..\artifacts\windows\*"; DestDir: "{app}"; Excludes: "*.obj,*.lib,*.exp
 Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\README.en.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\LICENSE"; DestDir: "{app}\Source"; Flags: ignoreversion
+Source: "..\README.md"; DestDir: "{app}\Source"; Flags: ignoreversion
+Source: "..\README.en.md"; DestDir: "{app}\Source"; Flags: ignoreversion
+Source: "..\docs\*"; DestDir: "{app}\Source\docs"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\.github\workflows\*"; DestDir: "{app}\Source\.github\workflows"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\desktop\*"; DestDir: "{app}\Source\desktop"; Excludes: "bin\*,obj\*"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\src\*"; DestDir: "{app}\Source\src"; Excludes: "bin\*,obj\*"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\tests\*"; DestDir: "{app}\Source\tests"; Excludes: "bin\*,obj\*"; Flags: ignoreversion recursesubdirs createallsubdirs
