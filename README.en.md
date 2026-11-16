@@ -4,7 +4,7 @@ A standalone chat sorter with automatic ascending-name order. The current 1.4.1 
 
 Languages include Simplified Chinese, Traditional Chinese, English, Japanese, Korean, French, German, Spanish, Portuguese, Italian, Russian, and Arabic. Interface text, menus, and application messages follow the selected language. The tool stores its own language preference. Arabic uses a right-to-left layout.
 
-This project is undergoing private cloud acceptance. The Windows 1.4.0 installer candidate passed installation, running legacy upgrades, preference retention and uninstall acceptance. macOS and Linux packages and public sharing links await complete real-client acceptance.
+This project is undergoing private cloud acceptance. The Windows 1.4.1 installer candidate passed installation, running legacy upgrades, preference retention and uninstall acceptance. macOS and Linux packages and public sharing links await complete real-client acceptance.
 
 [中文说明](README.md)
 
@@ -19,7 +19,7 @@ This project is undergoing private cloud acceptance. The Windows 1.4.0 installer
 | Official Windows client | Window closing, complete exit, reopening, worker independence and startup after a Store update check passed, cross-version replacement pending |
 | Official macOS client | MCP service initialization passed, native sidebar requests rejected with `untrusted-code-signing-identity` |
 | Official Linux client | Tool catalog readable, signed-out list requests timed out, real sorting pending |
-| Windows 1.4.0 installer candidate | Bundled runtime, Unicode paths, running legacy upgrades, preferences, full exit/reopen and uninstall passed |
+| Windows 1.4.1 installer candidate | Bundled runtime, 12 language options, Unicode paths, running legacy upgrades, preferences, full exit/reopen and uninstall passed |
 | macOS and Linux packages and public release | Pending complete acceptance |
 
 Functional and installation acceptance use disposable GitHub-hosted systems.

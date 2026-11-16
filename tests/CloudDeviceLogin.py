@@ -37,7 +37,7 @@ if mode == "start":
         if url and code:
             info = {"verificationUrl": url.group().rstrip(".,)"), "userCode": code.group(),
                     "issuedAt": time.time(), "cloudRun": os.environ["GITHUB_RUN_ID"],
-                    "purpose": "Independent Mac MCP sidebar sorter acceptance"}
+                    "purpose": "Independent Mac desktop sidebar sorter acceptance"}
             public.write_text(json.dumps(info, indent=2))
             print("The one-time device authorization details are available in the public-login artifact.")
             break
