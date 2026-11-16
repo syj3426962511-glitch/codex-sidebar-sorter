@@ -1,0 +1,29 @@
+name: Cross-platform desktop candidate
+on:
+  push:
+    branches: [main]
+    paths: ['desktop/**', 'src/**', '.github/workflows/desktop.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: macos-latest
+            rid: osx-arm64
+          - os: ubuntu-latest
+            rid: linux-x64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build the shared desktop application
+        run: dotnet build desktop/SidebarSorter.Desktop.csproj -c Release -r ${{ matrix.rid }}

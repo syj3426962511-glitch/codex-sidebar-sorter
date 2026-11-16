@@ -1,0 +1,36 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="SidebarSorter.DesktopApp"
+             RequestedThemeVariant="Light">
+  <Application.Styles>
+    <FluentTheme />
+    <Style Selector="Window">
+      <Setter Property="FontFamily" Value="SimSun, Times New Roman" />
+      <Setter Property="FontSize" Value="16" />
+      <Setter Property="Foreground" Value="#192841" />
+      <Setter Property="Background" Value="#F2F5FB" />
+    </Style>
+    <Style Selector="Button">
+      <Setter Property="Background" Value="White" />
+      <Setter Property="BorderBrush" Value="#D8E1EF" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Padding" Value="15,9" />
+      <Setter Property="CornerRadius" Value="5" />
+    </Style>
+    <Style Selector="Button.primary">
+      <Setter Property="Background" Value="#3D5BEE" />
+      <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Border.card">
+      <Setter Property="Background" Value="White" />
+      <Setter Property="BorderBrush" Value="#D8E1EF" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="12" />
+      <Setter Property="Padding" Value="18" />
+    </Style>
+    <Style Selector="ComboBox">
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="MinHeight" Value="38" />
+    </Style>
+  </Application.Styles>
+</Application>

@@ -1,0 +1,83 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:SidebarSorter"
+        x:Class="SidebarSorter.DesktopWindow" Width="1240" Height="860"
+        MinWidth="980" MinHeight="680" Title="聊天排序工具">
+  <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" Margin="24" RowSpacing="16">
+    <Grid ColumnDefinitions="Auto,*,Auto,180" ColumnSpacing="14">
+      <Image Source="avares://SidebarSorter/Assets/logo.png" Width="42" Height="42" />
+      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
+        <TextBlock Name="Heading" Text="聊天排序" FontSize="26" FontWeight="Bold" />
+        <TextBlock Text="1.4.0" VerticalAlignment="Center" />
+      </StackPanel>
+      <TextBlock Grid.Column="2" Name="LanguageLabel" Text="语言" VerticalAlignment="Center" />
+      <ComboBox Grid.Column="3" Name="LanguageBox" />
+    </Grid>
+    <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto,*,260,Auto" ColumnSpacing="10">
+      <Button Name="ProjectsTab" />
+      <Button Grid.Column="1" Name="ChatsTab" />
+      <Button Grid.Column="2" Name="AllTab" />
+      <TextBox Grid.Column="4" Name="Search" Watermark="搜索" />
+      <Button Grid.Column="5" Name="RefreshButton" Content="刷新" />
+    </Grid>
+    <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+      <TextBlock Name="ScopeLabel" Text="范围" VerticalAlignment="Center" />
+      <ComboBox Grid.Column="1" Name="ScopeBox" />
+      <CheckBox Grid.Column="2" Name="AutomaticBox" Content="自动保持名称升序" />
+    </Grid>
+    <Grid Grid.Row="3" ColumnDefinitions="*,18,330">
+      <Border Classes="card">
+        <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="12">
+          <TextBlock Name="ListTitle" Text="项目与项目内对话" FontSize="20" />
+          <Grid Grid.Row="1" ColumnDefinitions="42,*,120,130">
+            <TextBlock Grid.Column="1" Name="NameColumn" Text="名称" />
+            <TextBlock Grid.Column="2" Name="DetailColumn" Text="对话 / 状态" />
+            <TextBlock Grid.Column="3" Name="TimeColumn" Text="最近更新" />
+          </Grid>
+          <ListBox Grid.Row="2" Name="Rows" Background="White" BorderThickness="0" SelectionMode="Single">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="local:SidebarDisplayRow">
+                <Grid ColumnDefinitions="42,*,120,130" MinHeight="40" Background="{Binding Background}">
+                  <Button Grid.Column="0" Content="{Binding Marker}" Padding="0" Background="Transparent" BorderThickness="0" Click="ToggleProject" />
+                  <TextBlock Grid.Column="1" Text="{Binding Title}" Margin="{Binding Indent}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" FontWeight="{Binding Weight}" ToolTip.Tip="{Binding Title}" />
+                  <TextBlock Grid.Column="2" Text="{Binding Detail}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="3" Text="{Binding Updated}" VerticalAlignment="Center" />
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <UniformGrid Grid.Row="3" Columns="4" Rows="1">
+            <Button Name="UpButton" Content="↑ 上移" HorizontalAlignment="Stretch" Margin="0,0,7,0" />
+            <Button Name="DownButton" Content="↓ 下移" HorizontalAlignment="Stretch" Margin="0,0,7,0" />
+            <Button Name="TopButton" Content="移至顶部" HorizontalAlignment="Stretch" Margin="0,0,7,0" />
+            <Button Name="BottomButton" Content="移至底部" HorizontalAlignment="Stretch" />
+          </UniformGrid>
+        </Grid>
+      </Border>
+      <Border Grid.Column="2" Classes="card">
+        <ScrollViewer>
+          <StackPanel Spacing="12">
+            <TextBlock Name="SortHeading" Text="排序与变更" FontSize="24" FontWeight="Bold" />
+            <TextBlock Name="Pending" Foreground="#3D5BEE" TextWrapping="Wrap" />
+            <TextBlock Name="ProjectModeLabel" Text="第一层 · 项目" />
+            <ComboBox Name="ProjectModeBox" />
+            <TextBlock Name="ChatModeLabel" Text="第二层 · 项目内对话" />
+            <ComboBox Name="ChatModeBox" />
+            <CheckBox Name="ApplyChatsBox" Content="同时应用项目内对话排序" IsChecked="True" />
+            <TextBlock Name="SharedModeLabel" Text="项目内对话与最近聊天共用排序模式" TextWrapping="Wrap" />
+            <TextBlock Name="CheckHeading" Text="提交前检查" FontWeight="Bold" Margin="0,15,0,0" />
+            <TextBlock Name="ReadCheck" TextWrapping="Wrap" />
+            <TextBlock Name="PlanCheck" TextWrapping="Wrap" />
+            <ItemsControl Name="Changes" />
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+    </Grid>
+    <Grid Grid.Row="4" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="10">
+      <TextBlock Name="StatusText" VerticalAlignment="Center" TextWrapping="Wrap" />
+      <Button Grid.Column="1" Name="RestoreButton" Content="还原预览" />
+      <Button Grid.Column="2" Name="HideButton" Content="收起" />
+      <Button Grid.Column="3" Name="ApplyButton" Content="应用到侧栏" Classes="primary" />
+    </Grid>
+  </Grid>
+</Window>
