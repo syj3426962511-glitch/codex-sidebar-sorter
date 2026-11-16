@@ -1,0 +1,82 @@
+{
+  "name": "Codex Sidebar Sorter for Windows",
+  "slug": "codex-sidebar-sorter-windows",
+  "version": "1.4.1",
+  "summary": "Set up and operate the standalone Codex Sidebar Sorter Windows companion with seven sorting modes, twelve interface languages, automatic name ordering, previews, and an independent background worker.",
+  "description": "## Organize Codex projects and chats\n\nCodex Sidebar Sorter for Windows is an agent skill for setting up and operating the standalone Codex Sidebar Sorter companion. It helps you choose an interface language, configure project and chat ordering, use the persistent background worker, and resolve connection or upgrade messages.\n\n## What you get\n\n- A complete agent workflow for installation, connection, sorting, language selection, tray operation, and troubleshooting.\n- Seven sorting choices covering names, natural numbers, update times, and manual order.\n- Instructions for continuous ascending-name sorting after additions and renaming.\n- Guidance for twelve interface languages, including Arabic right-to-left layout.\n- The current compatibility and validation record.\n\nThe companion supplies the desktop interface and background worker. Your agent can operate the controls when an authorized desktop-control surface is available, or guide you through the same controls.\n\n## Getting started\n\n1. Install the companion from the verified Windows download supplied with the listing.\n2. Open a compatible, signed-in Codex Desktop on the same computer.\n3. Load this skill through Agensi and describe the project, chat scope, language, and sorting rule.\n4. Review the companion's preview and apply the selected order.\n\n## Sorting and background use\n\nProjects and project chats have separate sorting choices. Use Name A to Z, Name Z to A, Natural numeric order, Reverse natural order, Recently updated first, Oldest update first, or Manual order.\n\nKeep names sorted A to Z enables continuous alphabetical synchronization for supported sidebar items. Closing the companion window leaves its worker and tray running. Open Sidebar Sorter and Exit are available from the tray.\n\n## Compatibility\n\nThis listing targets Windows x64 and the Codex Sidebar Sorter 1.4.1 companion. The desktop installer includes its runtime. Codex Desktop compatibility depends on the client's available local interface and authorization.\n\nShared logic and desktop tests passed on Windows x64, macOS ARM64, and Linux x64 with fictional projects and chats. Mac and Linux consumer installers, authenticated real-client sorting acceptance, and actual client version replacement have remaining validation work.\n\nCurrent ordering support covers unpinned projects in the default Projects section, supported Codex project chats, and chats in pinned or custom sections. Additional client support is needed for ChatGPT project-chat ordering, independent alphabetical Recents ordering, and pinned project placement.\n\n## Purchase\n\nUSD 9.50, one-time. The purchase supplies this agent skill through Agensi. The Windows companion installer is a separate prerequisite supplied at no additional charge.\n\nThe project uses the MIT license. Product support and download access are described in the linked documentation.",
+  "demo_request": "Use Codex Sidebar Sorter for Windows to help me select German, keep my projects and their chats in ascending name order, and explain how to temporarily sort one project by natural numbers.",
+  "demo_result": "## Requested configuration\n\n| Setting | Selection |\n| --- | --- |\n| Interface language | Deutsch |\n| Project order | Name A to Z |\n| Chats within each project | Name A to Z |\n| Continuous sorting | Enabled |\n| Background use | Worker and tray remain after closing the window |\n\n## Apply the configuration\n\nOpen the installed Codex Sidebar Sorter companion and a compatible, signed-in Codex Desktop on the same Windows computer. Select Refresh and check the project and chat preview.\n\nIn the companion's language selector, choose Deutsch. Enable Namen automatisch aufsteigend sortieren. The companion saves the language choice and enables ascending-name ordering for projects and their supported chats.\n\nKeep the Codex client running while the companion synchronizes its sidebar. Closing the companion window leaves the independent worker and tray running. Open Sidebar Sorter in the tray reopens the interface.\n\n## Temporarily use natural numeric order\n\nSelect the named project in Scope. Choose Natürliche Zahlenfolge for its chats. Review the preview and apply the order to the sidebar.\n\nNatural order places Item 2 before Item 10 and Item 20. Choosing this manual rule pauses continuous alphabetical sorting. Enable Namen automatisch aufsteigend sortieren again when you want continuous alphabetical order to resume.\n\n## Completion check\n\nRead the companion's status and refreshed saved order after applying. Check the same project in the Codex sidebar. If a connection or project-membership message appears, keep that exact message and the client version available for troubleshooting.\n\nThis is a guided example of the delivered workflow. The visible desktop screenshots use fictional test projects and chats.",
+  "pricing": {
+    "model": "one-time",
+    "currency": "USD",
+    "amount": 9.5
+  },
+  "categories": [
+    "Productivity",
+    "Workflow Automation"
+  ],
+  "tags": [
+    "codex",
+    "windows",
+    "sidebar",
+    "sorting",
+    "multilingual",
+    "productivity"
+  ],
+  "use_cases": [
+    "Configure automatic name ordering",
+    "Choose a project or chat sorting mode",
+    "Use natural numeric ordering",
+    "Switch among twelve interface languages",
+    "Manage background and tray operation",
+    "Diagnose companion connection messages"
+  ],
+  "compatibility": "Windows x64, Codex Sidebar Sorter 1.4.1 installed, and a compatible signed-in Codex Desktop on the same computer. Desktop controls are agent-dependent. The companion installer bundles its runtime.",
+  "requires": [
+    "Windows x64",
+    "Codex Sidebar Sorter 1.4.1 companion",
+    "Compatible signed-in Codex Desktop",
+    "Agensi connection for skill delivery"
+  ],
+  "optional": [
+    "Authorized desktop-control tools for direct UI operation"
+  ],
+  "permissions": {
+    "tools": [
+      "Browser"
+    ],
+    "files": [],
+    "network": "Agensi skill delivery and the verified companion installer download. Desktop control uses the buyer's authorized local surface."
+  },
+  "docs_url": "https://github.com/syj3426962511-glitch/codex-sidebar-sorter",
+  "installer": {
+    "file": "CodexSidebarSorter-1.4.1-Windows-Setup.exe",
+    "bytes": 44062557,
+    "source_commit": "036f029",
+    "public_download_url": null
+  },
+  "faq": [
+    {
+      "question": "What does the purchase include?",
+      "answer": "A complete agent skill for installing, configuring, operating, and troubleshooting the Windows companion. The companion installer is a separate prerequisite supplied at no additional charge."
+    },
+    {
+      "question": "Which languages are available?",
+      "answer": "Simplified Chinese, Traditional Chinese, English, Japanese, Korean, French, German, Spanish, Portuguese, Italian, Russian, and Arabic. Arabic uses a right-to-left interface."
+    },
+    {
+      "question": "Can it run after I close its window?",
+      "answer": "The desktop companion has a separate worker and native tray. Closing its window retains those components. Exit in the tray stops the companion."
+    },
+    {
+      "question": "Which systems does this listing target?",
+      "answer": "Windows x64. The shared code and fictional-data tests cover macOS and Linux, while their consumer installers and authenticated real-client sorting require further acceptance."
+    },
+    {
+      "question": "Does the AI operate the application directly?",
+      "answer": "An agent with an authorized desktop-control surface can operate the companion. Other compatible agents can guide the same controls and explain the resulting status."
+    }
+  ],
+  "submission_status": "prepared",
+  "sale_readiness": "Public companion download and authenticated real-client acceptance require completion before a paid buyer handoff."
+}

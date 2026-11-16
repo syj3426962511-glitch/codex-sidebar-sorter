@@ -1,71 +1,104 @@
-# Codex 聊天排序工具
+# Codex Sidebar Sorter
 
-独立运行的聊天排序工具，默认自动保持名称升序。当前 1.4.1 候选提供 12 个语言选项，采用共享的三平台界面、独立排序后台和系统原生托盘。
+A standalone desktop companion for organizing Codex projects and chats. Preview two levels of ordering, choose from seven sorting modes, and keep supported sidebar items in ascending name order with an independent background worker.
 
-语言包括简体中文、繁体中文、英语、日语、韩语、法语、德语、西班牙语、葡萄牙语、意大利语、俄语和阿拉伯语。界面、菜单和工具自身提示随选择切换，偏好保存于工具自身设置。阿拉伯语使用从右到左的布局。
+![Codex Sidebar Sorter in English](docs/assets/sidebar-sorter-english.png)
 
-项目仍处于私有云端验收阶段。Windows 1.4.1 安装候选已通过安装、旧版运行中升级、设置保留及卸载验收。macOS、Linux 安装包及公开共享链接等待完整真实客户端验收。
+[简体中文](README.zh-CN.md) · [User guide](docs/03-product-guide.md) · [Validation results](docs/02-validation.md) · [Agensi submission](agensi/README.md)
 
-[English guide](README.en.md)
+## Features
 
-## 当前验收状态
+- Separate sorting choices for projects and chats within each project.
+- Seven modes covering names, natural numbers, update times, and manual order.
+- Automatic ascending-name sorting after additions and renaming.
+- Search, scope selection, project and chat views, change previews, drag ordering, and movement buttons.
+- An independent background worker and native tray menu that continue after the window closes.
+- Twelve interface languages, including Arabic right-to-left layout.
+- A self-contained Windows installer with the runtime, application icon, language resources, and source.
 
-| 验收内容 | 当前结果 |
+Sidebar synchronization depends on the installed Codex client's local interface and access authorization. The compatibility table below records the current evidence.
+
+## Languages
+
+Simplified Chinese, Traditional Chinese, English, Japanese, Korean, French, German, Spanish, Portuguese, Italian, Russian, and Arabic.
+
+The system-language option selects a supported interface language. A manual selection is saved in the companion's own preferences.
+
+## Sorting modes
+
+| Mode | Behavior |
 | --- | --- |
-| Windows x64、macOS ARM64、Linux x64 界面和共享逻辑 | 云端通过，使用 30 个虚构项目和 360 条虚构对话 |
-| 新增、改名后的自动重排 | 云端协议测试通过 |
-| 置顶与自定义分区内的对话 | 云端自动排序测试通过 |
-| 关窗后台、后台单实例、重新打开界面、安全退出 | 三平台云端通过 |
-| Windows 官方客户端 | 普通关窗、完整退出、重开、后台独立保留和商店更新检查后启动通过，跨版本替换待验证 |
-| macOS 官方客户端 | MCP 服务加载成功，原生侧栏接口继续以 `untrusted-code-signing-identity` 拒绝请求 |
-| Linux 官方客户端 | 工具目录读取通过，登录前的列表调用超时，真实排序待验收 |
-| Windows 1.4.1 安装候选 | 自带运行时、12 个语言选项、中文与空格路径、旧版运行中升级、设置保留、完整退出后重开及卸载通过 |
-| macOS、Linux 安装包及公开发布 | 待完整验收 |
+| Name A to Z | Ascending names, with Chinese comparison based on `zh-CN` |
+| Name Z to A | Descending names |
+| Natural numeric order | Numeric parts follow 2, 10, 20 |
+| Reverse natural order | Descending natural numbers |
+| Recently updated first | Newest timestamps first, missing values last |
+| Oldest update first | Oldest timestamps first, missing values last |
+| Manual order | Drag rows or use Move up, Move down, To top, and To bottom |
 
-功能与安装验收使用 GitHub 托管的独立云端环境。
+Choosing a custom rule, moving rows, or resetting the preview pauses automatic name sorting. Selecting **Keep names sorted A to Z** resumes it. **Apply to sidebar** submits a manual choice.
 
-## 使用行为
+## Getting started
 
-打开工具后，项目列表和 Codex 项目内对话默认自动保持名称升序。新增项目、新增对话或修改名称后，后台通过文件事件合并触发同步。选择其他排序规则、手动移动或还原预览时暂停自动排序，重新勾选“自动保持名称升序”即可恢复。
+1. Obtain the Windows 1.4.1 installer from the maintainer's verified release channel.
+2. Choose an installation directory and install the bundled application.
+3. Open a compatible, signed-in Codex Desktop client.
+4. Open Codex Sidebar Sorter and select **Refresh**.
+5. Select the scope and review the project and chat preview.
+6. Use automatic ascending-name sorting or choose and apply a manual rule.
 
-界面提供项目、对话和全部视图、搜索、范围选择、两级排序、变更预览、手动移动和拖动。手动规则通过“应用到侧栏”提交。
+Close the companion window to keep its worker and tray running. Use **Open Sidebar Sorter** in the tray to reopen the window and **Exit** to stop the companion.
 
-## 排序方式
+The current repository is private, and a public installer download is pending. Public download access is part of the remaining marketplace delivery work.
 
-| 方式 | 行为 |
+## Compatibility and verification
+
+| Component | Verified scope |
 | --- | --- |
-| 名称升序 | 按名称正序排列，中文使用 zh-CN 比较规则 |
-| 名称降序 | 按名称倒序排列 |
-| 数字自然升序 | 名称中的数字按自然顺序排列，例如 2、10、20 |
-| 数字自然降序 | 按自然数字倒序排列 |
-| 最近更新优先 | 更新时间从新到旧，缺少时间的条目放在最后 |
-| 最早更新优先 | 更新时间从旧到新，缺少时间的条目放在最后 |
-| 手动顺序 | 拖动或使用上移、下移、移至顶部、移至底部 |
+| Windows x64, macOS ARM64, Linux x64 shared core | 21 checks per platform |
+| Multilingual desktop and automatic worker | Twelve languages, 30 fictional projects, 360 fictional chats |
+| Windows 1.4.1 installer | Custom Unicode paths, bundled runtime, running upgrades, retained settings, full exit and reopening, uninstall |
+| Official Windows client 26.1111.2228.0 | Window close, full exit, reopening, worker independence, update check, and unchanged client files |
+| Official macOS client | Accessibility permission granted and 218 actual login-screen controls read. Signed-in sidebar reordering is pending |
+| Official Linux client | Tool catalog read. Signed-in sidebar reordering is pending |
+| Actual client version replacement | Pending |
+| macOS and Linux consumer installers | Pending real-client acceptance |
 
-项目和项目内对话可分别选择排序规则。原生项目重排接口覆盖默认项目分区内的未置顶项目，置顶及自定义分区的重排接口覆盖其中的对话。附属对话由其父对话管理。
+The Windows official-client lifecycle run used a signed-out cloud profile. Authenticated real-client sorting has its own remaining acceptance work. The Windows installer and desktop automation results use fictional protocol fixtures.
 
-ChatGPT 项目内的对话顺序及最近聊天的独立名称重排仍受原生接口范围限制。客户端的项目内对话与最近聊天共用聊天排序模式。
+Native project ordering covers unpinned projects in the default Projects section. Chat ordering covers supported Codex project chats and chats in pinned or custom sections. ChatGPT project-chat ordering, independent alphabetical Recents ordering, and pinned project placement require additional client support.
 
-## 后台与客户端生命周期
+The latest Windows/Linux follow-up runs were prevented from starting by the GitHub account billing check. The last fully accepted Windows installer corresponds to `036f029`, version `1.4.1`.
 
-关闭工具窗口后，图形进程退出，独立的排序后台及原生托盘继续运行。托盘菜单或再次打开程序可显示界面，托盘菜单提供退出入口。后台采用文件事件监听与空闲等待，界面关闭时回收已经完成的排序分配。
+[Shared core results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43866519115) · [Desktop results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43867351898) · [Windows installer results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43867345247) · [Windows client lifecycle](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43854854495)
 
-界面与自动后台通过工具自己的进程间通道串行协调操作。语言和排序偏好保存在工具自己的用户数据目录。侧栏顺序通过客户端现有本地工具提交，历史 SQLite 索引使用只读连接。每次连接重新发现端点。
+## Architecture
 
-客户端原生接口、接入授权和历史索引结构属于版本适配范围。启动、关闭、实际版本替换与替换后的冷启动按真实回执记录。
+The desktop UI, sorting worker, and native tray have separate lifecycle responsibilities. The worker coalesces local file events and waits while idle. Application operations use the companion's IPC channel for coordination.
 
-## 云端验收
+The companion stores its own language and sorting preferences. History queries use read-only SQLite connections. Supported ordering requests go through Codex's existing local tools. Client interfaces, authorization, and history schemas are versioned integration dependencies.
 
-核心排序、翻译、设置、只读历史读取和消息分帧通过三平台测试。三平台桌面验收使用生产界面、自动后台及原生托盘，检查新增、改名、手动切换、零变更提交、关窗、单实例、重开和退出。
+## Build
 
-实际客户端接入由独立工作流验收。协议测试数据、官方客户端结果和安装包验收分别记录在 Actions 回执及项目验收记录中。
+Source builds use .NET 10. Native trays use Windows C++, macOS Cocoa, and Linux Ayatana AppIndicator.
 
-## 源码与构建
+```sh
+dotnet build desktop/SidebarSorter.Desktop.csproj -c Release
+dotnet run --project tests/CoreTests.csproj -c Release -- src artifacts/core-results.json
+```
 
-`desktop` 包含当前三平台界面、后台控制和系统原生托盘。`src` 提供共享排序、只读索引、设置和翻译，并保留升级验收所需的既有 Windows 实现。`tests` 和 `.github/workflows` 提供云端验收流程，`packaging/windows.iss` 定义当前 Windows 安装包。
+- `desktop/` contains the shared UI, worker host, and native trays.
+- `src/` contains ordering, history reading, settings, localization, and legacy upgrade fixtures.
+- `tests/` contains core, desktop, installer, and official-client acceptance drivers.
+- `packaging/windows.iss` defines the current Windows installer.
+- `.github/workflows/` contains platform-specific build and acceptance workflows.
 
-源码构建使用 .NET 10 SDK。原生托盘分别由 Windows C++、macOS Cocoa 和 Linux Ayatana AppIndicator 构建。三平台桌面命令见 `.github/workflows/desktop.yml`，Windows 安装与运行中升级验收见 `.github/workflows/windows-update.yml`。Windows 安装候选包含运行时、图标、资源和完整源码。
+[Development notes](docs/01-development.md)
 
-## 许可
+## Marketplace companion
 
-MIT，详见 LICENSE。
+The Agensi submission provides an English agent skill for installing, configuring, and operating the Windows companion. The requested price is **USD 9.50 for a one-time purchase**. Its package, listing copy, compatibility requirements, and submission status are maintained in `agensi/`.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
