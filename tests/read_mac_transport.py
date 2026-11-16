@@ -14,6 +14,9 @@ header_size = struct.unpack_from("<I", data, 4)[0]
 json_size = struct.unpack_from("<I", data, 12)[0]
 tree = json.loads(data[16:16 + json_size])
 excerpts = []
+terms = ("native-pipe-peer-authorizer", "dynamic_app_tools_peer_authorization_failed", "authorizeNativePipePeer", "native pipe peer authorization")
+if "--ordering" in sys.argv[3:]:
+    terms = ("sidebar-project-thread-orders", "thread/section/move", "project/move", "project/list", "section_position")
 
 def visit(node, prefix=""):
     for name, entry in node.get("files", {}).items():
@@ -23,9 +26,9 @@ def visit(node, prefix=""):
         elif name.endswith((".js", ".cjs")) and "offset" in entry:
             start = 8 + header_size + int(entry["offset"])
             source = data[start:start + entry["size"]].decode(errors="replace")
-            for term in ("native-pipe-peer-authorizer", "dynamic_app_tools_peer_authorization_failed", "authorizeNativePipePeer", "native pipe peer authorization"):
-                for match in list(re.finditer(re.escape(term), source))[:5]:
-                    excerpts.append({"file": path, "term": term, "source": source[max(0, match.start()-4500):match.end()+4500]})
+            for term in terms:
+                for match in list(re.finditer(re.escape(term), source))[:3]:
+                    excerpts.append({"file": path, "term": term, "source": source[max(0, match.start()-1600):match.end()+1600]})
 
 visit(tree)
 output.write_text(json.dumps(excerpts, indent=2))

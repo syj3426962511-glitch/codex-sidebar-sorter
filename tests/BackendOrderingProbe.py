@@ -38,7 +38,7 @@ def read_messages():
     messages.put(None)
 
 
-def request(method, parameters):
+def request(method, parameters, allow_error=False):
     global request_id
     request_id += 1
     started = time.monotonic()
@@ -62,6 +62,8 @@ def request(method, parameters):
         record["elapsedMilliseconds"] = round((time.monotonic() - started) * 1000, 2)
         if "error" in message:
             record["error"] = message["error"]
+            if allow_error:
+                return {"error": message["error"]}
             raise RuntimeError(method + " returned " + json.dumps(message["error"]))
         record["success"] = True
         return message["result"]
@@ -101,16 +103,34 @@ try:
             request("thread/name/set", {"threadId": thread["id"], "name": name})
             request("thread/metadata/update", {"threadId": thread["id"], "projectId": projects[0]["id"]})
             threads.append(thread)
+        sections = request("threadSection/list", {"limit": 50})
+        report["sectionsCreatedByProjects"] = len(sections["data"])
         request("thread/section/move", {"threadId": threads[0]["id"], "sectionId": None})
-        request("thread/section/move", {"threadId": threads[1]["id"], "sectionId": None,
-                                        "beforeThreadId": threads[0]["id"]})
+        unsectioned = request("thread/section/move", {"threadId": threads[1]["id"], "sectionId": None,
+                                                       "beforeThreadId": threads[0]["id"]}, allow_error=True)
+        report["unsectionedOrderingError"] = unsectioned.get("error")
+        project_section = request("thread/section/move", {"threadId": threads[0]["id"],
+                                                           "sectionId": projects[0]["id"]}, allow_error=True)
+        report["projectSectionError"] = project_section.get("error")
+        if "error" in unsectioned and "error" in project_section:
+            report["projectChatOrderingPassed"] = False
+            section = request("threadSection/create", {"name": "Cloud fixture section"})["section"]
+            request("thread/section/move", {"threadId": threads[0]["id"], "sectionId": section["id"]})
+            request("thread/section/move", {"threadId": threads[1]["id"], "sectionId": section["id"],
+                                             "beforeThreadId": threads[0]["id"]})
+        elif "error" not in project_section:
+            request("thread/section/move", {"threadId": threads[1]["id"], "sectionId": projects[0]["id"],
+                                            "beforeThreadId": threads[0]["id"]})
+            report["projectChatOrderingPassed"] = True
+        else:
+            report["projectChatOrderingPassed"] = True
         ordered = request("thread/list", {"projectId": projects[0]["id"], "sortKey": "section_position",
                                           "sortDirection": "asc", "useStateDbOnly": True, "limit": 50})
         report["threadIdsAfter"] = [thread["id"] for thread in ordered["data"]]
         report["threadOrderPassed"] = report["threadIdsAfter"] == [threads[1]["id"], threads[0]["id"]]
         if not report["threadOrderPassed"]:
             raise RuntimeError("The section ordering API did not produce the requested project-chat order.")
-        report["backendOrderingPassed"] = True
+        report["backendOrderingPassed"] = report["projectChatOrderingPassed"] and report["threadOrderPassed"]
 except Exception as error:
     report["error"] = str(error)
 finally:

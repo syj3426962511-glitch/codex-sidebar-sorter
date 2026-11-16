@@ -33,6 +33,22 @@ jobs:
           tar -xzf artifacts/cli/official.tar.gz -C artifacts/cli
       - name: Exercise supported backend ordering on isolated cloud data
         run: python tests/BackendOrderingProbe.py artifacts/cli/${{ matrix.executable }} artifacts/backend/results.json
+      - name: Read the official Mac desktop ordering contract
+        if: always() && runner.os == 'macOS'
+        shell: bash
+        run: |
+          mkdir -p artifacts/backend "$RUNNER_TEMP/sorter-mac-mount"
+          curl --fail --location --retry 2 --max-time 240 https://persistent.oaistatic.com/codex-app-prod/Codex.dmg -o "$RUNNER_TEMP/sorter-mac.dmg"
+          hdiutil attach "$RUNNER_TEMP/sorter-mac.dmg" -nobrowse -readonly -mountpoint "$RUNNER_TEMP/sorter-mac-mount"
+          app=$(find "$RUNNER_TEMP/sorter-mac-mount" -maxdepth 1 -name '*.app' -print -quit)
+          ditto "$app" "$RUNNER_TEMP/SorterOfficialClient.app"
+          hdiutil detach "$RUNNER_TEMP/sorter-mac-mount"
+          codesign --verify --deep --strict "$RUNNER_TEMP/SorterOfficialClient.app"
+          python tests/read_mac_transport.py "$RUNNER_TEMP/SorterOfficialClient.app/Contents/Resources/app.asar" artifacts/backend/desktop-ordering-contract.json --ordering
+          bundled="$RUNNER_TEMP/SorterOfficialClient.app/Contents/Resources/codex-cli/bin/codex"
+          cp "$bundled" artifacts/cli/bundled-codex
+          codesign --verify --strict artifacts/cli/bundled-codex
+          python tests/BackendOrderingProbe.py artifacts/cli/bundled-codex artifacts/backend/bundled-results.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
