@@ -27,6 +27,7 @@ internal static class DesktopSmokeTests
         using var server = new FixtureNativeServer();
         Environment.SetEnvironmentVariable("CODEX_HOME", server.Root);
         new ToolSettingsStore().Save(new ToolSettings { Language = "zh-CN" });
+        File.WriteAllText(new ToolSettingsStore().PathName, "{\"language\":\"zh-CN\",\"projectSortMode\":2,\"chatSortMode\":5}");
         BackgroundClient.EnsureRunningAsync().GetAwaiter().GetResult();
         var report = new JsonObject
         {
@@ -128,6 +129,7 @@ internal sealed partial class DesktopApp
     {
         await DesktopSmokeTests.WaitForAsync(() => window?.CloudLoaded == true && server.IsSortedByName(), "Startup must automatically sort projects and their chats by name.");
         report["initialAutomaticNameOrder"] = true;
+        report["olderSettingsAdoptAutomaticNameOrder"] = true;
         await DesktopSmokeTests.WaitForAsync(server.AreSectionsSortedByName, "Pinned and custom-section chats must also keep ascending names.");
         report["pinnedAndCustomSectionsSortedByName"] = true;
         await window!.VerifyCloudUiAsync(server, report, output);

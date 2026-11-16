@@ -25,6 +25,7 @@ internal sealed partial class DesktopApp : Application
     {
         Instance = this;
         Settings = SettingsStore.Load();
+        if (Settings.AutomaticNameSorting) Settings = Settings with { ProjectSortMode = 0, ChatSortMode = 0 };
         Localization.SetLanguage(Settings.Language);
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
