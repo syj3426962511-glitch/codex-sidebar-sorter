@@ -55,7 +55,7 @@ internal static class InstalledDesktopAcceptance
                 Require(!File.Exists(Path.Combine(directory, "聊天排序后台.exe")), "Remove the preceding native background files.");
                 report["legacyRunningUpgradePassed"] = true;
             }
-            Require(FileVersionInfo.GetVersionInfo(program).ProductVersion?.StartsWith("1.4.0") == true, "Install the current desktop version.");
+            Require(FileVersionInfo.GetVersionInfo(program).ProductVersion?.StartsWith("1.4.1") == true, "Install the current desktop version.");
             Require(File.Exists(Path.Combine(directory, "coreclr.dll")), "Install the bundled runtime.");
             Require(File.Exists(Path.Combine(directory, "Source", "desktop", "SidebarSorter.Desktop.csproj")), "Install the complete current source tree.");
             Require(File.Exists(Path.Combine(directory, "Source", "src", "NativeBridge.cs")), "Include shared source dependencies.");

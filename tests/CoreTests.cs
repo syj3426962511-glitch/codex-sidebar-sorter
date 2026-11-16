@@ -72,6 +72,43 @@ internal static class CoreTests
             string[] missing = keys.Where(key => !Localization.HasEnglish(key)).ToArray();
             Require(missing.Length == 0, "Missing translations: " + string.Join(" | ", missing));
         });
+        await CheckAction("twelve-complete-language-options", () =>
+        {
+            using Stream resource = typeof(Localization).Assembly.GetManifestResourceStream("SidebarSorter.English")!;
+            var messages = JsonSerializer.Deserialize<Dictionary<string, string>>(resource)!;
+            Require(Localization.Choices.Count == 13, "Twelve languages and the system option are required.");
+            foreach (LanguageChoice choice in Localization.Choices.Where(choice => choice.Code != "system"))
+            {
+                Localization.SetLanguage(choice.Code);
+                foreach (string message in messages.Keys)
+                {
+                    Require(Localization.HasTranslation(choice.Code, message), choice.Code + " is missing " + message);
+                    Require(!string.IsNullOrWhiteSpace(Localization.Text(message)), choice.Code + " has an empty message.");
+                }
+                Require(Localization.IsRightToLeft == (choice.Code == "ar"), "Arabic uses right-to-left layout.");
+            }
+            Localization.SetLanguage("en");
+        });
+        await CheckAction("regional-system-languages", () =>
+        {
+            foreach (var (culture, expected) in new (string, string)[]
+            {
+                ("zh-CN", "zh-CN"), ("zh-Hant-HK", "zh-TW"), ("zh-TW", "zh-TW"),
+                ("ja-JP", "ja"), ("ko-KR", "ko"), ("fr-CA", "fr"), ("de-DE", "de"),
+                ("es-MX", "es"), ("pt-BR", "pt"), ("it-IT", "it"), ("ru-RU", "ru"),
+                ("ar-SA", "ar"), ("en-GB", "en"), ("sv-SE", "en")
+            }) Require(Localization.ResolveCulture(culture) == expected, "System language mapping failed for " + culture);
+        });
+        await CheckAction("all-language-settings-retain-sort-choices", () =>
+        {
+            var store = new ToolSettingsStore(Path.Combine(temporary, "multilingual-settings"));
+            foreach (LanguageChoice choice in Localization.Choices)
+            {
+                var settings = new ToolSettings { Language = choice.Code, ProjectSortMode = 2, ChatSortMode = 5, AutomaticNameSorting = false };
+                store.Save(settings);
+                Require(store.Load() == settings, "Language and sort choices must survive reopening.");
+            }
+        });
         await CheckAction("pinned-slots-and-parent-membership", VerifyWorkspace);
         await CheckAction("current-history-schema-readonly-attached-filter", () => VerifyHistory(Path.Combine(temporary, "current"), true));
         await CheckAction("older-history-schema-readonly", () => VerifyHistory(Path.Combine(temporary, "older"), false));

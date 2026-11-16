@@ -11,5 +11,6 @@
     <Compile Include="../src/NativeBridge.cs" />
     <Compile Include="../src/Localization.cs" />
     <EmbeddedResource Include="../src/Assets/English.json" LogicalName="SidebarSorter.English" />
+    <EmbeddedResource Include="../src/Assets/Languages.json" LogicalName="SidebarSorter.Languages" />
   </ItemGroup>
 </Project>

@@ -170,7 +170,20 @@ internal sealed partial class DesktopWindow
         SaveScreenshot(Path.Combine(output, "desktop-english-compact.png"));
         Width = 1240;
         Height = 860;
-        report["bilingualUiAndCompactRendering"] = true;
+        var languages = new JsonArray();
+        foreach (LanguageChoice choice in Localization.Choices.Where(choice => choice.Code != "system"))
+        {
+            Box("LanguageBox").SelectedItem = choice;
+            DesktopSmokeTests.Require(app.Settings.Language == choice.Code && app.SettingsStore.Load().Language == choice.Code, "Language selection is persisted.");
+            DesktopSmokeTests.Require(Button("ApplyButton").Content?.ToString() == Localization.Text("应用到侧栏"), "Captions update in " + choice.Code);
+            DesktopSmokeTests.Require(FlowDirection == (choice.Code == "ar" ? Avalonia.Media.FlowDirection.RightToLeft : Avalonia.Media.FlowDirection.LeftToRight), "Text direction follows the selected language.");
+            DesktopSmokeTests.Require(ProjectMode == 0 && ChatMode == 0 && app.Settings.AutomaticNameSorting, "Language changes retain automatic name sorting.");
+            await Task.Delay(100);
+            SaveScreenshot(Path.Combine(output, "desktop-language-" + choice.Code + ".png"));
+            languages.Add(choice.Code);
+        }
+        report["languagesRendered"] = languages;
+        Box("LanguageBox").SelectedIndex = 2;
 
         Box("ProjectModeBox").SelectedIndex = 1;
         Box("ChatModeBox").SelectedIndex = 1;

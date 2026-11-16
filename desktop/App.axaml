@@ -32,5 +32,8 @@
       <Setter Property="HorizontalAlignment" Value="Stretch" />
       <Setter Property="MinHeight" Value="38" />
     </Style>
+    <Style Selector="TextBlock">
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
   </Application.Styles>
 </Application>

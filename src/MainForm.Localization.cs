@@ -24,9 +24,7 @@ internal sealed partial class MainForm
             Margin = new Padding(28, 11, 8, 0)
         });
         language.Margin = new Padding(0, 6, 0, 0);
-        language.Items.AddRange([
-            new LanguageChoice("system", ""), new LanguageChoice("zh-CN", "中文"), new LanguageChoice("en", "English")
-        ]);
+        language.Items.AddRange(Localization.Choices.ToArray());
         language.SelectedIndex = language.Items.Cast<LanguageChoice>().ToList().FindIndex(item => item.Code == settings.Language);
         heading.Controls.Add(language);
         language.SelectedIndexChanged += async (_, _) =>

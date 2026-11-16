@@ -34,7 +34,7 @@ internal sealed class ToolSettingsStore
             ?? throw new InvalidDataException("The tool settings file is empty.");
         return settings with
         {
-            Language = settings.Language is "zh-CN" or "en" ? settings.Language : "system",
+            Language = Localization.NormalizeLanguage(settings.Language),
             ProjectSortMode = Math.Clamp(settings.ProjectSortMode, 0, 6),
             ChatSortMode = Math.Clamp(settings.ChatSortMode, 0, 6)
         };

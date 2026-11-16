@@ -16,6 +16,7 @@
     <Compile Include="../src/Localization.cs" />
     <Compile Include="../src/ToolSettings.cs" />
     <EmbeddedResource Include="../src/Assets/English.json" LogicalName="SidebarSorter.English" />
+    <EmbeddedResource Include="../src/Assets/Languages.json" LogicalName="SidebarSorter.Languages" />
   </ItemGroup>
 </Project>
 

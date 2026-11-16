@@ -18,5 +18,6 @@
   <ItemGroup>
     <EmbeddedResource Include="Assets\聊天排序-Logo-256.png" LogicalName="SidebarSorter.BrandLogo" />
     <EmbeddedResource Include="Assets\English.json" LogicalName="SidebarSorter.English" />
+    <EmbeddedResource Include="Assets\Languages.json" LogicalName="SidebarSorter.Languages" />
   </ItemGroup>
 </Project>

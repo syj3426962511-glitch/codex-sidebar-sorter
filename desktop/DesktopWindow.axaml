@@ -4,11 +4,11 @@
         x:Class="SidebarSorter.DesktopWindow" Width="1240" Height="860"
         MinWidth="980" MinHeight="680" Title="聊天排序工具">
   <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" Margin="24" RowSpacing="16">
-    <Grid ColumnDefinitions="Auto,*,Auto,180" ColumnSpacing="14">
+    <Grid ColumnDefinitions="Auto,*,Auto,210" ColumnSpacing="14">
       <Image Source="avares://SidebarSorter/Assets/logo.png" Width="42" Height="42" />
       <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
         <TextBlock Name="Heading" Text="聊天排序" FontSize="26" FontWeight="Bold" />
-        <TextBlock Text="1.4.0" VerticalAlignment="Center" />
+        <TextBlock Text="1.4.1" VerticalAlignment="Center" />
       </StackPanel>
       <TextBlock Grid.Column="2" Name="LanguageLabel" Text="语言" VerticalAlignment="Center" />
       <ComboBox Grid.Column="3" Name="LanguageBox" />
@@ -23,7 +23,7 @@
     <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
       <TextBlock Name="ScopeLabel" Text="范围" VerticalAlignment="Center" />
       <ComboBox Grid.Column="1" Name="ScopeBox" />
-      <CheckBox Grid.Column="2" Name="AutomaticBox" Content="自动保持名称升序" />
+      <CheckBox Grid.Column="2" Name="AutomaticBox" Content="自动保持名称升序" MaxWidth="400" />
     </Grid>
     <Grid Grid.Row="3" ColumnDefinitions="*,18,330">
       <Border Classes="card">

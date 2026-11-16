@@ -114,6 +114,8 @@ internal sealed partial class DesktopWindow : Window
     private void SetCaptions()
     {
         updating = true;
+        string status = Localization.SourceText(Label("StatusText").Text ?? "");
+        FlowDirection = Localization.IsRightToLeft ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
         Title = Localization.Text("聊天排序工具");
         foreach (var (name, text) in new (string, string)[]
         {
@@ -137,8 +139,12 @@ internal sealed partial class DesktopWindow : Window
         Box("ChatModeBox").ItemsSource = ModeKeys.Select(Localization.Text).ToArray();
         Box("ProjectModeBox").SelectedIndex = projectsMode >= 0 ? projectsMode : app.Settings.ProjectSortMode;
         Box("ChatModeBox").SelectedIndex = chatsMode >= 0 ? chatsMode : app.Settings.ChatSortMode;
-        Box("LanguageBox").ItemsSource = new LanguageChoice[] { new("system", ""), new("zh-CN", "中文"), new("en", "English") };
-        Box("LanguageBox").SelectedIndex = app.Settings.Language == "zh-CN" ? 1 : app.Settings.Language == "en" ? 2 : 0;
+        Box("LanguageBox").ItemsSource = Localization.Choices;
+        Box("LanguageBox").SelectedItem = Localization.Choices.First(choice => choice.Code == app.Settings.Language);
+        SortScope? selectedScope = Scope;
+        Box("ScopeBox").ItemsSource = scopes.ToArray();
+        Box("ScopeBox").SelectedItem = selectedScope;
+        Label("StatusText").Text = Localization.Text(status);
         updating = false;
     }
 

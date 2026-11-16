@@ -34,11 +34,11 @@ jobs:
           & $compiler.FullName packaging/windows.iss
           if ($LASTEXITCODE -ne 0) { throw 'Installer compilation failed.' }
       - name: Verify the installed production program and running upgrade
-        run: dotnet run --project tests/InstalledDesktopAcceptance.csproj -c Release -- artifacts/installer/CodexSidebarSorter-1.4.0-Windows-Setup.exe artifacts/installed artifacts/installer/CodexSidebarSorter-1.3.0-Setup.exe
+        run: dotnet run --project tests/InstalledDesktopAcceptance.csproj -c Release -- artifacts/installer/CodexSidebarSorter-1.4.1-Windows-Setup.exe artifacts/installed artifacts/installer/CodexSidebarSorter-1.3.0-Setup.exe
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: windows-desktop-upgrade
           path: |
-            artifacts/installer/CodexSidebarSorter-1.4.0-Windows-Setup.exe
+            artifacts/installer/CodexSidebarSorter-1.4.1-Windows-Setup.exe
             artifacts/installed/*

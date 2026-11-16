@@ -5,32 +5,67 @@ namespace SidebarSorter;
 
 internal static class Localization
 {
-    private static readonly Dictionary<string, string> English = ReadEnglish();
+    private static readonly Dictionary<string, string> English = ReadCatalog("SidebarSorter.English");
+    private static readonly Dictionary<string, Dictionary<string, string>> Catalogs = ReadCatalogs();
+    public static IReadOnlyList<LanguageChoice> Choices { get; } = new LanguageChoice[]
+    {
+        new("system", ""), new("zh-CN", "简体中文"), new("en", "English"), new("zh-TW", "繁體中文"),
+        new("ja", "日本語"), new("ko", "한국어"), new("fr", "Français"), new("de", "Deutsch"),
+        new("es", "Español"), new("pt", "Português"), new("it", "Italiano"), new("ru", "Русский"),
+        new("ar", "العربية")
+    };
     public static string Language { get; private set; } = "system";
-    public static bool IsChinese => Language == "zh-CN"
-        || Language == "system" && CultureInfo.CurrentUICulture.Name.StartsWith("zh", StringComparison.OrdinalIgnoreCase);
+    public static string CurrentLanguage => Language == "system" ? ResolveCulture(CultureInfo.CurrentUICulture.Name) : Language;
+    public static bool IsChinese => CurrentLanguage.StartsWith("zh", StringComparison.Ordinal);
+    public static bool IsRightToLeft => CurrentLanguage == "ar";
 
     public static void SetLanguage(string language)
     {
-        Language = language is "zh-CN" or "en" ? language : "system";
+        Language = NormalizeLanguage(language);
     }
 
-    public static string Text(string source) => IsChinese ? source : English.GetValueOrDefault(source, source);
+    public static string NormalizeLanguage(string language) => Choices.Any(choice => choice.Code == language) ? language : "system";
+
+    internal static string ResolveCulture(string culture)
+    {
+        string name = culture.Replace('_', '-').ToLowerInvariant();
+        if (name.StartsWith("zh", StringComparison.Ordinal))
+            return name.Contains("hant", StringComparison.Ordinal) || name is "zh-tw" or "zh-hk" or "zh-mo" ? "zh-TW" : "zh-CN";
+        string language = name.Split('-')[0];
+        return Catalogs.ContainsKey(language) ? language : "en";
+    }
+
+    public static string Text(string source)
+    {
+        string language = CurrentLanguage;
+        return language == "zh-CN" ? source : Catalogs[language].GetValueOrDefault(source, English.GetValueOrDefault(source, source));
+    }
 
     public static string SourceText(string text)
     {
-        foreach (var pair in English)
-            if (pair.Value == text) return pair.Key;
+        foreach (Dictionary<string, string> catalog in Catalogs.Values)
+            foreach (var pair in catalog)
+                if (pair.Value == text) return pair.Key;
         return text;
     }
 
     public static bool HasEnglish(string source) => English.ContainsKey(source);
+    internal static bool HasTranslation(string language, string source) => language == "zh-CN" || Catalogs[language].ContainsKey(source);
 
-    private static Dictionary<string, string> ReadEnglish()
+    private static Dictionary<string, string> ReadCatalog(string resource)
     {
-        using Stream stream = typeof(Localization).Assembly.GetManifestResourceStream("SidebarSorter.English")
-            ?? throw new InvalidOperationException("The English language resource is missing.");
+        using Stream stream = typeof(Localization).Assembly.GetManifestResourceStream(resource)
+            ?? throw new InvalidOperationException("A language resource is missing.");
         return JsonSerializer.Deserialize<Dictionary<string, string>>(stream)!;
+    }
+
+    private static Dictionary<string, Dictionary<string, string>> ReadCatalogs()
+    {
+        using Stream stream = typeof(Localization).Assembly.GetManifestResourceStream("SidebarSorter.Languages")
+            ?? throw new InvalidOperationException("The language resources are missing.");
+        var catalogs = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(stream)!;
+        catalogs.Add("en", English);
+        return catalogs;
     }
 }
 

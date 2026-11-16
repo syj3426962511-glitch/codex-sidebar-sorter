@@ -1,5 +1,4 @@
 {
-  "自动保持名称升序": "Keep names sorted automatically",
   "自动排序已暂停": "Automatic sorting is paused",
   "打开聊天排序": "Open Sidebar Sorter",
   "退出程序": "Exit",
@@ -136,5 +135,6 @@
   "后台组件启动失败，请通过安装包更新工具。\n": "The background component could not start. Update the tool using its installer.\n",
   "原生项目顺序与提交顺序存在差异。": "The saved project order differs from the requested order.",
   "原项目顺序恢复核验失败。": "Restoring the original project order failed verification.",
-  "原排序偏好恢复核验失败。": "Restoring the original sort preferences failed verification."
+  "原排序偏好恢复核验失败。": "Restoring the original sort preferences failed verification.",
+  " 个项目": " projects"
 }

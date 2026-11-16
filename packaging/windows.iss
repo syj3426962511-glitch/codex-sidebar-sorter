@@ -1,4 +1,4 @@
-#define ProductVersion "1.4.0"
+#define ProductVersion "1.4.1"
 
 [Setup]
 AppId={{57DA4787-4BE0-43CB-9BFC-FE83679E370F}
@@ -29,12 +29,24 @@ RestartApplications=no
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "chinesesimp"; MessagesFile: "ChineseSimplified.isl"
+Name: "chinesetrad"; MessagesFile: "compiler:Languages\ChineseTraditional.isl"
+Name: "japanese"; MessagesFile: "compiler:Languages\Japanese.isl"
+Name: "korean"; MessagesFile: "compiler:Languages\Korean.isl"
+Name: "french"; MessagesFile: "compiler:Languages\French.isl"
+Name: "german"; MessagesFile: "compiler:Languages\German.isl"
+Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
+Name: "portuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
+Name: "italian"; MessagesFile: "compiler:Languages\Italian.isl"
+Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
+Name: "arabic"; MessagesFile: "compiler:Languages\Arabic.isl"
 
 [LangOptions]
 english.DialogFontName=Times New Roman
 english.DialogFontSize=11
 chinesesimp.DialogFontName=宋体
 chinesesimp.DialogFontSize=11
+chinesetrad.DialogFontName=宋体
+chinesetrad.DialogFontSize=11
 
 [CustomMessages]
 english.DesktopShortcut=Create a desktop shortcut
@@ -43,6 +55,36 @@ english.ExitBeforeUpdate=The sorting operation is still finishing. Retry after i
 chinesesimp.DesktopShortcut=创建桌面快捷方式
 chinesesimp.OpenApplication=打开聊天排序工具
 chinesesimp.ExitBeforeUpdate=排序操作正在收尾，请完成后重试。
+chinesetrad.DesktopShortcut=建立桌面捷徑
+chinesetrad.OpenApplication=開啟聊天排序工具
+chinesetrad.ExitBeforeUpdate=排序操作正在完成，請稍後重試。
+japanese.DesktopShortcut=デスクトップにショートカットを作成
+japanese.OpenApplication=チャット並べ替えを開く
+japanese.ExitBeforeUpdate=並べ替え処理の完了後に再試行してください。
+korean.DesktopShortcut=바탕 화면 바로 가기 만들기
+korean.OpenApplication=채팅 정렬 도구 열기
+korean.ExitBeforeUpdate=정렬 작업이 완료된 후 다시 시도하세요.
+french.DesktopShortcut=Créer un raccourci sur le bureau
+french.OpenApplication=Ouvrir le tri des discussions
+french.ExitBeforeUpdate=Réessayez lorsque le tri est terminé.
+german.DesktopShortcut=Desktop-Verknüpfung erstellen
+german.OpenApplication=Chat-Sortierung öffnen
+german.ExitBeforeUpdate=Nach Abschluss der Sortierung erneut versuchen.
+spanish.DesktopShortcut=Crear un acceso directo en el escritorio
+spanish.OpenApplication=Abrir ordenación de chats
+spanish.ExitBeforeUpdate=Vuelve a intentarlo cuando termine la ordenación.
+portuguese.DesktopShortcut=Criar atalho na área de trabalho
+portuguese.OpenApplication=Abrir ordenação de conversas
+portuguese.ExitBeforeUpdate=Tente novamente quando a ordenação terminar.
+italian.DesktopShortcut=Crea un collegamento sul desktop
+italian.OpenApplication=Apri ordinamento chat
+italian.ExitBeforeUpdate=Riprova al termine dell’ordinamento.
+russian.DesktopShortcut=Создать ярлык на рабочем столе
+russian.OpenApplication=Открыть сортировку чатов
+russian.ExitBeforeUpdate=Повторите попытку после завершения сортировки.
+arabic.DesktopShortcut=إنشاء اختصار على سطح المكتب
+arabic.OpenApplication=فتح أداة ترتيب المحادثات
+arabic.ExitBeforeUpdate=أعد المحاولة بعد اكتمال الترتيب.
 
 [Dirs]
 Name: "{app}"; Permissions: everyone-full
