@@ -53,6 +53,27 @@ async function readCurrentPage(action) {
   }
 }
 
+function activateAccessibilityButton(node, label) {
+  if (node.actions?.includes('AXPress')) return inspect(label, 'action', node.path, 'AXPress');
+  const focused = inspect(label + '-focused', 'set', node.path, 'AXFocused', 'true');
+  if (focused.setStatus !== 0) throw new Error('The action did not accept Accessibility focus.');
+  return inspect(label, 'key', '49');
+}
+
+async function trustCreatedFixtureFolder() {
+  const state = inspect('fixture-trust-before');
+  const trust = state.nodes.find(node => node.AXRole === 'AXButton' && node.AXTitle === 'Trust folder');
+  if (!trust) return;
+  const allowed = ['Zulu AX background project', 'Alpha AX background project'].map(name => path.join(process.env.HOME, 'Documents', 'ChatGPT', name));
+  const directory = allowed.find(candidate => state.nodes.some(node => node.AXValue === candidate));
+  if (!directory) throw new Error('The folder trust prompt belongs to another directory.');
+  const files = fs.readdirSync(directory);
+  if (files.some(name => name !== '.git')) throw new Error('The new fixture folder contains files that require inspection.');
+  const result = activateAccessibilityButton(trust, 'fixture-trust-submitted');
+  report.fixtureFolderTrust = {directory,files,before:state.before,after:result.after};
+  await delay(1000);
+}
+
 async function createProjectWithAccessibility(name, sequence) {
   const label = 'fixture-' + sequence;
   const before = inspect(label + '-before');
@@ -62,15 +83,14 @@ async function createProjectWithAccessibility(name, sequence) {
   const field = opened.nodes.find(node => node.AXRole === 'AXTextField' && node.AXTitle === 'Project name' && node.writable?.includes('AXValue'));
   if (!field) throw new Error('The native project dialog has no editable project name.');
   const filled = inspect(label + '-named', 'set', field.path, 'AXValue', name);
-  const button = filled.nodes.find(node => node.AXRole === 'AXButton' && node.AXTitle === 'Create project' && node.writable?.includes('AXFocused'));
+  const button = filled.nodes.find(node => node.AXRole === 'AXButton' && node.AXTitle === 'Create project');
   if (!button || filled.setStatus !== 0) throw new Error('The project name was not accepted through Accessibility.');
-  const focused = inspect(label + '-focused', 'set', button.path, 'AXFocused', 'true');
-  if (focused.setStatus !== 0) throw new Error('The project action did not accept Accessibility focus.');
-  const submitted = inspect(label + '-submitted', 'key', '49');
+  const submitted = activateAccessibilityButton(button, label + '-submitted');
+  await trustCreatedFixtureFolder();
   await delay(1000);
   const text = await readCurrentPage(page => page.evaluate(() => document.body?.innerText ?? ''));
   const result = {
-    name, nameAccepted:filled.setStatus === 0, focusAccepted:focused.setStatus === 0,
+    name, nameAccepted:filled.setStatus === 0, activationMethod:button.actions?.includes('AXPress') ? 'AXPress' : 'targeted-key',
     dialogClosed:!submitted.nodes.some(node => node.AXRole === 'AXTextField' && node.AXTitle === 'Project name'),
     visible:text.includes(name), before:opened.before, after:submitted.after,
   };
@@ -100,6 +120,7 @@ try {
   const enabled = inspect('01-accessibility-enabled', 'enable');
   report.accessibilityTrusted = enabled.trusted;
   report.manualAccessibilityStatus = enabled.manualAccessibilityStatus;
+  report.enhancedAccessibilityStatus = enabled.enhancedAccessibilityStatus;
   await readCurrentPage(page => page.screenshot({path:path.join(output, '02-client-started.png')}));
   report.page = await readCurrentPage(page => page.evaluate(() => ({
     text:document.body?.innerText?.slice(0,12000),
@@ -141,6 +162,7 @@ try {
     }) : [],
   }));
   if (report.credentialsPresent && !report.desktopSignInRequired) {
+    await trustCreatedFixtureFolder();
     for (const [index, name] of ['Zulu AX background project', 'Alpha AX background project'].entries()) {
       const text = await readCurrentPage(page => page.evaluate(() => document.body?.innerText ?? ''));
       if (!text.includes(name)) await createProjectWithAccessibility(name, index + 1);

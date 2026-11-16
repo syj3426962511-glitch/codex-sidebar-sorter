@@ -78,6 +78,10 @@ AXUIElementSetMessagingTimeout(root, 3)
 var report: [String: Any] = ["trusted": AXIsProcessTrusted(), "targetPid": pid, "before": inputState()]
 let operation = args[3]
 if operation == "enable" {
+    var enhancedSettable = DarwinBoolean(false)
+    if AXUIElementIsAttributeSettable(root, "AXEnhancedUserInterface" as CFString, &enhancedSettable) == .success && enhancedSettable.boolValue {
+        report["enhancedAccessibilityStatus"] = AXUIElementSetAttributeValue(root, "AXEnhancedUserInterface" as CFString, kCFBooleanTrue).rawValue
+    }
     report["manualAccessibilityStatus"] = AXUIElementSetAttributeValue(root, "AXManualAccessibility" as CFString, kCFBooleanTrue).rawValue
     Thread.sleep(forTimeInterval: 2)
 } else if operation == "action" && args.count >= 6 {
