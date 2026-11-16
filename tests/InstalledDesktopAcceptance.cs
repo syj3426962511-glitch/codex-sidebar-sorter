@@ -87,7 +87,12 @@ internal static class InstalledDesktopAcceptance
             Require(retained.Language == "en" && !retained.AutomaticNameSorting && retained.ProjectSortMode == 2 && retained.ChatSortMode == 5, "Keep existing tool preferences across upgrade.");
             report["runningUpgradeAndSettingsRetention"] = true;
             await RunAsync(program, "--background");
-            await RunAsync(Path.Combine(directory, "unins000.exe"), "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART");
+            using (var registration = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\{57DA4787-4BE0-43CB-9BFC-FE83679E370F}_is1"))
+            {
+                string uninstaller = (registration?.GetValue("UninstallString") as string)?.Trim('"')
+                    ?? throw new InvalidOperationException("The installed uninstaller registration is missing.");
+                await RunAsync(uninstaller, "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART");
+            }
             Require(!File.Exists(program), "Remove the installed program during uninstall.");
             Require(File.Exists(settingsStore.PathName), "Retain user preferences for a later installation.");
             report["runningUninstallAndPreferenceRetention"] = true;

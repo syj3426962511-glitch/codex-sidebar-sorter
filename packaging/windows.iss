@@ -68,7 +68,18 @@ Name: "{autoprograms}\Codex Sidebar Sorter"; Filename: "{app}\SidebarSorter.exe"
 Filename: "{app}\SidebarSorter.exe"; Description: "{cm:OpenApplication}"; Flags: nowait postinstall skipifsilent
 
 [Code]
-function WaitForPreviousTool(): Boolean;
+function PreviousUninstallerPath(): String;
+var
+  RegistryKey: String;
+begin
+  RegistryKey := 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{57DA4787-4BE0-43CB-9BFC-FE83679E370F}_is1';
+  if not RegQueryStringValue(HKCU, RegistryKey, 'UninstallString', Result) then
+    if not RegQueryStringValue(HKLM, RegistryKey, 'UninstallString', Result) then
+      Result := '';
+  Result := RemoveQuotes(Result);
+end;
+
+function WaitForPreviousTool(InstallDirectory: String): Boolean;
 var
   Services: Variant;
   Processes: Variant;
@@ -76,9 +87,8 @@ var
   Index: Integer;
   Attempt: Integer;
   Found: Boolean;
-  InstallDirectory: String;
 begin
-  InstallDirectory := AddBackslash(ExpandConstant('{app}'));
+  InstallDirectory := AddBackslash(InstallDirectory);
   Services := CreateOleObject('WbemScripting.SWbemLocator').ConnectServer('.', 'root\cimv2');
   Result := False;
   for Attempt := 1 to 240 do
@@ -108,7 +118,10 @@ var
   ExitCode: Integer;
 begin
   Result := '';
-  PreviousBackground := ExpandConstant('{app}\聊天排序后台.exe');
+  PreviousUninstaller := PreviousUninstallerPath();
+  if PreviousUninstaller = '' then
+    Exit;
+  PreviousBackground := AddBackslash(ExtractFilePath(PreviousUninstaller)) + '聊天排序后台.exe';
   if FileExists(PreviousBackground) then
   begin
     if not Exec(PreviousBackground, '--exit', '', SW_HIDE, ewWaitUntilTerminated, ExitCode) then
@@ -121,13 +134,12 @@ begin
       Result := CustomMessage('ExitBeforeUpdate');
       Exit;
     end;
-    if not WaitForPreviousTool() then
+    if not WaitForPreviousTool(ExtractFilePath(PreviousUninstaller)) then
     begin
       Result := CustomMessage('ExitBeforeUpdate');
       Exit;
     end;
   end;
-  PreviousUninstaller := ExpandConstant('{app}\unins000.exe');
   if FileExists(PreviousUninstaller) then
   begin
     if not Exec(PreviousUninstaller, '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART', '', SW_HIDE, ewWaitUntilTerminated, ExitCode) then
