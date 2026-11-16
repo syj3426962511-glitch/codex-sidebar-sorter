@@ -1,0 +1,40 @@
+name: Official backend ordering contract
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  backend:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            asset: codex-aarch64-apple-darwin.tar.gz
+            executable: codex-aarch64-apple-darwin
+          - os: ubuntu-latest
+            asset: codex-x86_64-unknown-linux-musl.tar.gz
+            executable: codex-x86_64-unknown-linux-musl
+          - os: windows-latest
+            asset: codex-x86_64-pc-windows-msvc.exe.tar.gz
+            executable: codex-x86_64-pc-windows-msvc.exe
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download the official standalone CLI
+        shell: bash
+        run: |
+          mkdir -p artifacts/cli
+          curl --fail --location --retry 2 --max-time 180 "https://github.com/openai/codex/releases/download/rust-v0.169.0/${{ matrix.asset }}" -o artifacts/cli/official.tar.gz
+          tar -xzf artifacts/cli/official.tar.gz -C artifacts/cli
+      - name: Exercise supported backend ordering on isolated cloud data
+        run: python tests/BackendOrderingProbe.py artifacts/cli/${{ matrix.executable }} artifacts/backend/results.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-${{ matrix.os }}
+          path: artifacts/backend/*
