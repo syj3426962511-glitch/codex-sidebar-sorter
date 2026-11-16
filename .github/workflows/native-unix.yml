@@ -75,6 +75,17 @@ jobs:
           codesign --verify --strict "$cli"
           codesign -dv --verbose=4 "$cli" 2> artifacts/native/relay-signature.txt
           python3 tests/mac_relay_probe.py "$cli" artifacts/native/native-macos-relay.json
+      - name: Inspect the shipping transport contract and bundled CLI
+        if: always()
+        run: |
+          python3 tests/read_mac_transport.py "$RUNNER_TEMP/OfficialCodex.app/Contents/Resources/app.asar" artifacts/native/shipping-transport.json
+          bundled="$RUNNER_TEMP/OfficialCodex.app/Contents/Resources/codex"
+          if [ -x "$bundled" ]; then
+            cp "$bundled" "$RUNNER_TEMP/sorter-relay/bundled-codex"
+            codesign --verify --strict "$RUNNER_TEMP/sorter-relay/bundled-codex"
+            codesign -dv --verbose=4 "$RUNNER_TEMP/sorter-relay/bundled-codex" 2> artifacts/native/bundled-cli-signature.txt
+            python3 tests/mac_relay_probe.py "$RUNNER_TEMP/sorter-relay/bundled-codex" artifacts/native/native-macos-bundled-relay.json
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
