@@ -53,6 +53,33 @@ async function readCurrentPage(action) {
   }
 }
 
+async function createProjectWithAccessibility(name, sequence) {
+  const label = 'fixture-' + sequence;
+  const before = inspect(label + '-before');
+  const menu = before.nodes.find(node => node.AXRole === 'AXMenuItem' && node.AXTitle === 'New Project…' && node.actions?.includes('AXPress'));
+  if (!menu) throw new Error('The native New Project command is unavailable.');
+  const opened = inspect(label + '-dialog', 'action', menu.path, 'AXPress');
+  const field = opened.nodes.find(node => node.AXRole === 'AXTextField' && node.AXTitle === 'Project name' && node.writable?.includes('AXValue'));
+  if (!field) throw new Error('The native project dialog has no editable project name.');
+  const filled = inspect(label + '-named', 'set', field.path, 'AXValue', name);
+  const button = filled.nodes.find(node => node.AXRole === 'AXButton' && node.AXTitle === 'Create project' && node.writable?.includes('AXFocused'));
+  if (!button || filled.setStatus !== 0) throw new Error('The project name was not accepted through Accessibility.');
+  const focused = inspect(label + '-focused', 'set', button.path, 'AXFocused', 'true');
+  if (focused.setStatus !== 0) throw new Error('The project action did not accept Accessibility focus.');
+  const submitted = inspect(label + '-submitted', 'key', '49');
+  await delay(1000);
+  const text = await readCurrentPage(page => page.evaluate(() => document.body?.innerText ?? ''));
+  const result = {
+    name, nameAccepted:filled.setStatus === 0, focusAccepted:focused.setStatus === 0,
+    dialogClosed:!submitted.nodes.some(node => node.AXRole === 'AXTextField' && node.AXTitle === 'Project name'),
+    visible:text.includes(name), before:opened.before, after:submitted.after,
+  };
+  report.accessibilityProjectSetup ??= [];
+  report.accessibilityProjectSetup.push(result);
+  await readCurrentPage(page => page.screenshot({path:path.join(output, label + '-result.png')}));
+  if (!result.dialogClosed || !result.visible) throw new Error('The Accessibility project action requires adaptation.');
+}
+
 try {
   execFileSync(python, ['tests/PrepareMacAccessibility.py'], {timeout:120000});
   if (fs.existsSync(path.join(codexHome, 'auth.json'))) {
@@ -113,12 +140,10 @@ try {
       catch (error) { return {name,error:String(error.message)}; }
     }) : [],
   }));
-  if (report.credentialsPresent && report.page.text?.includes('No projects')) {
-    const newProject = snapshot.nodes.find(node => node.AXRole === 'AXMenuItem' && node.AXTitle === 'New Project…' && node.actions?.includes('AXPress'));
-    if (newProject) {
-      const opened = inspect('04-new-project-dialog', 'action', newProject.path, 'AXPress');
-      report.newProjectDialog = {actionStatus:opened.actionStatus,before:opened.before,after:opened.after};
-      await readCurrentPage(page => page.screenshot({path:path.join(output, '04-new-project-dialog.png')}));
+  if (report.credentialsPresent && !report.desktopSignInRequired) {
+    for (const [index, name] of ['Zulu AX background project', 'Alpha AX background project'].entries()) {
+      const text = await readCurrentPage(page => page.evaluate(() => document.body?.innerText ?? ''));
+      if (!text.includes(name)) await createProjectWithAccessibility(name, index + 1);
     }
   }
 } catch (error) {
