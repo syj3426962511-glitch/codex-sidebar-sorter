@@ -133,7 +133,8 @@ try {
     $backend = Wait-Condition {
         Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq $background -and (!$ProgramDirectory -or $_.CommandLine -match '--background') } | Select-Object -Last 1
     } 'The independent background did not start.'
-    $report.installPreservesOpenClient = $true
+    if ($InstallerPath) { $report.installPreservesOpenClient = $true }
+    else { $report.sorterStartupPreservesOpenClient = $true }
     Save-ClientWindow $client 'official-client-with-sorter.png'
     Close-ClientWindow $client
     $report.normalClientWindowCloseWithSorter = $true
@@ -174,13 +175,16 @@ try {
     } else {
         $stop = Start-Process -FilePath $program -ArgumentList '--exit' -WindowStyle Hidden -PassThru -Wait
         if ($stop.ExitCode -ne 0) { throw 'The standalone sorter did not exit.' }
+        [void](Wait-Condition { !(Get-Process -Id $backend.ProcessId -ErrorAction SilentlyContinue) } 'The standalone background stayed running after Exit.')
         $report.standaloneCandidate = $true
     }
     if (!(Get-Process -Id $clientIdBeforeUninstall -ErrorAction SilentlyContinue)) { throw 'Uninstalling the sorter closed Codex.' }
-    $report.sorterUninstallPreservesOpenClient = $true
+    if ($InstallerPath) { $report.sorterUninstallPreservesOpenClient = $true }
+    else { $report.sorterExitPreservesOpenClient = $true }
     Quit-Client $client
     $client = Open-Client
-    $report.normalClientStartsAfterSorterUninstall = $true
+    if ($InstallerPath) { $report.normalClientStartsAfterSorterUninstall = $true }
+    else { $report.normalClientStartsAfterSorterExit = $true }
     Quit-Client $client
     $report.success = $true
 }
