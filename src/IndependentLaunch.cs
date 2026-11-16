@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Collections;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -66,6 +67,9 @@ internal static class IndependentLaunch
         dynamic startup = services.Get("Win32_ProcessStartup").SpawnInstance_();
         startup.Properties_.Item("ShowWindow").Value = arguments.Length == 0 ? 1 : 0;
         startup.Properties_.Item("WinstationDesktop").Value = "winsta0\\default";
+        startup.Properties_.Item("CreateFlags").Value = 1024;
+        startup.Properties_.Item("EnvironmentVariables").Value = Environment.GetEnvironmentVariables().Cast<DictionaryEntry>()
+            .Select(entry => entry.Key + "=" + entry.Value).ToArray();
         parameters.Properties_.Item("ProcessStartupInformation").Value = startup;
         dynamic result = processClass.ExecMethod_("Create", parameters);
         uint code = Convert.ToUInt32(result.Properties_.Item("ReturnValue").Value);

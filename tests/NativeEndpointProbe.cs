@@ -23,6 +23,13 @@ internal static class NativeEndpointProbe
             using NativeBridge bridge = await NativeBridge.ConnectAsync();
             report["nativeCatalogAccessible"] = true;
             report["toolCount"] = bridge.Tools.Count;
+            if (arguments.Contains("--read-lists"))
+            {
+                JsonObject projects = await bridge.CallAsync("list_projects", new JsonObject());
+                JsonObject threads = await bridge.CallAsync("list_threads", new JsonObject { ["limit"] = 50 });
+                report["nativeProjectListAccessible"] = projects["projects"] != null;
+                report["nativeThreadListAccessible"] = threads["threads"] != null;
+            }
             report["success"] = true;
         }
         catch (Exception error)

@@ -137,8 +137,8 @@ internal sealed class BackgroundHost : IDisposable
 
     private async Task ExitAllAsync()
     {
-        await DesktopProgram.CloseWindowAsync();
-        Stop();
+        try { await DesktopProgram.CloseWindowAsync(); }
+        finally { Stop(); }
     }
 
     private async Task ListenAsync()

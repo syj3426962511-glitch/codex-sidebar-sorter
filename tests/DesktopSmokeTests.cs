@@ -43,9 +43,12 @@ internal static class DesktopSmokeTests
                 catch (Exception error) { report["success"] = false; report["error"] = error.ToString(); }
                 finally
                 {
+                    File.WriteAllText(Path.Combine(output, "desktop-results.json"), report.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
                     await app.ExitAsync();
                 }
             })).StartWithClassicDesktopLifetime([]);
+        SynchronizationContext.SetSynchronizationContext(null);
+        Console.WriteLine("Desktop closed. Verifying the independent background process.");
         try
         {
             if (result == 0) VerifyBackgroundAsync(server, report, output).GetAwaiter().GetResult();

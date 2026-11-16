@@ -163,7 +163,7 @@ internal sealed partial class DesktopWindow : Window
 
     private async Task RunAsync(Func<Task> action)
     {
-        if (busy) return;
+        if (busy || app.IsClosing) return;
         busy = true;
         await app.OperationGate.WaitAsync();
         Button("ApplyButton").IsEnabled = false;
