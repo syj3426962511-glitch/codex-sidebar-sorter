@@ -127,7 +127,7 @@ function Get-StandaloneBackground {
             if (!$response.Wait(10000)) { throw 'The standalone worker did not return its process identity.' }
             $status = $response.Result | ConvertFrom-Json
             return Get-CimInstance Win32_Process -Filter ('ProcessId=' + $status.ProcessId)
-        } finally { $reader.Dispose(); $writer.Dispose() }
+        } finally { $writer.Dispose(); $reader.Dispose() }
     } finally { $pipe.Dispose() }
 }
 
