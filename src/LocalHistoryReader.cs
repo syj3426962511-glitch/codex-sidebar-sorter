@@ -89,11 +89,18 @@ internal static class LocalHistoryReader
             if (opened != 0) throw new IOException(Localization.Text("历史索引只读打开失败，SQLite 状态码 ") + opened);
             if (sqlite3_db_readonly(database, "main") != 1) throw new InvalidOperationException(Localization.Text("历史索引未以只读方式打开。"));
             sqlite3_busy_timeout(database, 1500);
-            bool hasAttachedParent = sqlite3_table_column_metadata(database, "main", "threads", "attached_thread_parent_id",
+            bool HasColumn(string column) => sqlite3_table_column_metadata(database, "main", "threads", column,
                 out _, out _, out _, out _, out _) == 0;
-            string query = "SELECT id, COALESCE(NULLIF(name,''),title), COALESCE(updated_at_ms,updated_at*1000), project_id "
-                + "FROM threads WHERE archived=0 AND source NOT LIKE '{%' AND (agent_path IS NULL OR agent_path='/root')";
-            if (hasAttachedParent)
+            string title = HasColumn("name") ? "COALESCE(NULLIF(name,''),title)" : "title";
+            // Match the upstream timestamp migration, which also handles early millisecond values.
+            string legacyUpdated = "CASE WHEN updated_at < 1577836800000 THEN updated_at*1000 ELSE updated_at END";
+            string updated = HasColumn("updated_at_ms") ? "COALESCE(updated_at_ms," + legacyUpdated + ")" : legacyUpdated;
+            string projectColumn = HasColumn("project_id") ? "project_id" : "NULL";
+            string query = "SELECT id," + title + "," + updated + "," + projectColumn
+                + " FROM threads WHERE archived=0 AND source NOT LIKE '{%'";
+            if (HasColumn("agent_path"))
+                query += " AND (agent_path IS NULL OR agent_path='/root')";
+            if (HasColumn("attached_thread_parent_id"))
                 query += " AND (attached_thread_parent_id IS NULL OR attached_thread_parent_id='')";
             if (sqlite3_prepare_v2(database, query, -1, out statement, IntPtr.Zero) != 0)
                 throw new InvalidDataException(Localization.Text("当前历史索引字段需要适配。") + Marshal.PtrToStringUTF8(sqlite3_errmsg(database)));

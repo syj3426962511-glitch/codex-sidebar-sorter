@@ -8,7 +8,7 @@
       <Image Source="avares://SidebarSorter/Assets/logo.png" Width="42" Height="42" />
       <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
         <TextBlock Name="Heading" Text="聊天排序" FontSize="26" FontWeight="Bold" />
-        <TextBlock Text="1.4.1" VerticalAlignment="Center" />
+        <TextBlock Text="1.4.2" VerticalAlignment="Center" />
       </StackPanel>
       <TextBlock Grid.Column="2" Name="LanguageLabel" Text="语言" VerticalAlignment="Center" />
       <ComboBox Grid.Column="3" Name="LanguageBox" />

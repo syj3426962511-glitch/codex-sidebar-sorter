@@ -70,6 +70,8 @@ Native project ordering covers unpinned projects in the default Projects section
 
 The latest Windows/Linux follow-up runs were prevented from starting by the GitHub account billing check. The last fully accepted Windows installer corresponds to `036f029`, version `1.4.1`.
 
+The source now contains a 1.4.2 compatibility candidate that detects historical name, timestamp, project, agent-path, and attached-parent fields. Its expanded 25-check suite awaits cloud execution. Client-build support is tracked in the [compatibility record](docs/04-compatibility.md).
+
 [Shared core results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43866519115) · [Desktop results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43867351898) · [Windows installer results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43867345247) · [Windows client lifecycle](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43854854495)
 
 ## Architecture

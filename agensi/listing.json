@@ -77,6 +77,10 @@
       "answer": "An agent with an authorized desktop-control surface can operate the companion. Other compatible agents can guide the same controls and explain the resulting status."
     }
   ],
-  "submission_status": "prepared",
-  "sale_readiness": "Public companion download and authenticated real-client acceptance require completion before a paid buyer handoff."
+  "submission_status": "uploaded-draft",
+  "sale_readiness": "Public companion download and authenticated real-client acceptance require completion before a paid buyer handoff.",
+  "draft_url": "https://www.agensi.io/dashboard/submit?draft=f3ef0bc3-a1e9-43b5-8f6f-3dc15f82bf77",
+  "security_scan": "not-scanned",
+  "owner_publication_choice": "Retain cloud-only testing. Publish after cloud acceptance resumes and passes.",
+  "source_candidate_version": "1.4.2"
 }

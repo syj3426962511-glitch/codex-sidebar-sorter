@@ -28,4 +28,8 @@ The current packaging guide accepts a SKILL.md ZIP and text references. Executab
 
 ## Submission record
 
-The English package and listing fields are prepared. Record the actual upload, security scan, review state, price, and listing URL after observing them in the creator dashboard.
+The skill ZIP, English title, summary, description, guided demonstration, compatibility note, logo, and English desktop screenshot have been uploaded to the creator draft. Its saved price is USD 9.50 one-time. The platform currently shows the submission controls and "Not scanned yet".
+
+The owner chose cloud recovery and cloud-only testing before publication on November 16, 2026. The draft remains saved for that continuation.
+
+[Saved creator draft](https://www.agensi.io/dashboard/submit?draft=f3ef0bc3-a1e9-43b5-8f6f-3dc15f82bf77) · [Client compatibility](../docs/04-compatibility.md)

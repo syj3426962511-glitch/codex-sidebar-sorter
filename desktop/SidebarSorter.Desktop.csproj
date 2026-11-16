@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>SidebarSorter</AssemblyName>
-    <Version>1.4.1</Version>
+    <Version>1.4.2</Version>
     <ApplicationIcon>../src/Assets/聊天排序.ico</ApplicationIcon>
     <SelfContained>true</SelfContained>
     <DebugType>none</DebugType>

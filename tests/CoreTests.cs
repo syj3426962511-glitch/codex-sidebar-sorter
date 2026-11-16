@@ -110,8 +110,12 @@ internal static class CoreTests
             }
         });
         await CheckAction("pinned-slots-and-parent-membership", VerifyWorkspace);
-        await CheckAction("current-history-schema-readonly-attached-filter", () => VerifyHistory(Path.Combine(temporary, "current"), true));
-        await CheckAction("older-history-schema-readonly", () => VerifyHistory(Path.Combine(temporary, "older"), false));
+        await CheckAction("current-history-schema-readonly-attached-filter", () => VerifyHistory(Path.Combine(temporary, "current"), 5));
+        await CheckAction("older-history-schema-readonly", () => VerifyHistory(Path.Combine(temporary, "older"), 4));
+        await CheckAction("initial-history-schema-readonly", () => VerifyHistory(Path.Combine(temporary, "initial"), 0));
+        await CheckAction("agent-path-history-schema-readonly", () => VerifyHistory(Path.Combine(temporary, "agent-path"), 1));
+        await CheckAction("millisecond-history-schema-readonly", () => VerifyHistory(Path.Combine(temporary, "millisecond"), 2));
+        await CheckAction("named-history-schema-before-projects-readonly", () => VerifyHistory(Path.Combine(temporary, "named"), 3));
         await Check("native-pipe-framing-and-split-response", VerifyPipeAsync);
         await Check("automatic-watch-coalesces-writes-and-idles", () => VerifyAutomaticWatchAsync(Path.Combine(temporary, "automatic")));
         await Check("automatic-stop-waits-for-current-operation", () => VerifyAutomaticStopAsync(Path.Combine(temporary, "automatic-stop")));
@@ -182,21 +186,48 @@ internal static class CoreTests
         Require(group.Scope.Id == "project", "Project membership.");
     }
 
-    private static void VerifyHistory(string directory, bool currentSchema)
+    private static void VerifyHistory(string directory, int generation)
     {
         RuntimeHelpers.RunClassConstructor(typeof(LocalHistoryReader).TypeHandle);
         Directory.CreateDirectory(directory);
-        File.WriteAllText(Path.Combine(directory, ".codex-global-state.json"), "{}");
+        var state = new JsonObject
+        {
+            ["thread-project-assignments"] = new JsonObject
+            {
+                ["parent"] = new JsonObject { ["projectKind"] = "local", ["projectId"] = "legacy-project" }
+            },
+            ["app-server-project-id-by-legacy-project-id-by-host"] = new JsonObject
+            {
+                ["local:" + Path.GetFullPath(directory)] = new JsonObject { ["legacy-project"] = "backend-project" }
+            }
+        };
+        File.WriteAllText(Path.Combine(directory, ".codex-global-state.json"), state.ToJsonString());
         string databaseFile = Path.Combine(directory, "state_1.sqlite");
         Require(sqlite3_open(databaseFile, out IntPtr database, 0x10006, IntPtr.Zero) == 0, "Create fixture database.");
         try
         {
-            string parent = currentSchema ? ", attached_thread_parent_id TEXT" : "";
-            string sql = "CREATE TABLE threads(id TEXT,name TEXT,title TEXT,updated_at_ms INTEGER,updated_at INTEGER,project_id TEXT,archived INTEGER,source TEXT,agent_path TEXT" + parent + ");"
+            var columns = new List<string> { "id TEXT", "title TEXT", "updated_at INTEGER", "archived INTEGER", "source TEXT" };
+            if (generation >= 1) columns.Add("agent_path TEXT");
+            if (generation >= 2) columns.Add("updated_at_ms INTEGER");
+            if (generation >= 3) columns.Add("name TEXT");
+            if (generation >= 4) columns.Add("project_id TEXT");
+            if (generation >= 5) columns.Add("attached_thread_parent_id TEXT");
+            string sql = "CREATE TABLE threads(" + string.Join(",", columns) + ");"
                 + "INSERT INTO threads(id,title,updated_at,archived,source) VALUES('parent','Parent',1,0,'vscode');"
                 + "INSERT INTO threads(id,title,updated_at,archived,source) VALUES('root','Root',2,0,'vscode');"
-                + "INSERT INTO threads(id,title,updated_at,archived,source) VALUES('archived','Archived',3,1,'vscode');";
-            if (currentSchema)
+                + "INSERT INTO threads(id,title,updated_at,archived,source) VALUES('archived','Archived',3,1,'vscode');"
+                + "INSERT INTO threads(id,title,updated_at,archived,source) VALUES('legacy-ms','Legacy milliseconds',1577836800123,0,'vscode');"
+                + "INSERT INTO threads(id,title,updated_at,archived,source) VALUES('subagent','Subagent',4,0,'{\"subagent\":\"worker\"}');";
+            if (generation >= 1)
+                sql += "INSERT INTO threads(id,title,updated_at,archived,source,agent_path) VALUES('nested','Nested agent',4,0,'vscode','/root/worker');";
+            if (generation >= 2)
+                sql += "UPDATE threads SET updated_at_ms=2501 WHERE id='root';";
+            if (generation >= 3)
+                sql += "UPDATE threads SET name='Named root' WHERE id='root';"
+                    + "UPDATE threads SET name='' WHERE id='parent';";
+            if (generation >= 4)
+                sql += "UPDATE threads SET project_id='backend-project' WHERE id='parent';";
+            if (generation >= 5)
                 sql += "UPDATE threads SET attached_thread_parent_id='' WHERE id='root';"
                     + "INSERT INTO threads(id,title,updated_at,archived,source,attached_thread_parent_id) VALUES('child','Child',4,0,'vscode','parent');";
             Require(sqlite3_exec(database, sql, IntPtr.Zero, IntPtr.Zero, out IntPtr error) == 0, Marshal.PtrToStringUTF8(error) ?? "Create fixture rows.");
@@ -204,7 +235,12 @@ internal static class CoreTests
         finally { sqlite3_close(database); }
         string before = Convert.ToBase64String(File.ReadAllBytes(databaseFile));
         List<JsonObject> rows = LocalHistoryReader.Read(directory, new JsonObject { ["threads"] = new JsonArray(), ["pinnedThreads"] = new JsonArray() });
-        Require(rows.Select(row => row["id"]!.GetValue<string>()).ToHashSet().SetEquals(["parent", "root"]), "Standalone active rows.");
+        Require(rows.Select(row => row["id"]!.GetValue<string>()).ToHashSet().SetEquals(["parent", "root", "legacy-ms"]), "Standalone active rows.");
+        JsonObject root = rows.Single(row => row["id"]!.GetValue<string>() == "root");
+        Require(root["title"]!.GetValue<string>() == (generation >= 3 ? "Named root" : "Root"), "Use a saved name when the schema provides it.");
+        Require(root["updatedAt"]!.GetValue<long>() == (generation >= 2 ? 2501 : 2000), "Read available timestamp precision.");
+        Require(rows.Single(row => row["id"]!.GetValue<string>() == "legacy-ms")["updatedAt"]!.GetValue<long>() == 1577836800123, "Preserve early millisecond values.");
+        Require(rows.Single(row => row["id"]!.GetValue<string>() == "parent")["projectId"]!.GetValue<string>() == "legacy-project", "Resolve project membership across schema generations.");
         Require(Convert.ToBase64String(File.ReadAllBytes(databaseFile)) == before, "History bytes stay read-only.");
     }
 
