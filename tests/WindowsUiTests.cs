@@ -42,6 +42,8 @@ internal sealed partial class MainForm
     public async Task VerifyMultilingualUiAsync(FixtureNativeServer server, JsonObject report, string output)
     {
         while (busy) await Task.Delay(30);
+        ClientSize = new Size(1480, 980);
+        PerformLayout();
         RequireUi(workspace != null && workspace.Problems.Count == 0, "The UI must load the fixture through the production native bridge.");
         RequireUi(workspace!.Groups.Count == 30 && workspace.ChatCount == 360, "Complete project/chat counts with attached records excluded.");
         RequireUi(projectOrder.SelectedIndex == 0 && chatOrder.SelectedIndex == 0 && applyChatOrder.Checked, "Both layers default to ascending names.");
@@ -63,6 +65,14 @@ internal sealed partial class MainForm
         RequireUi(server.WriteCount == writes && status.Text == "The requested order is already applied", "A repeated application makes zero writes.");
         report["unchangedApplyWritesNothing"] = true;
         SaveCloudUi(Path.Combine(output, "ui-english-after-apply.png"));
+        ClientSize = new Size(1008, 730);
+        PerformLayout();
+        RequireUi(tree.Columns().Time < tree.ClientSize.Width - 120, "The compact view retains the last-updated column.");
+        RequireUi(TextRenderer.MeasureText(bottom.Text, bottom.Font).Width < bottom.ClientSize.Width, "The compact move button caption fits.");
+        SaveCloudUi(Path.Combine(output, "ui-english-compact.png"));
+        report["compactEnglishLayout"] = true;
+        ClientSize = new Size(1480, 980);
+        PerformLayout();
         projectOrder.SelectedIndex = 2;
         chatOrder.SelectedIndex = 5;
         language.SelectedIndex = 1;

@@ -25,7 +25,7 @@ internal sealed class ConversationTree : TreeView
         SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
     }
 
-    public (int Count, int Time) Columns() => (Math.Max(320, ClientSize.Width - 330), Math.Max(480, ClientSize.Width - 175));
+    public (int Count, int Time) Columns() => (Math.Max(180, ClientSize.Width - 300), Math.Max(290, ClientSize.Width - 154));
 
     protected override void OnDrawNode(DrawTreeNodeEventArgs eventArgs)
     {

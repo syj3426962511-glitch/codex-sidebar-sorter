@@ -68,8 +68,9 @@ internal sealed partial class MainForm : Form
         AutoScaleMode = AutoScaleMode.Dpi;
         Text = Localization.Text("聊天排序工具");
         Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
-        ClientSize = new Size(1480, 980);
-        MinimumSize = new Size(1120, 780);
+        Rectangle workingArea = Screen.FromControl(this).WorkingArea;
+        MinimumSize = new Size(Math.Min(1120, workingArea.Width), Math.Min(780, workingArea.Height));
+        ClientSize = new Size(Math.Min(1480, workingArea.Width - 24), Math.Min(980, workingArea.Height - 60));
         StartPosition = FormStartPosition.CenterScreen;
         BackColor = UiStyle.Background;
         ForeColor = UiStyle.Text;
@@ -117,8 +118,8 @@ internal sealed partial class MainForm : Form
         toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 220));
         toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 164));
         toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 76));
-        toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 390));
         toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 230));
         quickSort.Dock = DockStyle.Top; quickSort.Height = 39;
         grouping.Dock = DockStyle.Top; grouping.Height = 39;
         toolbar.Controls.Add(quickSort, 0, 0);

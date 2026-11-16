@@ -42,7 +42,7 @@ internal sealed class NativeBridge : IDisposable
                         bridge.Tools.Add(tool["name"]!.GetValue<string>());
                 }
                 if (!bridge.Tools.Contains("list_threads") || !bridge.Tools.Contains("list_projects"))
-                    throw new InvalidDataException("客户端返回的工具目录缺少列表读取能力。");
+                    throw new InvalidDataException(Localization.Text("客户端返回的工具目录缺少列表读取能力。"));
                 return bridge;
             }
             catch (Exception error) when (error is IOException or TimeoutException or InvalidDataException)
@@ -50,13 +50,13 @@ internal sealed class NativeBridge : IDisposable
                 stream.Dispose();
             }
         }
-        throw new IOException("客户端连接尚未就绪。打开客户端后点击刷新。");
+        throw new IOException(Localization.Text("客户端连接尚未就绪。打开客户端后点击刷新。"));
     }
 
     public async Task<JsonObject> CallAsync(string tool, JsonObject arguments)
     {
         if (!Tools.Contains(tool))
-            throw new InvalidOperationException("当前客户端尚未提供这项排序操作。");
+            throw new InvalidOperationException(Localization.Text("当前客户端尚未提供这项排序操作。"));
 
         JsonObject response = await RequestAsync("tools/call", new JsonObject
         {
@@ -74,7 +74,7 @@ internal sealed class NativeBridge : IDisposable
             .Select(item => item!["text"]!.GetValue<string>()));
         if (response["success"]?.GetValue<bool>() != true)
             throw new InvalidOperationException(text);
-        return JsonNode.Parse(text) as JsonObject ?? throw new InvalidDataException("客户端返回了无法读取的排序回执。");
+        return JsonNode.Parse(text) as JsonObject ?? throw new InvalidDataException(Localization.Text("客户端返回了无法读取的排序回执。"));
     }
 
     private async Task<JsonObject> RequestAsync(string method, JsonObject parameters)
@@ -85,20 +85,20 @@ internal sealed class NativeBridge : IDisposable
         {
             ["id"] = requestId, ["jsonrpc"] = "2.0", ["method"] = method, ["params"] = parameters
         }.ToJsonString());
-        if (payload.Length > MaximumFrameBytes) throw new InvalidDataException("请求超出本地接口支持的大小。");
+        if (payload.Length > MaximumFrameBytes) throw new InvalidDataException(Localization.Text("请求超出本地接口支持的大小。"));
         await stream.WriteAsync(BitConverter.GetBytes(payload.Length), timeout.Token);
         await stream.WriteAsync(payload, timeout.Token);
         byte[] header = new byte[4];
         await stream.ReadExactlyAsync(header, timeout.Token);
         int length = BitConverter.ToInt32(header);
-        if (length < 1 || length > MaximumFrameBytes) throw new InvalidDataException("客户端返回了异常长度。");
+        if (length < 1 || length > MaximumFrameBytes) throw new InvalidDataException(Localization.Text("客户端返回了异常长度。"));
         byte[] body = new byte[length];
         await stream.ReadExactlyAsync(body, timeout.Token);
         JsonObject message = JsonNode.Parse(body)!.AsObject();
-        if (message["id"]?.GetValue<int>() != requestId) throw new InvalidDataException("客户端回执序号异常。");
+        if (message["id"]?.GetValue<int>() != requestId) throw new InvalidDataException(Localization.Text("客户端回执序号异常。"));
         if (message["error"] is JsonObject error)
-            throw new InvalidOperationException(error["message"]?.GetValue<string>() ?? "客户端操作失败。");
-        return message["result"]?.AsObject() ?? throw new InvalidDataException("客户端回执缺少结果。");
+            throw new InvalidOperationException(error["message"]?.GetValue<string>() ?? Localization.Text("客户端操作失败。"));
+        return message["result"]?.AsObject() ?? throw new InvalidDataException(Localization.Text("客户端回执缺少结果。"));
     }
 
     private static string FindCallerThread()
@@ -123,7 +123,7 @@ internal sealed class NativeBridge : IDisposable
         }
         string? inherited = Environment.GetEnvironmentVariable("CODEX_THREAD_ID");
         if (Guid.TryParse(inherited, out _)) return inherited!;
-        throw new IOException("请先在客户端建立一条本机聊天，随后点击刷新。");
+        throw new IOException(Localization.Text("请先在客户端建立一条本机聊天，随后点击刷新。"));
     }
 
     public void Dispose() => stream.Dispose();

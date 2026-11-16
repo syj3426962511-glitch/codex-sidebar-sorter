@@ -7,6 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <ApplicationIcon>../src/Assets/聊天排序.ico</ApplicationIcon>
+    <Version>1.3.0</Version>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="WindowsUiTests.cs" />

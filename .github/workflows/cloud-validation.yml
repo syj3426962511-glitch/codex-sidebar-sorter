@@ -54,6 +54,11 @@ jobs:
           $compiler = Get-ChildItem 'C:/Program Files (x86)/Inno Setup */ISCC.exe' | Select-Object -Last 1
           & $compiler.FullName packaging/setup.iss
           if ($LASTEXITCODE -ne 0) { throw 'Installer build failed.' }
+      - name: Accept installation, running upgrade, uninstall and lightweight background
+        shell: pwsh
+        run: |
+          & ./tests/InstallerAcceptance.ps1 -InstallerPath "$PWD/artifacts/installer/CodexSidebarSorter-1.3.0-Setup.exe" -OutputDirectory "$PWD/artifacts/installed"
+          if ($LASTEXITCODE -ne 0) { throw 'Installed application acceptance failed.' }
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -61,3 +66,4 @@ jobs:
           path: |
             artifacts/installer/*.exe
             artifacts/ui/*
+            artifacts/installed/*
