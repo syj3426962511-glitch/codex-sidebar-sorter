@@ -1,10 +1,16 @@
 name: Official backend ordering contract
 on:
   workflow_dispatch:
+    inputs:
+      include_stable:
+        type: boolean
+        description: Repeat the official stable CLI tests on all three platforms
+        default: true
 permissions:
   contents: read
 jobs:
   backend:
+    if: inputs.include_stable
     strategy:
       fail-fast: false
       matrix:
@@ -33,8 +39,20 @@ jobs:
           tar -xzf artifacts/cli/official.tar.gz -C artifacts/cli
       - name: Exercise supported backend ordering on isolated cloud data
         run: python tests/BackendOrderingProbe.py artifacts/cli/${{ matrix.executable }} artifacts/backend/results.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-${{ matrix.os }}
+          path: artifacts/backend/*
+  mac_desktop_backend:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Read the official Mac desktop ordering contract
-        if: always() && runner.os == 'macOS'
         shell: bash
         run: |
           mkdir -p artifacts/backend "$RUNNER_TEMP/sorter-mac-mount"
@@ -46,10 +64,9 @@ jobs:
           codesign --verify --deep --strict "$RUNNER_TEMP/SorterOfficialClient.app"
           python tests/read_mac_transport.py "$RUNNER_TEMP/SorterOfficialClient.app/Contents/Resources/app.asar" artifacts/backend/desktop-ordering-contract.json --ordering
           bundled="$RUNNER_TEMP/SorterOfficialClient.app/Contents/Resources/codex-cli/bin/codex"
-          cp "$bundled" artifacts/cli/bundled-codex
-          python tests/BackendOrderingProbe.py artifacts/cli/bundled-codex artifacts/backend/bundled-results.json
+          python tests/BackendOrderingProbe.py "$bundled" artifacts/backend/bundled-results.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: backend-${{ matrix.os }}
+          name: backend-shipping-macos
           path: artifacts/backend/*

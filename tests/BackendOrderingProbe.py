@@ -70,7 +70,7 @@ def request(method, parameters, allow_error=False):
 
 
 try:
-    report["cliVersion"] = subprocess.check_output([str(cli), "--version"], text=True).strip()
+    report["cliVersion"] = subprocess.check_output([str(cli), "--version"], env=environment, text=True).strip()
     with (output.parent / "backend-stderr.log").open("w") as errors:
         process = subprocess.Popen([str(cli), "app-server"], env=environment,
                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=errors,
