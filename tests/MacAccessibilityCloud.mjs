@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import {spawn, spawnSync, execFileSync} from 'node:child_process';
+import {spawn, execFileSync} from 'node:child_process';
 import {createRequire} from 'node:module';
 
 if (process.env.GITHUB_ACTIONS !== 'true' || process.platform !== 'darwin') {
@@ -44,6 +44,7 @@ async function activePage() {
 }
 
 try {
+  execFileSync(python, ['tests/PrepareMacAccessibility.py'], {timeout:120000});
   if (fs.existsSync(path.join(codexHome, 'auth.json'))) {
     const cli = path.join(app, 'Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex');
     execFileSync(python, ['tests/PrepareMacSidebarFixture.py', cli], {timeout:180000});

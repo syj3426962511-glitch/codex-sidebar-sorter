@@ -56,9 +56,9 @@
         </Grid>
       </Border>
       <Border Grid.Column="2" Classes="card">
-        <ScrollViewer>
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled">
           <StackPanel Spacing="12">
-            <TextBlock Name="SortHeading" Text="排序与变更" FontSize="24" FontWeight="Bold" />
+            <TextBlock Name="SortHeading" Text="排序与变更" FontSize="24" FontWeight="Bold" TextWrapping="Wrap" />
             <TextBlock Name="Pending" Foreground="#3D5BEE" TextWrapping="Wrap" />
             <TextBlock Name="ProjectModeLabel" Text="第一层 · 项目" />
             <ComboBox Name="ProjectModeBox" />

@@ -29,16 +29,16 @@ RestartApplications=no
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "chinesesimp"; MessagesFile: "ChineseSimplified.isl"
-Name: "chinesetrad"; MessagesFile: "compiler:Languages\ChineseTraditional.isl"
-Name: "japanese"; MessagesFile: "compiler:Languages\Japanese.isl"
-Name: "korean"; MessagesFile: "compiler:Languages\Korean.isl"
-Name: "french"; MessagesFile: "compiler:Languages\French.isl"
-Name: "german"; MessagesFile: "compiler:Languages\German.isl"
-Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
-Name: "portuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
-Name: "italian"; MessagesFile: "compiler:Languages\Italian.isl"
-Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
-Name: "arabic"; MessagesFile: "compiler:Languages\Arabic.isl"
+Name: "chinesetrad"; MessagesFile: "Languages\ChineseTraditional.isl"
+Name: "japanese"; MessagesFile: "Languages\Japanese.isl"
+Name: "korean"; MessagesFile: "Languages\Korean.isl"
+Name: "french"; MessagesFile: "Languages\French.isl"
+Name: "german"; MessagesFile: "Languages\German.isl"
+Name: "spanish"; MessagesFile: "Languages\Spanish.isl"
+Name: "portuguese"; MessagesFile: "Languages\BrazilianPortuguese.isl"
+Name: "italian"; MessagesFile: "Languages\Italian.isl"
+Name: "russian"; MessagesFile: "Languages\Russian.isl"
+Name: "arabic"; MessagesFile: "Languages\Arabic.isl"
 
 [LangOptions]
 english.DialogFontName=Times New Roman

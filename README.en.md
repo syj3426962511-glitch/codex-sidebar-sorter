@@ -1,6 +1,8 @@
 # Codex Sidebar Sorter
 
-A standalone chat sorter with Chinese and English UI and automatic ascending-name order. The current 1.4.0 candidate uses a shared desktop interface, a separate sorting worker, and platform-native tray menus.
+A standalone chat sorter with automatic ascending-name order. The current 1.4.1 candidate offers 12 language options, a shared desktop interface, a separate sorting worker, and platform-native tray menus.
+
+Languages include Simplified Chinese, Traditional Chinese, English, Japanese, Korean, French, German, Spanish, Portuguese, Italian, Russian, and Arabic. Interface text, menus, and application messages follow the selected language. The tool stores its own language preference. Arabic uses a right-to-left layout.
 
 This project is undergoing private cloud acceptance. The Windows 1.4.0 installer candidate passed installation, running legacy upgrades, preference retention and uninstall acceptance. macOS and Linux packages and public sharing links await complete real-client acceptance.
 
