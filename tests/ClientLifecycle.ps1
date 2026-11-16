@@ -137,3 +137,4 @@ finally {
 }
 $report | ConvertTo-Json -Depth 8
 if (!$report.success) { exit 1 }
+exit 0

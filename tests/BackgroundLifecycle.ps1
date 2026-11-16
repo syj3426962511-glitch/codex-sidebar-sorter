@@ -156,3 +156,4 @@ finally {
 }
 Get-Content -LiteralPath (Join-Path $OutputDirectory 'background-results.json') -Raw
 if(!$report.Success){exit 1}
+exit 0
