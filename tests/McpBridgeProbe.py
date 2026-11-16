@@ -63,12 +63,12 @@ def check_native():
     report["ancestry"] = ancestry
     report["attempts"] = []
     for endpoint in glob.glob("/tmp/codex-app-tools/*.sock"):
-        record = {"endpoint": endpoint, "transport": "official signed CLI relay from desktop-owned MCP"}
+        record = {"endpoint": endpoint, "transport": "official signed Node host from desktop-owned MCP"}
         report["attempts"].append(record)
         peer = None
         try:
             relay = os.environ["SORTER_CLOUD_RELAY"]
-            peer = subprocess.Popen([relay, "stdio-to-uds", endpoint], stdin=subprocess.PIPE,
+            peer = subprocess.Popen([relay, os.environ["SORTER_CLOUD_RELAY_SCRIPT"], endpoint], stdin=subprocess.PIPE,
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             record["relayPid"] = peer.pid
             payload = json.dumps({

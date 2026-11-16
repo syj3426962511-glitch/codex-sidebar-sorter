@@ -18,8 +18,10 @@ for (const directory of [codexHome, profile, receipts]) fs.mkdirSync(directory, 
 const require = createRequire(path.join(process.env.RUNNER_TEMP, 'sorter-test-tools/package.json'));
 const {chromium} = require('playwright');
 const probe = path.resolve('tests/McpBridgeProbe.py');
-const relay = path.join(app, 'Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex');
-const config = `cli_auth_credentials_store = "file"\n[mcp_servers.sidebar_sorter_cloud_probe]\ncommand = ${JSON.stringify(python)}\nargs = ${JSON.stringify([probe, receipts])}\nrequired = false\nstartup_timeout_sec = 5\ntool_timeout_sec = 10\n[mcp_servers.sidebar_sorter_cloud_probe.env]\nGITHUB_ACTIONS = "true"\nSORTER_CLOUD_RELAY = ${JSON.stringify(relay)}\n`;
+const signedHost = JSON.parse(execFileSync(python, ['tests/PrepareSignedRelay.py'], {encoding:'utf8', timeout:300000}));
+const relay = signedHost.node;
+const relayScript = path.resolve('tests/NativeRelay.mjs');
+const config = `cli_auth_credentials_store = "file"\n[mcp_servers.sidebar_sorter_cloud_probe]\ncommand = ${JSON.stringify(python)}\nargs = ${JSON.stringify([probe, receipts])}\nrequired = false\nstartup_timeout_sec = 5\ntool_timeout_sec = 10\n[mcp_servers.sidebar_sorter_cloud_probe.env]\nGITHUB_ACTIONS = "true"\nSORTER_CLOUD_RELAY = ${JSON.stringify(relay)}\nSORTER_CLOUD_RELAY_SCRIPT = ${JSON.stringify(relayScript)}\n`;
 fs.writeFileSync(path.join(codexHome, 'config.toml'), config);
 const executableName = execFileSync('/usr/libexec/PlistBuddy', ['-c', 'Print :CFBundleExecutable', path.join(app, 'Contents/Info.plist')], {encoding:'utf8'}).trim();
 const executable = path.join(app, 'Contents/MacOS', executableName);
@@ -27,6 +29,7 @@ const archive = path.join(app, 'Contents/Resources/app.asar');
 const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 const originals = {executable:hash(executable), archive:hash(archive)};
 const report = {mcpConfigRegistered:true, signedDesktopLaunched:false, nativeCatalogAccessible:false};
+report.signedHost = signedHost;
 report.relaySignature = spawnSync('/usr/bin/codesign', ['-dv', '--verbose=4', '-r-', relay], {encoding:'utf8'}).stderr;
 const authorizer = path.join(app, 'Contents/Resources/native/browser-use-peer-authorization.node');
 if (fs.existsSync(authorizer)) {
