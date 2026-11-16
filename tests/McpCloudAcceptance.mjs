@@ -82,7 +82,12 @@ try {
   }
   if (!browser) throw new Error('The official desktop diagnostic port did not start.');
   report.signedDesktopLaunched = true;
-  const page = browser.contexts()[0].pages().find(page => page.url().startsWith('app://'));
+  let page;
+  for (let attempt = 0; attempt < 60; attempt++) {
+    page = browser.contexts()[0].pages().find(page => page.url().startsWith('app://'));
+    if (page) break;
+    await delay(500);
+  }
   if (!page) throw new Error('The official desktop page is unavailable.');
   await page.waitForLoadState('domcontentloaded');
   await delay(3000);
