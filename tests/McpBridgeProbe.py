@@ -5,7 +5,6 @@ import json
 import os
 import pathlib
 import select
-import socket
 import struct
 import subprocess
 import sys

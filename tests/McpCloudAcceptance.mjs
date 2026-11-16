@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import {spawn, execFileSync} from 'node:child_process';
+import {spawn, spawnSync, execFileSync} from 'node:child_process';
 import {createRequire} from 'node:module';
 
 if (process.env.GITHUB_ACTIONS !== 'true' || process.platform !== 'darwin') {
@@ -27,6 +27,12 @@ const archive = path.join(app, 'Contents/Resources/app.asar');
 const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 const originals = {executable:hash(executable), archive:hash(archive)};
 const report = {mcpConfigRegistered:true, signedDesktopLaunched:false, nativeCatalogAccessible:false};
+report.relaySignature = spawnSync('/usr/bin/codesign', ['-dv', '--verbose=4', '-r-', relay], {encoding:'utf8'}).stderr;
+const authorizer = path.join(app, 'Contents/Resources/native/browser-use-peer-authorization.node');
+if (fs.existsSync(authorizer)) {
+  report.nativePeerRequirements = execFileSync('/usr/bin/strings', ['-a', authorizer], {encoding:'utf8'})
+    .split('\n').filter(line => /anchor apple|subject\.OU|com\.openai|org\.openai|untrusted-|team-identifier/.test(line)).slice(0, 45);
+}
 const delay = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 let browser;
 let client;
