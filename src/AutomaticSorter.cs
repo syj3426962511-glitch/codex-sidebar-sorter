@@ -101,11 +101,26 @@ internal sealed class AutomaticSorter : IAsyncDisposable
             && !group.Chats.Select(SorterService.RowKey).SequenceEqual(group.OriginalChats.Select(SorterService.RowKey))).ToList();
         bool projectsChanged = preview.Changes(true, []).Count > 0;
         bool modeChanged = service.Snapshot["sidebarPreferences"]?["sorting"]?["chats"]?.GetValue<string>() != "manual";
-        if (!projectsChanged && changedGroups.Count == 0 && !modeChanged) return 0;
-        var plans = changedGroups.Select(group => new ProjectChatPlan(group.Scope, group.Chats.Where(row => !row.IsPinned).ToList())).ToList();
-        await service.ApplyWorkspaceAsync(preview.Groups.Where(group => group.CanReorder).Select(group => group.Row).ToList(),
-            projectsChanged, plans, false, applyChatMode: true);
-        return (projectsChanged ? 1 : 0) + plans.Sum(plan => plan.Rows.Count) + (modeChanged ? 1 : 0);
+        int writes = 0;
+        if (projectsChanged || changedGroups.Count > 0 || modeChanged)
+        {
+            var plans = changedGroups.Select(group => new ProjectChatPlan(group.Scope, group.Chats.Where(row => !row.IsPinned).ToList())).ToList();
+            await service.ApplyWorkspaceAsync(preview.Groups.Where(group => group.CanReorder).Select(group => group.Row).ToList(),
+                projectsChanged, plans, false, applyChatMode: true);
+            writes += (projectsChanged ? 1 : 0) + plans.Sum(plan => plan.Rows.Count) + (modeChanged ? 1 : 0);
+        }
+        foreach (SortScope scope in scopes.Where(scope => scope.Kind == "section"))
+        {
+            List<SortRow> rows = await service.GetRowsAsync(scope);
+            List<string> previous = rows.Select(SorterService.RowKey).ToList();
+            SorterService.Sort(rows, 0);
+            bool orderChanged = !rows.Select(SorterService.RowKey).SequenceEqual(previous);
+            bool pinnedModeChanged = scope.Id == "pinned" && service.Snapshot["sidebarPreferences"]?["sorting"]?["pinned"]?.GetValue<string>() != "manual";
+            if (!orderChanged && !pinnedModeChanged) continue;
+            await service.ApplyAsync(scope, rows, false);
+            writes++;
+        }
+        return writes;
     }
 
     public async ValueTask DisposeAsync()

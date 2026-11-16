@@ -69,6 +69,8 @@ internal sealed partial class DesktopApp
     {
         await DesktopSmokeTests.WaitForAsync(() => window?.CloudLoaded == true && server.IsSortedByName(), "Startup must automatically sort projects and their chats by name.");
         report["initialAutomaticNameOrder"] = true;
+        await DesktopSmokeTests.WaitForAsync(server.AreSectionsSortedByName, "Pinned and custom-section chats must also keep ascending names.");
+        report["pinnedAndCustomSectionsSortedByName"] = true;
         await window!.VerifyCloudUiAsync(server, report, output);
 
         Settings = Settings with { AutomaticNameSorting = true, ProjectSortMode = 0, ChatSortMode = 0 };

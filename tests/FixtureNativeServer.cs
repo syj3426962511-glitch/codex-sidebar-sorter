@@ -22,6 +22,7 @@ internal sealed class FixtureNativeServer : IDisposable
     public Dictionary<string, List<SortRow>> Chats { get; } = new();
     private readonly List<string> projectOrder = [];
     private readonly Dictionary<string, List<string>> chatOrders = new();
+    private readonly Dictionary<string, List<string>> sectionOrders = new();
     public int WriteCount { get; private set; }
 
     public FixtureNativeServer()
@@ -65,6 +66,8 @@ internal sealed class FixtureNativeServer : IDisposable
         try { Require(sqlite3_exec(database, sql.ToString(), IntPtr.Zero, IntPtr.Zero, out _) == 0, "Populate fixture history."); }
         finally { sqlite3_close(database); }
         globalState["thread-project-assignments"] = assignments;
+        sectionOrders["pinned"] = Chats[Projects[0].Id].Take(3).Select(row => row.Id).ToList();
+        sectionOrders["fixture-section"] = Chats[Projects[1].Id].Take(3).Select(row => row.Id).ToList();
         globalState["sidebar-project-thread-orders"] = orders;
         globalState["app-server-project-id-by-legacy-project-id-by-host"] = new JsonObject { ["local:" + Root] = backendIds };
         SaveState();
@@ -163,11 +166,16 @@ internal sealed class FixtureNativeServer : IDisposable
                     {
                         ["id"] = row.Id, ["title"] = row.Title, ["kind"] = "codex", ["hostId"] = "local", ["updatedAt"] = row.UpdatedAt, ["status"] = "completed"
                     }).ToArray()),
-                    ["pinnedThreads"] = new JsonArray(),
+                    ["pinnedThreads"] = new JsonArray(sectionOrders["pinned"].Select(id =>
+                    {
+                        SortRow row = Chats.Values.SelectMany(rows => rows).Single(row => row.Id == id);
+                        return (JsonNode)new JsonObject { ["id"] = id, ["title"] = row.Title, ["kind"] = "codex", ["hostId"] = "local", ["updatedAt"] = row.UpdatedAt, ["isPinned"] = true };
+                    }).ToArray()),
                     ["sections"] = new JsonArray(
-                        new JsonObject { ["sectionId"] = "pinned", ["name"] = "Pinned", ["itemKeys"] = new JsonArray() },
+                        new JsonObject { ["sectionId"] = "pinned", ["name"] = "Pinned", ["itemKeys"] = SorterService.StringArray(sectionOrders["pinned"].Select(id => "codex:thread:local:" + id)) },
                         new JsonObject { ["sectionId"] = "threads", ["name"] = "Projects", ["itemKeys"] = SorterService.StringArray(projectOrder.Select(id => "codex:project:" + id)) },
-                        new JsonObject { ["sectionId"] = "chats", ["name"] = "Chats", ["itemKeys"] = new JsonArray() }),
+                        new JsonObject { ["sectionId"] = "chats", ["name"] = "Chats", ["itemKeys"] = new JsonArray() },
+                        new JsonObject { ["sectionId"] = "fixture-section", ["name"] = "Research", ["itemKeys"] = SorterService.StringArray(sectionOrders["fixture-section"].Select(id => "codex:thread:local:" + id)) }),
                     ["sidebarPreferences"] = new JsonObject { ["sorting"] = sorting.DeepClone() }
                 };
                 break;
@@ -198,6 +206,15 @@ internal sealed class FixtureNativeServer : IDisposable
                 WriteCount++;
                 value = new JsonObject();
                 break;
+            case "reorder_section":
+                string sectionId = args["sectionId"]!.GetValue<string>();
+                List<string> ids = args["threadIds"]!.AsArray().Select(item => item!.GetValue<string>()).ToList();
+                Require(ids.Count == sectionOrders[sectionId].Count && ids.Distinct().Count() == ids.Count && ids.All(sectionOrders[sectionId].Contains), "Complete section membership.");
+                sectionOrders[sectionId] = ids;
+                WriteCount++;
+                SaveState();
+                value = new JsonObject();
+                break;
             default:
                 throw new InvalidOperationException("Unsupported fixture tool " + tool);
         }
@@ -213,9 +230,24 @@ internal sealed class FixtureNativeServer : IDisposable
             if (!projectOrder.SequenceEqual(expectedProjects.Select(row => row.Id))) return false;
             foreach (var project in Chats)
             {
-                List<SortRow> expected = project.Value.ToList();
+                List<SortRow> expected = project.Value.Where(row => !sectionOrders["pinned"].Contains(row.Id)).ToList();
                 SorterService.Sort(expected, 0);
-                if (!chatOrders[project.Key].SequenceEqual(expected.Select(row => row.Id))) return false;
+                if (!chatOrders[project.Key].Where(id => !sectionOrders["pinned"].Contains(id)).SequenceEqual(expected.Select(row => row.Id))) return false;
+            }
+            return true;
+        }
+    }
+
+    public bool AreSectionsSortedByName()
+    {
+        lock (modelLock)
+        {
+            var rows = Chats.Values.SelectMany(rows => rows).ToDictionary(row => row.Id);
+            foreach (List<string> order in sectionOrders.Values)
+            {
+                List<SortRow> expected = order.Select(id => rows[id]).ToList();
+                SorterService.Sort(expected, 0);
+                if (!order.SequenceEqual(expected.Select(row => row.Id))) return false;
             }
             return true;
         }
