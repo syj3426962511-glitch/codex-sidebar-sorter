@@ -138,7 +138,7 @@ internal static class CoreTests
 
     private static async Task VerifyPipeAsync()
     {
-        string pipeName = "sidebar-sorter-test-" + Guid.NewGuid().ToString("N");
+        string pipeName = "sst-" + Guid.NewGuid().ToString("N")[..12];
         await using var server = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
         var stream = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
         Task accepting = server.WaitForConnectionAsync();
