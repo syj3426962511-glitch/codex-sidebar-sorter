@@ -81,6 +81,7 @@ end;
 
 function WaitForPreviousTool(InstallDirectory: String): Boolean;
 var
+  Locator: Variant;
   Services: Variant;
   Processes: Variant;
   PreviousProcess: Variant;
@@ -89,7 +90,8 @@ var
   Found: Boolean;
 begin
   InstallDirectory := AddBackslash(InstallDirectory);
-  Services := CreateOleObject('WbemScripting.SWbemLocator').ConnectServer('.', 'root\cimv2');
+  Locator := CreateOleObject('WbemScripting.SWbemLocator');
+  Services := Locator.ConnectServer('.', 'root\cimv2');
   Result := False;
   for Attempt := 1 to 240 do
   begin

@@ -107,6 +107,30 @@ function Save-ClientWindow($Client, [string]$Name) {
     finally { $bitmap.Dispose() }
 }
 
+function Get-StandaloneBackground {
+    $dataRoot = $env:CODEX_HOME
+    if (!$dataRoot) { $dataRoot = [Environment]::GetEnvironmentVariable('CODEX_HOME','User') }
+    if (!$dataRoot) { $dataRoot = Join-Path $env:USERPROFILE '.codex' }
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { $hash = $sha.ComputeHash([Text.Encoding]::UTF8.GetBytes([IO.Path]::GetFullPath($dataRoot).ToUpperInvariant())) }
+    finally { $sha.Dispose() }
+    $identity = 'sst-' + ([BitConverter]::ToString($hash).Replace('-','').Substring(0,12)) + '-bg'
+    $pipe = [IO.Pipes.NamedPipeClientStream]::new('.', $identity, [IO.Pipes.PipeDirection]::InOut, [IO.Pipes.PipeOptions]::Asynchronous)
+    try {
+        $pipe.Connect(10000)
+        $writer = [IO.StreamWriter]::new($pipe,[Text.UTF8Encoding]::new($false),1024,$true)
+        $writer.AutoFlush = $true
+        $writer.WriteLine('status')
+        $reader = [IO.StreamReader]::new($pipe)
+        try {
+            $response = $reader.ReadLineAsync()
+            if (!$response.Wait(10000)) { throw 'The standalone worker did not return its process identity.' }
+            $status = $response.Result | ConvertFrom-Json
+            return Get-CimInstance Win32_Process -Filter ('ProcessId=' + $status.ProcessId)
+        } finally { $reader.Dispose(); $writer.Dispose() }
+    } finally { $pipe.Dispose() }
+}
+
 try {
     $package = @(Get-AppxPackage -Name OpenAI.Codex)
     if ($package.Count -ne 1) { throw 'Expected one officially registered Codex package.' }
@@ -130,9 +154,14 @@ try {
     if (!(Get-Process -Id $originalClientId -ErrorAction SilentlyContinue)) { throw 'Installing the sorter closed Codex.' }
     $launch = Start-Process -FilePath $program -ArgumentList '--background' -WindowStyle Hidden -PassThru
     Start-Sleep -Seconds 2
-    $backend = Wait-Condition {
-        Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq $background -and (!$ProgramDirectory -or $_.CommandLine -match '--background') } | Select-Object -Last 1
-    } 'The independent background did not start.'
+    if ($ProgramDirectory) { $backend = Get-StandaloneBackground }
+    else {
+        $backend = Wait-Condition {
+            Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq $background } | Select-Object -Last 1
+        } 'The independent background did not start.'
+    }
+    if ($backend.ExecutablePath -ne $background) { throw 'The responding worker has an unexpected program path.' }
+    $report.backgroundProcessId = $backend.ProcessId
     if ($InstallerPath) { $report.installPreservesOpenClient = $true }
     else { $report.sorterStartupPreservesOpenClient = $true }
     Save-ClientWindow $client 'official-client-with-sorter.png'
