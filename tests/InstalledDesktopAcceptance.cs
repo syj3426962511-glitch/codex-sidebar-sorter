@@ -114,11 +114,12 @@ internal static class InstalledDesktopAcceptance
 
     private static async Task RunAsync(string executable, params string[] arguments)
     {
-        var start = new ProcessStartInfo(executable) { UseShellExecute = false, CreateNoWindow = true };
+        var start = new ProcessStartInfo(executable) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardError = true };
         foreach (string argument in arguments) start.ArgumentList.Add(argument);
         using Process process = Process.Start(start)!;
+        Task<string> errors = process.StandardError.ReadToEndAsync();
         await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(120));
-        Require(process.ExitCode == 0, Path.GetFileName(executable) + " returned " + process.ExitCode);
+        Require(process.ExitCode == 0, Path.GetFileName(executable) + " " + string.Join(" ", arguments) + " returned " + process.ExitCode + " " + await errors);
     }
 
     private static async Task WaitAsync(Func<bool> condition, string failure)

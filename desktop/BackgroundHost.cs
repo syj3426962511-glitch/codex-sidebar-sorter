@@ -114,7 +114,10 @@ internal sealed class BackgroundHost : IDisposable
 
     public static int Run()
     {
-        using var mutex = new Mutex(true, BackgroundClient.Identity + "-bg", out bool first);
+        using var mutex = new Mutex(false, BackgroundClient.Identity + "-bg");
+        bool first;
+        try { first = mutex.WaitOne(TimeSpan.Zero); }
+        catch (AbandonedMutexException) { first = true; }
         if (!first) return 0;
         try
         {

@@ -40,7 +40,10 @@ internal static class DesktopProgram
     private static int RunWindow(string[] arguments)
     {
         string name = BackgroundClient.Identity;
-        using var mutex = new Mutex(true, name, out bool first);
+        using var mutex = new Mutex(false, name);
+        bool first;
+        try { first = mutex.WaitOne(TimeSpan.Zero); }
+        catch (AbandonedMutexException) { first = true; }
         if (!first)
         {
             try
