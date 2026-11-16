@@ -43,6 +43,11 @@ jobs:
       - name: Install the cloud-only installer compiler
         shell: pwsh
         run: choco install innosetup --yes --no-progress
+      - name: Render and exercise the bilingual application with 30 projects and 360 chats
+        shell: pwsh
+        run: |
+          dotnet run --project tests/WindowsUiTests.csproj --configuration Release -- artifacts/ui
+          if ($LASTEXITCODE -ne 0) { throw 'Windows UI acceptance failed.' }
       - name: Build the candidate installer
         shell: pwsh
         run: |
@@ -50,6 +55,9 @@ jobs:
           & $compiler.FullName packaging/setup.iss
           if ($LASTEXITCODE -ne 0) { throw 'Installer build failed.' }
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: windows-candidate
-          path: artifacts/installer/*.exe
+          path: |
+            artifacts/installer/*.exe
+            artifacts/ui/*

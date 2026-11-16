@@ -2,6 +2,10 @@
 #define NOMINMAX
 #include <windows.h>
 #include <shellapi.h>
+#include <shlobj.h>
+#include <filesystem>
+#include <fstream>
+#include <sstream>
 #include <string>
 #include <cwctype>
 #include <cstdint>
@@ -22,6 +26,49 @@ NOTIFYICONDATAW tray = {};
 HFONT menuFont = nullptr;
 std::wstring managedProgram;
 UINT taskbarCreated = 0;
+bool useChinese = true;
+
+std::string ToolPreferences() {
+    wchar_t localAppData[MAX_PATH] = {};
+    if (FAILED(SHGetFolderPathW(nullptr, CSIDL_LOCAL_APPDATA, nullptr, SHGFP_TYPE_CURRENT, localAppData))) return {};
+    auto path = std::filesystem::path(localAppData) / L"CodexSidebarSorter" / L"settings.json";
+    std::ifstream input(path, std::ios::binary);
+    std::ostringstream contents;
+    contents << input.rdbuf();
+    return contents.str();
+}
+
+std::string PreferenceValue(const std::string& text, const std::string& key) {
+    auto name = text.find("\"" + key + "\"");
+    if (name == std::string::npos) return {};
+    auto colon = text.find(':', name + key.size() + 2);
+    if (colon == std::string::npos) return {};
+    auto start = text.find_first_not_of(" \r\n\t", colon + 1);
+    if (start == std::string::npos) return {};
+    if (text[start] == '"') {
+        auto end = text.find('"', start + 1);
+        return end == std::string::npos ? std::string() : text.substr(start + 1, end - start - 1);
+    }
+    auto end = text.find_first_of(",}\r\n\t ", start);
+    return text.substr(start, end - start);
+}
+
+const wchar_t* Text(const wchar_t* chinese, const wchar_t* english) {
+    return useChinese ? chinese : english;
+}
+
+void UpdateLanguage(bool modifyIcon) {
+    std::string language = PreferenceValue(ToolPreferences(), "language");
+    useChinese = language == "zh-CN" || (language != "en" && PRIMARYLANGID(GetUserDefaultUILanguage()) == LANG_CHINESE);
+    if (menuFont) DeleteObject(menuFont);
+    menuFont = CreateFontW(-MulDiv(12, GetDpiForWindow(hostWindow), 72), 0, 0, 0, FW_NORMAL,
+        FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY,
+        DEFAULT_PITCH, useChinese ? L"SimSun" : L"Times New Roman");
+    wcscpy_s(tray.szTip, exiting
+        ? Text(L"聊天排序工具 · 当前任务完成后退出", L"Sidebar Sorter · Exiting after the current operation")
+        : Text(L"聊天排序工具 · 双击打开，右键退出", L"Sidebar Sorter · Double-click to open, right-click to exit"));
+    if (modifyIcon) Shell_NotifyIconW(NIM_MODIFY, &tray);
+}
 
 struct WindowSearch {
     DWORD processId;
@@ -64,7 +111,7 @@ void OpenTool() {
     startup.cb = sizeof(startup);
     PROCESS_INFORMATION process = {};
     if (!CreateProcessW(managedProgram.c_str(), command.data(), nullptr, nullptr, FALSE, 0, nullptr, nullptr, &startup, &process)) {
-        MessageBoxW(hostWindow, L"界面组件启动失败，请通过安装包更新工具。", L"聊天排序工具", MB_OK | MB_ICONINFORMATION);
+        MessageBoxW(hostWindow, Text(L"界面组件启动失败，请通过安装包更新工具。", L"The interface could not start. Update the tool using its installer."), Text(L"聊天排序工具", L"Codex Sidebar Sorter"), MB_OK | MB_ICONINFORMATION);
         return;
     }
     CloseHandle(process.hThread);
@@ -81,8 +128,7 @@ void BeginExit() {
     }
     if (HWND window = ToolWindow()) PostMessageW(window, kExitWindowMessage, 0, 0);
     else TerminateProcess(uiProcess, 0);
-    wcscpy_s(tray.szTip, L"聊天排序工具 · 当前任务完成后退出");
-    Shell_NotifyIconW(NIM_MODIFY, &tray);
+    UpdateLanguage(true);
 }
 
 void AddTrayIcon() {
@@ -93,11 +139,12 @@ void AddTrayIcon() {
 }
 
 void ShowTrayMenu() {
+    UpdateLanguage(true);
     POINT point = {};
     GetCursorPos(&point);
     HMENU menu = CreatePopupMenu();
-    AppendMenuW(menu, MF_OWNERDRAW | (exiting ? MF_GRAYED : 0), kOpenCommand, L"打开聊天排序");
-    AppendMenuW(menu, MF_OWNERDRAW, kExitCommand, L"退出程序");
+    AppendMenuW(menu, MF_OWNERDRAW | (exiting ? MF_GRAYED : 0), kOpenCommand, Text(L"打开聊天排序", L"Open Sidebar Sorter"));
+    AppendMenuW(menu, MF_OWNERDRAW, kExitCommand, Text(L"退出程序", L"Exit"));
     SetForegroundWindow(hostWindow);
     UINT command = TrackPopupMenu(menu, TPM_RETURNCMD | TPM_RIGHTBUTTON, point.x, point.y, 0, hostWindow, nullptr);
     DestroyMenu(menu);
@@ -129,7 +176,7 @@ LRESULT CALLBACK WindowProcedure(HWND window, UINT message, WPARAM wparam, LPARA
         HGDIOBJ previous = SelectObject(item->hDC, menuFont);
         RECT bounds = item->rcItem;
         bounds.left += MulDiv(18, GetDpiForWindow(window), 96);
-        const wchar_t* text = item->itemID == kOpenCommand ? L"打开聊天排序" : L"退出程序";
+        const wchar_t* text = item->itemID == kOpenCommand ? Text(L"打开聊天排序", L"Open Sidebar Sorter") : Text(L"退出程序", L"Exit");
         DrawTextW(item->hDC, text, -1, &bounds, DT_SINGLELINE | DT_VCENTER);
         SelectObject(item->hDC, previous);
         return TRUE;
@@ -212,16 +259,13 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
     hostWindow = CreateWindowExW(WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE, type.lpszClassName,
         L"聊天排序后台", 0, 0, 0, 0, 0, nullptr, nullptr, instance, nullptr);
     if (!hostWindow) return 1;
-    menuFont = CreateFontW(-MulDiv(12, GetDpiForWindow(hostWindow), 72), 0, 0, 0, FW_NORMAL,
-        FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY,
-        DEFAULT_PITCH, L"SimSun");
     tray.cbSize = sizeof(tray);
     tray.hWnd = hostWindow;
     tray.uID = 1;
     tray.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     tray.uCallbackMessage = kTrayMessage;
     tray.hIcon = type.hIcon;
-    wcscpy_s(tray.szTip, L"聊天排序工具 · 双击打开，右键退出");
+    UpdateLanguage(false);
     AddTrayIcon();
     if (argument != L"--background") SetEvent(openEvent);
 
