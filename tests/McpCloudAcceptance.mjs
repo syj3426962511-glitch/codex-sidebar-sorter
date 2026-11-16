@@ -18,7 +18,8 @@ for (const directory of [codexHome, profile, receipts]) fs.mkdirSync(directory, 
 const require = createRequire(path.join(process.env.RUNNER_TEMP, 'sorter-test-tools/package.json'));
 const {chromium} = require('playwright');
 const probe = path.resolve('tests/McpBridgeProbe.py');
-const config = `cli_auth_credentials_store = "file"\n[mcp_servers.sidebar_sorter_cloud_probe]\ncommand = ${JSON.stringify(python)}\nargs = ${JSON.stringify([probe, receipts])}\nrequired = false\nstartup_timeout_sec = 5\ntool_timeout_sec = 10\n[mcp_servers.sidebar_sorter_cloud_probe.env]\nGITHUB_ACTIONS = "true"\n`;
+const relay = path.join(app, 'Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex');
+const config = `cli_auth_credentials_store = "file"\n[mcp_servers.sidebar_sorter_cloud_probe]\ncommand = ${JSON.stringify(python)}\nargs = ${JSON.stringify([probe, receipts])}\nrequired = false\nstartup_timeout_sec = 5\ntool_timeout_sec = 10\n[mcp_servers.sidebar_sorter_cloud_probe.env]\nGITHUB_ACTIONS = "true"\nSORTER_CLOUD_RELAY = ${JSON.stringify(relay)}\n`;
 fs.writeFileSync(path.join(codexHome, 'config.toml'), config);
 const executableName = execFileSync('/usr/libexec/PlistBuddy', ['-c', 'Print :CFBundleExecutable', path.join(app, 'Contents/Info.plist')], {encoding:'utf8'}).trim();
 const executable = path.join(app, 'Contents/MacOS', executableName);
@@ -40,10 +41,11 @@ async function desktopRequest(page, method, params) {
         if (message?.type?.startsWith('mcp-') && observed.length < 10) {
           observed.push({type:message.type, keys:Object.keys(message)});
         }
-        if (message?.response?.id !== id) return;
+        const response = message?.type === 'mcp-response' ? message.message : null;
+        if (response?.id !== id) return;
         clearTimeout(timer);
         window.removeEventListener('message', listener);
-        message.response.error ? reject(new Error(JSON.stringify(message.response.error))) : resolve(message.response.result);
+        response.error ? reject(new Error(JSON.stringify(response.error))) : resolve(response.result);
       };
       const timer = setTimeout(() => {
         window.removeEventListener('message', listener);

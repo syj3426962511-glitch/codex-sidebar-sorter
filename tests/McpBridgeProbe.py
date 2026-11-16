@@ -4,6 +4,7 @@ import glob
 import json
 import os
 import pathlib
+import select
 import socket
 import struct
 import subprocess
@@ -32,10 +33,14 @@ def save():
     temporary.replace(destination)
 
 
-def read_exact(connection, size):
+def read_exact(stream, size):
     value = bytearray()
+    deadline = time.monotonic() + 15
     while len(value) < size:
-        part = connection.recv(size - len(value))
+        remaining = deadline - time.monotonic()
+        if remaining <= 0 or not select.select([stream], [], [], remaining)[0]:
+            raise TimeoutError("The native transport did not respond within 15 seconds.")
+        part = os.read(stream.fileno(), size - len(value))
         if not part:
             raise EOFError("The desktop closed the native connection.")
         value.extend(part)
@@ -59,29 +64,38 @@ def check_native():
     report["ancestry"] = ancestry
     report["attempts"] = []
     for endpoint in glob.glob("/tmp/codex-app-tools/*.sock"):
-        record = {"endpoint": endpoint}
+        record = {"endpoint": endpoint, "transport": "official signed CLI relay from desktop-owned MCP"}
         report["attempts"].append(record)
+        peer = None
         try:
-            with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as connection:
-                connection.settimeout(15)
-                connection.connect(endpoint)
-                payload = json.dumps({
-                    "jsonrpc": "2.0", "id": 1, "method": "tools/list",
-                    "params": {"threadStartKind": "all"},
-                }).encode()
-                connection.sendall(struct.pack("<I", len(payload)) + payload)
-                length = struct.unpack("<I", read_exact(connection, 4))[0]
-                if length < 1 or length > 8 * 1024 * 1024:
-                    raise ValueError("The desktop returned an invalid native frame length.")
-                response = json.loads(read_exact(connection, length))
-                if "error" in response:
-                    record["error"] = response["error"]
-                else:
-                    tools = response["result"]["tools"]
-                    record["toolCount"] = len(tools)
-                    report["nativeCatalogAccessible"] = True
+            relay = os.environ["SORTER_CLOUD_RELAY"]
+            peer = subprocess.Popen([relay, "stdio-to-uds", endpoint], stdin=subprocess.PIPE,
+                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            record["relayPid"] = peer.pid
+            payload = json.dumps({
+                "jsonrpc": "2.0", "id": 1, "method": "tools/list",
+                "params": {"threadStartKind": "all"},
+            }).encode()
+            peer.stdin.write(struct.pack("<I", len(payload)) + payload)
+            peer.stdin.flush()
+            length = struct.unpack("<I", read_exact(peer.stdout, 4))[0]
+            if length < 1 or length > 8 * 1024 * 1024:
+                raise ValueError("The desktop returned an invalid native frame length.")
+            response = json.loads(read_exact(peer.stdout, length))
+            if "error" in response:
+                record["error"] = response["error"]
+            else:
+                tools = response["result"]["tools"]
+                record["toolCount"] = len(tools)
+                report["nativeCatalogAccessible"] = True
         except (OSError, ValueError, EOFError, KeyError) as error:
             record["error"] = str(error)
+        finally:
+            if peer is not None:
+                peer.terminate()
+                peer.wait(timeout=3)
+                record["relayExitCode"] = peer.returncode
+                record["relayStderr"] = peer.stderr.read().decode(errors="replace")[-2000:]
     report["checkedAt"] = time.time()
     save()
 
