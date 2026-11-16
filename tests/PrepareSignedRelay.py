@@ -6,7 +6,6 @@ import os
 import pathlib
 import subprocess
 import tarfile
-import urllib.request
 
 if os.environ.get("GITHUB_ACTIONS") != "true":
     raise RuntimeError("Use disposable cloud storage for native host investigation.")
@@ -18,16 +17,18 @@ if receipt.exists():
     raise SystemExit(0)
 root.mkdir(parents=True, exist_ok=True)
 manifest_url = "https://persistent.oaistatic.com/codex-primary-runtime/latest/darwin-arm64/LATEST.json"
-with urllib.request.urlopen(manifest_url, timeout=30) as response:
-    manifest = json.load(response)
+manifest = json.loads(subprocess.check_output(["/usr/bin/curl", "--fail", "--location", "--retry", "2", "--max-time", "30", manifest_url], text=True))
 archive = root / "runtime.tar.xz"
 digest = hashlib.sha256()
 length = 0
-with urllib.request.urlopen(manifest["archiveUrl"], timeout=180) as response, archive.open("wb") as output:
-    while block := response.read(1024 * 1024):
+download = subprocess.Popen(["/usr/bin/curl", "--fail", "--location", "--retry", "2", "--max-time", "180", manifest["archiveUrl"]], stdout=subprocess.PIPE)
+with archive.open("wb") as output:
+    while block := download.stdout.read(1024 * 1024):
         output.write(block)
         digest.update(block)
         length += len(block)
+if download.wait() != 0:
+    raise RuntimeError("The official runtime download failed.")
 if length != manifest["archiveSizeBytes"] or digest.hexdigest() != manifest["archiveSha256"]:
     raise RuntimeError("The official runtime archive did not match its HTTPS manifest.")
 with tarfile.open(archive, "r:xz") as package:
