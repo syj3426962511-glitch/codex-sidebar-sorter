@@ -83,6 +83,8 @@ internal sealed partial class DesktopApp : Application
         if (observer != null) await observer.DisposeAsync();
         await OperationGate.WaitAsync();
         OperationGate.Release();
+        try { await BackgroundClient.NotifyAsync("compact"); }
+        catch (Exception error) when (error is IOException or TimeoutException) { Status = error.Message; }
         (ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Shutdown();
     }
 }

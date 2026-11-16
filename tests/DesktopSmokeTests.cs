@@ -17,6 +17,11 @@ internal static class DesktopSmokeTests
         if (Environment.GetEnvironmentVariable("GITHUB_ACTIONS") != "true")
             throw new InvalidOperationException("Desktop acceptance runs on disposable cloud hosts.");
         if (arguments[0].StartsWith("--", StringComparison.Ordinal)) return DesktopProgram.Run(arguments);
+        return RunDesktopTests(arguments);
+    }
+
+    private static int RunDesktopTests(string[] arguments)
+    {
         string output = Path.GetFullPath(arguments[0]);
         Directory.CreateDirectory(output);
         using var server = new FixtureNativeServer();
@@ -57,6 +62,11 @@ internal static class DesktopSmokeTests
         finally
         {
             BackgroundClient.NotifyAsync("exit").GetAwaiter().GetResult();
+            using var worker = new Mutex(false, BackgroundClient.Identity + "-bg");
+            try { Require(worker.WaitOne(TimeSpan.FromSeconds(60)), "The independent worker exits safely after its current operation."); }
+            catch (AbandonedMutexException) { }
+            worker.ReleaseMutex();
+            report["backgroundExitWaited"] = true;
             report["checkedAt"] = DateTimeOffset.UtcNow.ToString("O");
             File.WriteAllText(Path.Combine(output, "desktop-results.json"), report.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
         }
@@ -79,6 +89,7 @@ internal static class DesktopSmokeTests
     private static async Task VerifyBackgroundAsync(FixtureNativeServer server, JsonObject report, string output)
     {
         BackgroundStatus status = await BackgroundClient.ReadStatusAsync();
+        await BackgroundClient.NotifyAsync("compact");
         using Process background = Process.GetProcessById(status.ProcessId);
         BackgroundClient.Launch("--background");
         await Task.Delay(1500);

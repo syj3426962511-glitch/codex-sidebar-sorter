@@ -185,6 +185,7 @@ internal sealed class BackgroundHost : IDisposable
                     await writer.WriteLineAsync(JsonSerializer.Serialize(status));
                     return;
                 }
+                if (command == "compact") GC.Collect(2, GCCollectionMode.Forced, blocking: true, compacting: true);
                 await writer.WriteLineAsync("ok");
                 if (command == "settings")
                 {
