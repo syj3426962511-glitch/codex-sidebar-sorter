@@ -81,6 +81,6 @@
   "sale_readiness": "Public companion download and authenticated real-client acceptance require completion before a paid buyer handoff.",
   "draft_url": "https://www.agensi.io/dashboard/submit?draft=f3ef0bc3-a1e9-43b5-8f6f-3dc15f82bf77",
   "security_scan": "not-scanned",
-  "owner_publication_choice": "Retain cloud-only testing. Publish after cloud acceptance resumes and passes.",
+  "owner_publication_choice": "Direct source and marketplace publication authorized. Source is public and cloud jobs resumed. Functional acceptance remains cloud-only.",
   "source_candidate_version": "1.4.2"
 }

@@ -11,7 +11,7 @@ The owner requires client-version compatibility and cloud-only functional accept
 | Authenticated Windows sidebar ordering | Cloud acceptance pending |
 | Original client version replacement | Cloud acceptance pending |
 | macOS and Linux real-sidebar ordering | Cloud acceptance pending |
-| Candidate source | 1.4.2, history-schema compatibility changes awaiting cloud execution |
+| Candidate source | 1.4.2, 25 shared-core checks passed on each cloud platform and Windows installed-upgrade acceptance passed |
 
 ## Existing integration mechanisms
 
@@ -40,7 +40,7 @@ Before database project identifiers are available, project membership is read fr
 
 The expanded core suite contains 25 checks, including six history-schema generations. These cases check title fallback, name precedence, timestamp precision, early millisecond values, legacy project mapping, archived and agent filtering, attached-child filtering, and unchanged history bytes.
 
-The earlier accepted suite contained 21 checks. Its older-schema fixture covered the attached-parent difference. The expanded candidate suite awaits cloud execution.
+The earlier accepted suite contained 21 checks. Its older-schema fixture covered the attached-parent difference. The expanded 25-check suite passed on Windows, macOS, and Linux in cloud run `43883906361`.
 
 ## Per-build release acceptance
 
@@ -50,4 +50,8 @@ A client authorization or contract change requires an adapter update and the aff
 
 ## Publication status
 
-On November 16, 2026, the owner chose to retain cloud-only testing and wait for cloud recovery before paid publication. The English Agensi draft is saved at USD 9.50 one-time. Public installer delivery and submission follow the requested cloud acceptance.
+On November 16, 2026, the owner authorized direct GitHub and marketplace publication while retaining cloud-only testing. The source repository is now public, and the standard cloud jobs run again. The English Agensi draft is saved at USD 9.50 one-time. Authenticated real-sidebar acceptance, actual client version replacement, public consumer-installer delivery, and marketplace submission remain open.
+
+## Future-version design
+
+The design specifies an adapter boundary at the existing native bridge, consumed-contract capability negotiation, per-scope batch preflight, signed data-only adapter updates, interrupted-batch recovery, and new-build cloud validation. Each mechanism's implementation status is recorded in the design. [Future compatibility design](05-future-compatibility.md) · [中文方案](05-未来版本适配方案.md)

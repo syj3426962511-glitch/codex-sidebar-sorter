@@ -2,7 +2,15 @@
 
 Updated on November 16, 2026.
 
-## Accepted Windows package
+## Current 1.4.2 cloud candidate
+
+The 1.4.2 candidate from `23f9d67` passed 25 core checks on each cloud platform, all three desktop jobs, and Windows installed-upgrade acceptance. Its Windows installer is 44,319,278 bytes. The six history-schema cases cover the fields consumed from historical data generations.
+
+Windows installed acceptance used the production executable with fictional native-protocol fixtures. It covered the normal entry point, custom Unicode paths, bundled runtime and source, automatic sorting, older preferences, closing the window while the worker keeps sorting, upgrades, uninstall, and retained preferences. An approximately ten-second idle sample recorded 76,578,816 working-set bytes, 187.5 ms accumulated CPU time, and zero sorting writes.
+
+[Core acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43883906361) · [Desktop acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43883914547) · [Windows installed-upgrade acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43883922669)
+
+## Locally installed Windows package
 
 The accepted installer is `CodexSidebarSorter-1.4.1-Windows-Setup.exe`, built from `036f029`, with a size of 44,062,557 bytes.
 
@@ -41,7 +49,7 @@ Linux returned its tool catalog. Signed-out list calls timed out, and signed-in 
 - macOS and Linux consumer installers with installation and upgrade acceptance.
 - Public installer delivery and a verified Agensi buyer path.
 
-GitHub billing prevented the latest Windows and Linux follow-up jobs from starting. The additional Mac rendering run passed. The accepted Windows package above remains the current installer evidence.
+Cloud execution resumed after source publication. The current candidate results appear above. The locally installed companion remains 1.4.1, and local functional tests remain outside the owner's test scope.
 
 ## Marketplace status
 

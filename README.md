@@ -4,7 +4,7 @@ A standalone desktop companion for organizing Codex projects and chats. Preview 
 
 ![Codex Sidebar Sorter in English](docs/assets/sidebar-sorter-english.png)
 
-[简体中文](README.zh-CN.md) · [User guide](docs/03-product-guide.md) · [Validation results](docs/02-validation.md) · [Agensi submission](agensi/README.md)
+[简体中文](README.zh-CN.md) · [User guide](docs/03-product-guide.md) · [Validation results](docs/02-validation.md) · [Future compatibility design](docs/05-future-compatibility.md) · [Agensi submission](agensi/README.md)
 
 ## Features
 
@@ -49,15 +49,15 @@ Choosing a custom rule, moving rows, or resetting the preview pauses automatic n
 
 Close the companion window to keep its worker and tray running. Use **Open Sidebar Sorter** in the tray to reopen the window and **Exit** to stop the companion.
 
-The current repository is private, and a public installer download is pending. Public download access is part of the remaining marketplace delivery work.
+The source repository is public. Public consumer-installer delivery and marketplace submission are tracked with the real-client acceptance work.
 
 ## Compatibility and verification
 
 | Component | Verified scope |
 | --- | --- |
-| Windows x64, macOS ARM64, Linux x64 shared core | 21 checks per platform |
+| Windows x64, macOS ARM64, Linux x64 shared core | 25 checks per platform in 1.4.2, including six historical data-schema generations |
 | Multilingual desktop and automatic worker | Twelve languages, 30 fictional projects, 360 fictional chats |
-| Windows 1.4.1 installer | Custom Unicode paths, bundled runtime, running upgrades, retained settings, full exit and reopening, uninstall |
+| Windows 1.4.2 installer | Cloud installed-upgrade acceptance passed, including custom paths, bundled runtime, retained settings, full exit and reopening, uninstall |
 | Official Windows client 26.1111.2228.0 | Window close, full exit, reopening, worker independence, update check, and unchanged client files |
 | Official macOS client | Accessibility permission granted and 218 actual login-screen controls read. Signed-in sidebar reordering is pending |
 | Official Linux client | Tool catalog read. Signed-in sidebar reordering is pending |
@@ -68,11 +68,11 @@ The Windows official-client lifecycle run used a signed-out cloud profile. Authe
 
 Native project ordering covers unpinned projects in the default Projects section. Chat ordering covers supported Codex project chats and chats in pinned or custom sections. ChatGPT project-chat ordering, independent alphabetical Recents ordering, and pinned project placement require additional client support.
 
-The latest Windows/Linux follow-up runs were prevented from starting by the GitHub account billing check. The last fully accepted Windows installer corresponds to `036f029`, version `1.4.1`.
+Cloud execution resumed after the repository became public. The last locally installed Windows companion remains `036f029`, version `1.4.1`. Local functional testing remains outside the owner's authorized test scope.
 
-The source now contains a 1.4.2 compatibility candidate that detects historical name, timestamp, project, agent-path, and attached-parent fields. Its expanded 25-check suite awaits cloud execution. Client-build support is tracked in the [compatibility record](docs/04-compatibility.md).
+The 1.4.2 candidate detects historical name, timestamp, project, agent-path, and attached-parent fields. Its expanded 25-check suite passed on all three cloud platforms. Client-build support is tracked in the compatibility record. The future-version design specifies consumed-contract matching, independent adapters, signed adapter updates, interrupted-batch recovery, and per-build cloud acceptance. These additional mechanisms have their implementation status recorded in the design. [Compatibility record](docs/04-compatibility.md) · [Future compatibility design](docs/05-future-compatibility.md)
 
-[Shared core results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43866519115) · [Desktop results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43867351898) · [Windows installer results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43867345247) · [Windows client lifecycle](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43854854495)
+[Shared core results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43883906361) · [Desktop results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43883914547) · [Windows installer results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43883922669) · [Windows client lifecycle](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43854854495)
 
 ## Architecture
 
