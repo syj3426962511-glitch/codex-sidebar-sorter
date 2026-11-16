@@ -42,7 +42,8 @@ internal sealed partial class MainForm
     public async Task VerifyMultilingualUiAsync(FixtureNativeServer server, JsonObject report, string output)
     {
         while (busy) await Task.Delay(30);
-        ClientSize = new Size(1480, 980);
+        Size normalClientSize = new(Math.Min(1008, ClientSize.Width), Math.Min(730, ClientSize.Height));
+        ClientSize = normalClientSize;
         PerformLayout();
         RequireUi(workspace != null && workspace.Problems.Count == 0, "The UI must load the fixture through the production native bridge.");
         RequireUi(workspace!.Groups.Count == 30 && workspace.ChatCount == 360, "Complete project/chat counts with attached records excluded.");
@@ -71,7 +72,7 @@ internal sealed partial class MainForm
         RequireUi(TextRenderer.MeasureText(bottom.Text, bottom.Font).Width < bottom.ClientSize.Width, "The compact move button caption fits.");
         SaveCloudUi(Path.Combine(output, "ui-english-compact.png"));
         report["compactEnglishLayout"] = true;
-        ClientSize = new Size(1480, 980);
+        ClientSize = normalClientSize;
         PerformLayout();
         projectOrder.SelectedIndex = 2;
         chatOrder.SelectedIndex = 5;

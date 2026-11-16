@@ -38,8 +38,10 @@ chinesesimp.DialogFontSize=11
 [CustomMessages]
 english.DesktopShortcut=Create a desktop shortcut
 english.OpenApplication=Open Codex Sidebar Sorter
+english.ExitBeforeUninstall=The sorting operation is still finishing. Retry uninstall after it completes.
 chinesesimp.DesktopShortcut=创建桌面快捷方式
 chinesesimp.OpenApplication=打开聊天排序工具
+chinesesimp.ExitBeforeUninstall=排序操作正在收尾，请完成后再次卸载。
 
 [Dirs]
 Name: "{app}"; Permissions: everyone-full
@@ -58,3 +60,21 @@ Name: "{autoprograms}\Codex Sidebar Sorter"; Filename: "{app}\聊天排序工具
 
 [Run]
 Filename: "{app}\聊天排序工具.exe"; Description: "{cm:OpenApplication}"; Flags: nowait postinstall skipifsilent
+
+[Code]
+function InitializeUninstall(): Boolean;
+var
+  BackgroundPath: String;
+  ExitCode: Integer;
+begin
+  BackgroundPath := ExpandConstant('{app}\聊天排序后台.exe');
+  Result := True;
+  if FileExists(BackgroundPath) then
+  begin
+    Result := Exec(BackgroundPath, '--exit', '', SW_HIDE, ewWaitUntilTerminated, ExitCode);
+    if Result then
+      Result := ExitCode = 0;
+    if not Result then
+      MsgBox(CustomMessage('ExitBeforeUninstall'), mbError, MB_OK);
+  end;
+end;

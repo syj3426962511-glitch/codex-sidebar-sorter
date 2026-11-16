@@ -209,7 +209,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
     std::wstring argument = argumentCount > 1 ? arguments[1] : L"";
     LocalFree(arguments);
     BOOL inheritedJob = FALSE;
-    if (IsProcessInJob(GetCurrentProcess(), nullptr, &inheritedJob) && inheritedJob) {
+    if (IsProcessInJob(GetCurrentProcess(), nullptr, &inheritedJob) && inheritedJob && argument != L"--exit") {
         std::wstring command = L"\"" + managedProgram + L"\"";
         if (argument == L"--background" || argument == L"--exit") command += L" " + argument;
         STARTUPINFOW startup = {};
@@ -233,12 +233,18 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
     bool existing = GetLastError() == ERROR_ALREADY_EXISTS;
     if (!openEvent || !exitEvent || !singleton) return 1;
     if (existing) {
-        if (argument == L"--exit") SetEvent(exitEvent);
+        int exitCode = 0;
+        if (argument == L"--exit") {
+            SetEvent(exitEvent);
+            DWORD stopped = WaitForSingleObject(singleton, 45000);
+            if (stopped == WAIT_OBJECT_0 || stopped == WAIT_ABANDONED) ReleaseMutex(singleton);
+            else exitCode = 1;
+        }
         else if (argument != L"--background") SetEvent(openEvent);
         CloseHandle(singleton);
         CloseHandle(exitEvent);
         CloseHandle(openEvent);
-        return 0;
+        return exitCode;
     }
     if (argument == L"--exit") {
         ReleaseMutex(singleton);
