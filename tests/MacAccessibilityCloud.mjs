@@ -67,6 +67,7 @@ async function trustCreatedFixtureFolder() {
   const allowed = ['Zulu AX background project', 'Alpha AX background project'].map(name => path.join(process.env.HOME, 'Documents', 'ChatGPT', name));
   const directory = allowed.find(candidate => state.nodes.some(node => node.AXValue === candidate));
   if (!directory) throw new Error('The folder trust prompt belongs to another directory.');
+  fs.mkdirSync(directory, {recursive:true});
   const files = fs.readdirSync(directory);
   if (files.some(name => name !== '.git')) throw new Error('The new fixture folder contains files that require inspection.');
   const result = activateAccessibilityButton(trust, 'fixture-trust-submitted');
@@ -77,7 +78,8 @@ async function trustCreatedFixtureFolder() {
 async function createProjectWithAccessibility(name, sequence) {
   const label = 'fixture-' + sequence;
   const before = inspect(label + '-before');
-  const menu = before.nodes.find(node => node.AXRole === 'AXMenuItem' && node.AXTitle === 'New Project…' && node.actions?.includes('AXPress'));
+  const menu = before.nodes.find(node => node.AXRole === 'AXButton' && node.AXTitle === 'Add new project' && node.actions?.includes('AXPress'))
+    ?? before.nodes.find(node => node.AXRole === 'AXMenuItem' && node.AXTitle === 'New Project…' && node.actions?.includes('AXPress'));
   if (!menu) throw new Error('The native New Project command is unavailable.');
   const opened = inspect(label + '-dialog', 'action', menu.path, 'AXPress');
   const field = opened.nodes.find(node => node.AXRole === 'AXTextField' && node.AXTitle === 'Project name' && node.writable?.includes('AXValue'));
