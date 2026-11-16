@@ -7,7 +7,7 @@ The owner requires client-version compatibility and cloud-only functional accept
 | Item | Current evidence |
 | --- | --- |
 | Current public preview installer | Windows 1.4.2 from `43ee877`, cloud installed-upgrade acceptance passed |
-| Locally installed companion | Windows 1.4.1 from `036f029` |
+| Locally installed companion | Windows 1.4.2 from `43ee877`, authorized upgrade completed |
 | Official Windows client build | `26.1111.2228.0` lifecycle run |
 | Authenticated Windows sidebar ordering | Cloud acceptance pending |
 | Original client version replacement | Cloud acceptance pending |

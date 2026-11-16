@@ -68,7 +68,7 @@ The Windows official-client lifecycle run used a signed-out cloud profile. Authe
 
 Native project ordering covers unpinned projects in the default Projects section. Chat ordering covers supported Codex project chats and chats in pinned or custom sections. ChatGPT project-chat ordering, independent alphabetical Recents ordering, and pinned project placement require additional client support.
 
-Cloud execution resumed after the repository became public. The last locally installed Windows companion remains `036f029`, version `1.4.1`. Local functional testing remains outside the owner's authorized test scope.
+Cloud execution resumed after the repository became public. The authorized local installation has been upgraded to the cloud-accepted 1.4.2 preview. Functional testing continues on disposable cloud hosts.
 
 The 1.4.2 candidate detects historical name, timestamp, project, agent-path, and attached-parent fields. Its expanded 26-check suite passed on all three cloud platforms. Grouped project and chat submissions preflight required operation names before the first write. Client-build support is tracked in the compatibility record. The future-version design specifies consumed-contract matching, independent adapters, signed adapter updates, interrupted-batch recovery, and per-build cloud acceptance. These additional mechanisms have their implementation status recorded in the design. [Compatibility record](docs/04-compatibility.md) · [Future compatibility design](docs/05-future-compatibility.md)
 

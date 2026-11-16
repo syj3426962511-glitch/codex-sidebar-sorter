@@ -18,7 +18,7 @@ Use the existing application logo and the English, Japanese, and Arabic desktop 
 
 Agensi delivers the skill through MCP. The Windows companion installer is supplied through a verified external download. The paid listing is scoped to the agent workflow for the Windows companion.
 
-The source repository and Windows 1.4.2 preview installer are public. The preview passed 26 core checks on each cloud platform, all three desktop jobs, and Windows installed-upgrade acceptance. Its unauthenticated download returned HTTP 200 and the expected 44,327,746-byte content length. The locally installed Windows companion remains version 1.4.1 from `036f029`.
+The source repository and Windows 1.4.2 preview installer are public. The preview passed 26 core checks on each cloud platform, all three desktop jobs, and Windows installed-upgrade acceptance. Its unauthenticated download returned HTTP 200 and the expected 44,327,746-byte content length. The authorized local installation has been upgraded to the same Windows preview.
 
 The paid purchase delivers the agent skill through Agensi. The companion installer is supplied at no additional charge. The product page describes the Windows preview's current evidence and pending authenticated real-sidebar and client-version-replacement acceptance. [Windows preview](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-preview)
 

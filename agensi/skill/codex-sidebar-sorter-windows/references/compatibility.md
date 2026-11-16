@@ -12,7 +12,9 @@ Windows installed acceptance used the production executable with fictional nativ
 
 The public Windows preview download returned HTTP 200 without authentication and the expected 44,327,746-byte content length. [Windows preview release](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-preview)
 
-## Locally installed Windows package
+The authorized local upgrade to `1.4.2+43ee877` completed with installer exit code 0 and retained companion settings. The existing Codex main window process remained alive. Local checks covered installed files and process state. Functional tests run in cloud hosts.
+
+## Earlier Windows 1.4.1 package
 
 The accepted installer is `CodexSidebarSorter-1.4.1-Windows-Setup.exe`, built from `036f029`, with a size of 44,062,557 bytes.
 
@@ -51,7 +53,7 @@ Linux returned its tool catalog. Signed-out list calls timed out, and signed-in 
 - macOS and Linux consumer installers with installation and upgrade acceptance.
 - Public installer delivery and a verified Agensi buyer path.
 
-Cloud execution resumed after source publication. The current candidate results appear above. The locally installed companion remains 1.4.1, and local functional tests remain outside the owner's test scope.
+Cloud execution resumed after source publication. The current candidate results appear above. The locally installed companion is now 1.4.2, and functional tests continue on disposable cloud hosts.
 
 ## Marketplace status
 
