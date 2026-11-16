@@ -3,6 +3,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {spawn, execFileSync} from 'node:child_process';
 import {createRequire} from 'node:module';
+import readline from 'node:readline';
 
 if (process.env.GITHUB_ACTIONS !== 'true' || process.platform !== 'darwin') {
   throw new Error('Use the disposable cloud Mac.');
@@ -29,6 +30,37 @@ const report = {mcpConfigRegistered:true, signedDesktopLaunched:false, nativeCat
 const delay = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 let browser;
 let client;
+let backend;
+
+async function startBundledMcp() {
+  const helper = path.join(app, 'Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex');
+  const log = fs.openSync(path.join(output, 'backend.log'), 'a');
+  backend = spawn(helper, ['app-server'], {env:{...process.env, CODEX_HOME:codexHome}, stdio:['pipe','pipe',log]});
+  const pending = new Map();
+  let nextId = 0;
+  readline.createInterface({input:backend.stdout}).on('line', line => {
+    const message = JSON.parse(line);
+    const waiter = pending.get(message.id);
+    if (!waiter) return;
+    pending.delete(message.id);
+    message.error ? waiter.reject(new Error(JSON.stringify(message.error))) : waiter.resolve(message.result);
+  });
+  const request = async (method, params) => {
+    const id = ++nextId;
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => { pending.delete(id); reject(new Error(method + ' timed out.')); }, 30000);
+      pending.set(id, {
+        resolve:value => {clearTimeout(timer); resolve(value);},
+        reject:error => {clearTimeout(timer); reject(error);},
+      });
+      backend.stdin.write(JSON.stringify({id, method, params}) + '\n');
+    });
+  };
+  await request('initialize', {clientInfo:{name:'sorter-mcp-cloud', version:'0.1.0'}, capabilities:{experimentalApi:true}});
+  backend.stdin.write(JSON.stringify({method:'initialized'}) + '\n');
+  const result = await request('thread/start', {cwd:root, ephemeral:true, approvalPolicy:'never', sandbox:'read-only'});
+  report.bundledMcpStatus = await request('mcpServerStatus/list', {threadId:result.thread.id, serverName:'sidebar_sorter_cloud_probe', detail:'toolsAndAuthOnly'});
+}
 
 async function snapshot(page, label) {
   await page.screenshot({path:path.join(output, label + '.png')});
@@ -64,6 +96,7 @@ try {
   if (await mcp.count()) await mcp.first().click();
   await delay(1500);
   await snapshot(page, '03-mcp-settings');
+  await startBundledMcp();
   for (let attempt = 0; attempt < 30; attempt++) {
     const files = fs.readdirSync(receipts).filter(name => name.endsWith('.json'));
     report.bridges = files.map(name => JSON.parse(fs.readFileSync(path.join(receipts, name), 'utf8')));
@@ -72,16 +105,18 @@ try {
   }
   report.nativeCatalogAccessible = report.bridges?.some(bridge => bridge.nativeCatalogAccessible) ?? false;
   report.mcpInitialized = report.bridges?.some(bridge => bridge.mcpInitialized) ?? false;
+  report.desktopOwnedBridgeVerified = report.bridges?.some(bridge => bridge.nativeCatalogAccessible && bridge.ancestry?.some(ancestor => ancestor.pid === client.pid)) ?? false;
   await snapshot(page, '04-bridge-result');
 } catch (error) {
   report.error = String(error.stack ?? error);
 } finally {
   if (browser) await browser.close();
+  if (backend && backend.exitCode === null) backend.kill('SIGTERM');
   if (client && client.exitCode === null) client.kill('SIGTERM');
   report.clientFilesUnchanged = originals.executable === hash(executable) && originals.archive === hash(archive);
   fs.writeFileSync(path.join(output, 'results.json'), JSON.stringify(report, null, 2));
   execFileSync(python, ['tests/read_mac_transport.py', archive, path.join(output, 'shipping-mcp-contract.json'), '--mcp']);
 }
-console.log(JSON.stringify({mcpInitialized:report.mcpInitialized, nativeCatalogAccessible:report.nativeCatalogAccessible, clientFilesUnchanged:report.clientFilesUnchanged, error:report.error}));
+console.log(JSON.stringify({mcpInitialized:report.mcpInitialized, nativeCatalogAccessible:report.nativeCatalogAccessible, desktopOwnedBridgeVerified:report.desktopOwnedBridgeVerified, clientFilesUnchanged:report.clientFilesUnchanged, error:report.error}));
 process.exitCode = report.nativeCatalogAccessible && report.clientFilesUnchanged ? 0 : 1;
 
