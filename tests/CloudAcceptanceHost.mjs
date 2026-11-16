@@ -8,6 +8,8 @@ const [app, python] = process.argv.slice(2);
 const require = createRequire(path.join(process.env.RUNNER_TEMP, 'sorter-test-tools/package.json'));
 const {DefaultArtifactClient} = require('@actions/artifact');
 const artifacts = new DefaultArtifactClient();
+const driver = process.env.SORTER_CLOUD_DRIVER ?? 'tests/McpCloudAcceptance.mjs';
+const artifactPrefix = process.env.SORTER_CLOUD_ARTIFACT_PREFIX ?? 'mcp-live';
 const delay = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 const git = args => execFileSync('git', args, {encoding:'utf8'}).trim();
 let handledCommit;
@@ -30,12 +32,12 @@ while (Date.now() < deadline) {
   }
   git(['checkout', '--quiet', '--detach', commit]);
   handledCommit = commit;
-  const label = 'mcp-live-' + String(++attempt).padStart(2, '0');
+  const label = artifactPrefix + '-' + String(++attempt).padStart(2, '0');
   const output = path.resolve('artifacts', label);
   fs.mkdirSync(output, {recursive:true});
   console.log('Testing cloud diagnostic revision ' + commit);
   const exitCode = await new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, ['tests/McpCloudAcceptance.mjs', app, python], {
+    const child = spawn(process.execPath, [driver, app, python], {
       env:{...process.env, SORTER_ACCEPTANCE_OUTPUT:output}, stdio:'inherit',
     });
     child.once('error', reject);

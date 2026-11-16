@@ -1,0 +1,61 @@
+name: Mac background Accessibility acceptance
+on:
+  workflow_dispatch:
+    inputs:
+      cloud_login:
+        type: boolean
+        default: false
+        description: Request a fresh official device authorization for this disposable cloud session
+permissions:
+  contents: read
+jobs:
+  macos:
+    runs-on: macos-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install independent cloud diagnostics
+        run: npm install --prefix "$RUNNER_TEMP/sorter-test-tools" --no-audit --no-fund playwright @actions/artifact@2.3.2
+      - name: Install the original official Mac client
+        run: |
+          curl --fail --location --retry 2 --max-time 240 https://persistent.oaistatic.com/codex-app-prod/Codex.dmg -o "$RUNNER_TEMP/sorter-ax.dmg"
+          mkdir -p "$RUNNER_TEMP/sorter-ax-mount"
+          hdiutil attach "$RUNNER_TEMP/sorter-ax.dmg" -nobrowse -readonly -mountpoint "$RUNNER_TEMP/sorter-ax-mount"
+          app=$(find "$RUNNER_TEMP/sorter-ax-mount" -maxdepth 1 -name '*.app' -print -quit)
+          ditto "$app" "$RUNNER_TEMP/SorterAXOfficial.app"
+          hdiutil detach "$RUNNER_TEMP/sorter-ax-mount"
+          codesign --verify --deep --strict "$RUNNER_TEMP/SorterAXOfficial.app"
+      - name: Prepare cloud-only Accessibility authorization
+        run: python tests/PrepareMacAccessibility.py
+      - name: Inspect the actual client Accessibility interface
+        if: ${{ !inputs.cloud_login }}
+        run: node tests/MacAccessibilityCloud.mjs "$RUNNER_TEMP/SorterAXOfficial.app"
+      - name: Issue a fresh official device authorization
+        if: inputs.cloud_login
+        run: python tests/CloudDeviceLogin.py start "$RUNNER_TEMP/SorterAXOfficial.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex"
+      - uses: actions/upload-artifact@v4
+        if: inputs.cloud_login
+        with:
+          name: ax-login-macos
+          path: artifacts/login/public-login.json
+          retention-days: 1
+      - name: Wait for official device authorization
+        if: inputs.cloud_login
+        run: python tests/CloudDeviceLogin.py wait
+      - name: Retain the signed-in cloud session for actual sidebar acceptance
+        if: inputs.cloud_login
+        env:
+          SORTER_CLOUD_DRIVER: tests/MacAccessibilityCloud.mjs
+          SORTER_CLOUD_ARTIFACT_PREFIX: ax-live
+        run: node tests/CloudAcceptanceHost.mjs "$RUNNER_TEMP/SorterAXOfficial.app" "$(command -v python)"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mac-accessibility-probe
+          path: artifacts/mac-accessibility/*
