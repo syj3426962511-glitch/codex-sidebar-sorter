@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO.Pipes;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -9,6 +10,15 @@ namespace SidebarSorter;
 
 internal static class InstalledDesktopAcceptance
 {
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern IntPtr OpenProcess(uint access, bool inheritHandle, int processId);
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern bool QueryFullProcessImageName(IntPtr process, uint flags, StringBuilder path, ref int size);
+
+    [DllImport("kernel32.dll")]
+    private static extern bool CloseHandle(IntPtr handle);
+
     private static async Task<int> Main(string[] arguments)
     {
         if (Environment.GetEnvironmentVariable("GITHUB_ACTIONS") != "true" || !OperatingSystem.IsWindows())
@@ -124,7 +134,18 @@ internal static class InstalledDesktopAcceptance
         foreach (Process process in Process.GetProcessesByName(Path.GetFileNameWithoutExtension(program)))
         {
             using (process)
-                if (string.Equals(process.MainModule?.FileName, program, StringComparison.OrdinalIgnoreCase)) return true;
+            {
+                IntPtr handle = OpenProcess(0x1000, false, process.Id);
+                if (handle == IntPtr.Zero) continue;
+                try
+                {
+                    int size = 32768;
+                    var image = new StringBuilder(size);
+                    if (QueryFullProcessImageName(handle, 0, image, ref size)
+                        && string.Equals(image.ToString(), program, StringComparison.OrdinalIgnoreCase)) return true;
+                }
+                finally { CloseHandle(handle); }
+            }
         }
         return false;
     }
