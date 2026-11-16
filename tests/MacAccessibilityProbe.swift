@@ -94,6 +94,13 @@ if operation == "enable" {
         report["setStatus"] = AXUIElementSetAttributeValue(target, args[5] as CFString, value).rawValue
     } else { report["error"] = "The accessibility path changed before the edit." }
     Thread.sleep(forTimeInterval: 1)
+} else if operation == "key" && args.count >= 5, let code = UInt16(args[4]) {
+    let down = CGEvent(keyboardEventSource: nil, virtualKey: code, keyDown: true)
+    let up = CGEvent(keyboardEventSource: nil, virtualKey: code, keyDown: false)
+    down?.postToPid(pid)
+    up?.postToPid(pid)
+    report["targetedKeyCode"] = code
+    Thread.sleep(forTimeInterval: 1)
 }
 inspect(root, "", 0)
 report["nodes"] = nodes

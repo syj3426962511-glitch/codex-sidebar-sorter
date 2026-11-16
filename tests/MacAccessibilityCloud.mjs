@@ -8,6 +8,7 @@ if (process.env.GITHUB_ACTIONS !== 'true' || process.platform !== 'darwin') {
   throw new Error('Use the disposable cloud Mac.');
 }
 const [app] = process.argv.slice(2);
+const python = process.argv[3] ?? 'python3';
 const output = path.resolve(process.env.SORTER_ACCEPTANCE_OUTPUT ?? 'artifacts/mac-accessibility');
 fs.mkdirSync(output, {recursive:true});
 const root = path.join(process.env.RUNNER_TEMP, 'sorter-mcp-acceptance');
@@ -43,6 +44,11 @@ async function activePage() {
 }
 
 try {
+  if (fs.existsSync(path.join(codexHome, 'auth.json'))) {
+    const cli = path.join(app, 'Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex');
+    execFileSync(python, ['tests/PrepareMacSidebarFixture.py', cli], {timeout:180000});
+    report.fixtureCreated = true;
+  }
   const log = fs.openSync(path.join(output, 'client.log'), 'a');
   client = spawn(executable, ['--user-data-dir=' + profile, '--remote-debugging-port=9441'], {
     env:{...process.env, CODEX_HOME:codexHome}, stdio:['ignore',log,log],
