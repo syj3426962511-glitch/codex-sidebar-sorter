@@ -17,6 +17,8 @@ excerpts = []
 terms = ("native-pipe-peer-authorizer", "dynamic_app_tools_peer_authorization_failed", "authorizeNativePipePeer", "native pipe peer authorization")
 if "--ordering" in sys.argv[3:]:
     terms = ("sidebar-project-thread-orders", "thread/section/move", "project/move", "project/list", "section_position")
+if "--mcp" in sys.argv[3:]:
+    terms = ("mcpServerStatus/list", "sendMessageFromView", "app-server-request", "electronBridge", "native-pipe-peer-authorizer", "untrusted-process-ancestry")
 
 def visit(node, prefix=""):
     for name, entry in node.get("files", {}).items():
