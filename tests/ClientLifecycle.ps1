@@ -71,7 +71,9 @@ function Quit-Client($Client) {
     $quit = Wait-Condition {
         $root.FindFirst([Windows.Automation.TreeScope]::Descendants,[Windows.Automation.OrCondition]::new(
             [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::NameProperty,'Quit Codex'),
-            [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::NameProperty,'Quit')))
+            [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::NameProperty,'Quit'),
+            [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::NameProperty,'Exit'),
+            [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::NameProperty,'Exit Codex')))
     } 'The native Codex Quit menu did not open.' 10
     $report.nativeQuitMenuLabel = $quit.Current.Name
     $quit.GetCurrentPattern([Windows.Automation.InvokePattern]::Pattern).Invoke()
