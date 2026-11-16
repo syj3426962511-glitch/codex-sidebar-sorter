@@ -127,6 +127,13 @@ try {
   report.accessibilityTrusted = enabled.trusted;
   report.manualAccessibilityStatus = enabled.manualAccessibilityStatus;
   report.enhancedAccessibilityStatus = enabled.enhancedAccessibilityStatus;
+  if (enabled.before.frontmostBundle === 'com.apple.UserNotificationCenter') {
+    const file = path.join(output, '01b-system-dialog.json');
+    execFileSync(helper, [String(enabled.before.frontmostPid), file, 'inspect'], {timeout:60000});
+    const systemDialog = JSON.parse(fs.readFileSync(file, 'utf8'));
+    report.systemDialog = systemDialog.nodes.filter(node => node.AXTitle || node.AXValue || node.AXDescription)
+      .map(node => ({role:node.AXRole,title:node.AXTitle,value:node.AXValue,description:node.AXDescription}));
+  }
   await readCurrentPage(page => page.screenshot({path:path.join(output, '02-client-started.png')}));
   report.page = await readCurrentPage(page => page.evaluate(() => ({
     text:document.body?.innerText?.slice(0,12000),
