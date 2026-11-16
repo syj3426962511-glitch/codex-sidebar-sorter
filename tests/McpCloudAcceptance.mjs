@@ -10,7 +10,7 @@ if (process.env.GITHUB_ACTIONS !== 'true' || process.platform !== 'darwin') {
 
 const [app, python] = process.argv.slice(2);
 const root = path.join(process.env.RUNNER_TEMP, 'sorter-mcp-acceptance');
-const output = path.resolve('artifacts/mcp');
+const output = path.resolve(process.env.SORTER_ACCEPTANCE_OUTPUT ?? 'artifacts/mcp');
 const codexHome = path.join(root, 'codex-home');
 const profile = path.join(root, 'desktop-profile');
 const receipts = path.join(output, 'bridge');
@@ -82,15 +82,21 @@ try {
   }
   if (!browser) throw new Error('The official desktop diagnostic port did not start.');
   report.signedDesktopLaunched = true;
+  await delay(5000);
   let page;
   for (let attempt = 0; attempt < 60; attempt++) {
-    page = browser.contexts()[0].pages().find(page => page.url().startsWith('app://'));
+    page = browser.contexts()[0].pages().find(page => !page.isClosed() && page.url() === 'app://-/index.html');
     if (page) break;
     await delay(500);
   }
   if (!page) throw new Error('The official desktop page is unavailable.');
   await page.waitForLoadState('domcontentloaded');
-  await delay(3000);
+  await delay(2000);
+  if (page.isClosed()) {
+    page = browser.contexts()[0].pages().find(page => !page.isClosed() && page.url() === 'app://-/index.html');
+    if (!page) throw new Error('The signed-in desktop replacement page is unavailable.');
+    await page.waitForLoadState('domcontentloaded');
+  }
   await snapshot(page, '01-client-started');
   const settings = page.getByRole('button', {name:/settings|设置/i});
   if (await settings.count()) await settings.first().click();
@@ -117,7 +123,10 @@ try {
   report.error = String(error.stack ?? error);
 } finally {
   if (browser) await browser.close();
-  if (client && client.exitCode === null) client.kill('SIGTERM');
+  if (client && client.exitCode === null) {
+    client.kill('SIGTERM');
+    await Promise.race([new Promise(resolve => client.once('exit', resolve)), delay(5000)]);
+  }
   report.clientFilesUnchanged = originals.executable === hash(executable) && originals.archive === hash(archive);
   fs.writeFileSync(path.join(output, 'results.json'), JSON.stringify(report, null, 2));
   execFileSync(python, ['tests/read_mac_transport.py', archive, path.join(output, 'shipping-mcp-contract.json'), '--mcp']);
