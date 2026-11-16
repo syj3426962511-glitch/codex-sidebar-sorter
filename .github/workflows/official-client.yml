@@ -1,0 +1,50 @@
+name: Official client lifecycle in cloud
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_run:
+        description: Successful candidate build run ID
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+jobs:
+  native-windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-candidate
+          run-id: ${{ inputs.candidate_run }}
+          github-token: ${{ github.token }}
+          path: artifacts/candidate
+      - name: Bootstrap the official Windows package manager
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Install-PackageProvider -Name NuGet -Force | Out-Null
+          Install-Module Microsoft.WinGet.Client -Scope CurrentUser -Repository PSGallery -Force | Out-Null
+          Import-Module Microsoft.WinGet.Client
+          Repair-WinGetPackageManager -AllUsers
+      - name: Install Codex through the official Microsoft Store source
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          winget install --id 9PLM9XGG6VKS --exact --source msstore --silent --accept-package-agreements --accept-source-agreements --disable-interactivity 2>&1 | Tee-Object -FilePath official-store-install.log
+          if ($LASTEXITCODE -ne 0) { throw 'The official Store installation failed.' }
+      - name: Verify normal client startup, shutdown, update check and tool removal
+        shell: powershell
+        run: |
+          $candidate = Get-ChildItem artifacts/candidate -Recurse -Filter 'CodexSidebarSorter-1.3.0-Setup.exe' | Select-Object -First 1
+          & ./tests/ClientLifecycle.ps1 -InstallerPath $candidate.FullName -OutputDirectory "$PWD/artifacts/client"
+          if ($LASTEXITCODE -ne 0) { throw 'Official client lifecycle acceptance failed.' }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: official-client-lifecycle
+          path: |
+            artifacts/client/*
+            official-store-install.log
