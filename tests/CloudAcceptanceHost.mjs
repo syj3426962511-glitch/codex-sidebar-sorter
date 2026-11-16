@@ -10,6 +10,7 @@ const {DefaultArtifactClient} = require('@actions/artifact');
 const artifacts = new DefaultArtifactClient();
 const driver = process.env.SORTER_CLOUD_DRIVER ?? 'tests/McpCloudAcceptance.mjs';
 const artifactPrefix = process.env.SORTER_CLOUD_ARTIFACT_PREFIX ?? 'mcp-live';
+const oneShot = process.env.SORTER_CLOUD_ONESHOT === 'true';
 const delay = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 const git = args => execFileSync('git', args, {encoding:'utf8'}).trim();
 let handledCommit;
@@ -47,6 +48,7 @@ while (Date.now() < deadline) {
   const result = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {error:'The diagnostic exited before writing a result.'};
   fs.writeFileSync(path.join(output, 'cloud-revision.json'), JSON.stringify({commit, exitCode}, null, 2));
   await artifacts.uploadArtifact(label, filesIn(output), output, {retentionDays:2});
+  if (oneShot) process.exit(exitCode ?? 1);
   if (result.fullAcceptancePassed === true) process.exit(0);
   console.log('Cloud credentials remain available for the next diagnostic revision.');
 }

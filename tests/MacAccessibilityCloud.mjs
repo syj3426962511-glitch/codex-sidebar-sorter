@@ -43,6 +43,16 @@ async function activePage() {
   throw new Error('The desktop page is unavailable.');
 }
 
+async function readCurrentPage(action) {
+  for (let attempt = 0; attempt < 10; attempt++) {
+    try { return await action(await activePage()); }
+    catch (error) {
+      if (!String(error).includes('closed') || !browser.isConnected() || attempt === 9) throw error;
+      await delay(500);
+    }
+  }
+}
+
 try {
   execFileSync(python, ['tests/PrepareMacAccessibility.py'], {timeout:120000});
   if (fs.existsSync(path.join(codexHome, 'auth.json'))) {
@@ -63,12 +73,11 @@ try {
   const enabled = inspect('01-accessibility-enabled', 'enable');
   report.accessibilityTrusted = enabled.trusted;
   report.manualAccessibilityStatus = enabled.manualAccessibilityStatus;
-  const page = await activePage();
-  await page.screenshot({path:path.join(output, '02-client-started.png')});
-  report.page = await page.evaluate(() => ({
+  await readCurrentPage(page => page.screenshot({path:path.join(output, '02-client-started.png')}));
+  report.page = await readCurrentPage(page => page.evaluate(() => ({
     text:document.body?.innerText?.slice(0,12000),
     buttons:[...document.querySelectorAll('button')].map(button => ({text:button.innerText, label:button.getAttribute('aria-label'), title:button.title})),
-  }));
+  })));
   const snapshot = inspect('03-accessibility-tree');
   report.accessibilityNodes = snapshot.nodes.length;
   report.accessibilityActions = [...new Set(snapshot.nodes.flatMap(node => node.actions ?? []))];
@@ -77,6 +86,7 @@ try {
 } catch (error) {
   report.error = String(error.stack ?? error);
 } finally {
+  report.clientProcess = client ? {pid:client.pid, exitCode:client.exitCode} : null;
   if (browser) await browser.close();
   if (client && client.exitCode === null) {
     client.kill('SIGTERM');

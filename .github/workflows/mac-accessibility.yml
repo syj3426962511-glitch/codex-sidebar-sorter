@@ -33,9 +33,6 @@ jobs:
           codesign --verify --deep --strict "$RUNNER_TEMP/SorterAXOfficial.app"
       - name: Prepare cloud-only Accessibility authorization
         run: python tests/PrepareMacAccessibility.py
-      - name: Inspect the actual client Accessibility interface
-        if: ${{ !inputs.cloud_login }}
-        run: node tests/MacAccessibilityCloud.mjs "$RUNNER_TEMP/SorterAXOfficial.app"
       - name: Issue a fresh official device authorization
         if: inputs.cloud_login
         run: python tests/CloudDeviceLogin.py start "$RUNNER_TEMP/SorterAXOfficial.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex"
@@ -48,14 +45,27 @@ jobs:
       - name: Wait for official device authorization
         if: inputs.cloud_login
         run: python tests/CloudDeviceLogin.py wait
-      - name: Retain the signed-in cloud session for actual sidebar acceptance
-        if: inputs.cloud_login
+      - name: Run the Accessibility host with the Actions artifact environment
+        uses: actions/github-script@v7
         env:
           SORTER_CLOUD_DRIVER: tests/MacAccessibilityCloud.mjs
           SORTER_CLOUD_ARTIFACT_PREFIX: ax-live
-        run: node tests/CloudAcceptanceHost.mjs "$RUNNER_TEMP/SorterAXOfficial.app" "$(command -v python)"
+          SORTER_CLOUD_ONESHOT: ${{ inputs.cloud_login && 'false' || 'true' }}
+          SORTER_CLOUD_APP: ${{ runner.temp }}/SorterAXOfficial.app
+        with:
+          script: |
+            const {spawn} = require('node:child_process');
+            const path = require('node:path');
+            const python = path.join(process.env.pythonLocation, 'bin', 'python');
+            await new Promise((resolve, reject) => {
+              const child = spawn(process.execPath, ['tests/CloudAcceptanceHost.mjs', process.env.SORTER_CLOUD_APP, python], {stdio:'inherit', env:process.env});
+              child.once('error', reject);
+              child.once('exit', code => code === 0 ? resolve() : reject(new Error('Cloud acceptance host exited with ' + code)));
+            });
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: mac-accessibility-probe
-          path: artifacts/mac-accessibility/*
+          path: |
+            artifacts/mac-accessibility/*
+            artifacts/ax-live-*/**
