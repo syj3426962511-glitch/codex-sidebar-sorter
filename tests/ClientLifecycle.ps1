@@ -28,6 +28,8 @@ public static class ClientWindowCapture {
     public struct Bounds { public int Left, Top, Right, Bottom; }
     [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr window, out Bounds bounds);
     [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr window, IntPtr dc, uint flags);
+    [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr window);
+    [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr window, int command);
 }
 '@
 
@@ -60,8 +62,9 @@ function Close-ClientWindow($Client) {
 }
 
 function Quit-Client($Client) {
-    $window = [Windows.Automation.AutomationElement]::FromHandle($Client.MainWindowHandle)
-    $window.SetFocus()
+    [void][ClientWindowCapture]::ShowWindow($Client.MainWindowHandle,9)
+    [void][ClientWindowCapture]::SetForegroundWindow($Client.MainWindowHandle)
+    Start-Sleep -Milliseconds 300
     [Windows.Forms.SendKeys]::SendWait('^q')
     if ($Client.WaitForExit(3000)) { $report.nativeQuitShortcut = 'Ctrl+Q'; return }
     $root = [Windows.Automation.AutomationElement]::RootElement
@@ -126,8 +129,9 @@ try {
     if (!$InstallerPath -and !$ProgramDirectory) { throw 'Supply an installer or a standalone candidate directory.' }
     if (!(Get-Process -Id $originalClientId -ErrorAction SilentlyContinue)) { throw 'Installing the sorter closed Codex.' }
     $launch = Start-Process -FilePath $program -ArgumentList '--background' -WindowStyle Hidden -PassThru
+    Start-Sleep -Seconds 2
     $backend = Wait-Condition {
-        Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq $background -and (!$ProgramDirectory -or $_.CommandLine -match '--background') }
+        Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq $background -and (!$ProgramDirectory -or $_.CommandLine -match '--background') } | Select-Object -Last 1
     } 'The independent background did not start.'
     $report.installPreservesOpenClient = $true
     Save-ClientWindow $client 'official-client-with-sorter.png'
