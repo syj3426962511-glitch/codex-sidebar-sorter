@@ -1,0 +1,6 @@
+artifacts/
+private/
+**/bin/
+**/obj/
+*.user
+*.log

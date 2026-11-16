@@ -1,0 +1,55 @@
+name: Standalone cloud validation
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  core:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Exercise production ordering, localization, settings, history and native frames
+        run: dotnet run --project tests/CoreTests.csproj --configuration Release -- src artifacts/core-results.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: core-${{ matrix.os }}
+          path: artifacts/core-results.json
+  windows:
+    needs: core
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build the self-contained Windows application
+        shell: pwsh
+        run: |
+          dotnet publish src/SidebarSorter.csproj --configuration Release --output artifacts/windows
+          if ($LASTEXITCODE -ne 0) { throw 'Application build failed.' }
+          & ./src/Background/构建后台.ps1 -OutputDirectory "$PWD/artifacts/windows" -BuildDirectory "$env:RUNNER_TEMP/sidebar-sorter-native"
+      - name: Install the cloud-only installer compiler
+        shell: pwsh
+        run: choco install innosetup --yes --no-progress
+      - name: Build the candidate installer
+        shell: pwsh
+        run: |
+          $compiler = Get-ChildItem 'C:/Program Files (x86)/Inno Setup */ISCC.exe' | Select-Object -Last 1
+          & $compiler.FullName packaging/setup.iss
+          if ($LASTEXITCODE -ne 0) { throw 'Installer build failed.' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-candidate
+          path: artifacts/installer/*.exe
