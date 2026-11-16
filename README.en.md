@@ -1,19 +1,31 @@
 # Codex Sidebar Sorter
 
-A standalone Windows application with Chinese and English UI that applies sorting to the original Codex sidebar. Projects and chats within projects both default to ascending name order. The installer bundles the runtime, icons and native tray host, with a selectable installation directory.
+A standalone chat sorter with Chinese and English UI and automatic ascending-name order. The current 1.4.0 candidate uses a shared desktop interface, a separate sorting worker, and platform-native tray menus.
 
-Version 1.3.0 is a private acceptance candidate. The downloadable release follows cloud acceptance.
+This project is undergoing private cloud acceptance. Windows, macOS and Linux packages and public sharing links follow successful real-client integration and lifecycle acceptance.
 
 [中文说明](README.md)
 
-## Install and use
+## Current acceptance
 
-1. Install and sign in to Codex Desktop on Windows x64, with at least one local chat.
-2. Download this project's installer from Releases and select an installation directory.
-3. Open the tool and choose English, 中文 or the system language.
-4. Review the project and chat preview, select the scope and sorting choices, then click Apply to sidebar.
+| Coverage | Current result |
+| --- | --- |
+| Windows x64, macOS ARM64 and Linux x64 UI and shared logic | Passed in the cloud with 30 fictional projects and 360 fictional chats |
+| Automatic sorting after additions and renaming | Passed against the protocol fixture |
+| Pinned and custom-section chats | Automatic sorting passed in the cloud |
+| Closing the UI, worker single instance, reopening and safe exit | Passed on all three platforms |
+| Official Windows client | Ordinary window closing and reopening verified, complete exit and post-update startup under acceptance |
+| Official macOS client | Independent processes rejected with `untrusted-process-ancestry` |
+| Official Linux client | Tool catalog readable, signed-out list requests timed out, real sorting pending |
+| 1.4.0 installers and public release | Pending complete acceptance |
 
-The installer contains the required .NET runtime and application resources. Reading and applying sidebar order use the running Codex client.
+Runtime and installation tests use disposable GitHub-hosted systems. Local work in this development round is limited to source editing, historical records and cloud receipts.
+
+## Behavior
+
+Projects and chats within Codex projects default to automatic ascending-name order. Adding or renaming items triggers event-driven synchronization. Selecting another rule, moving rows or resetting a preview pauses automatic sorting. Selecting Keep names sorted A to Z resumes it.
+
+The interface provides project, chat and combined views, search, scope selection, two-level ordering, change previews, movement buttons and drag sorting. Apply to sidebar submits manual choices.
 
 ## Sorting choices
 
@@ -27,27 +39,29 @@ The installer contains the required .NET runtime and application resources. Read
 | Oldest updates first | Oldest timestamps first, missing timestamps last |
 | Manual order | Drag rows or use Move up, Move down, To top and To bottom |
 
-Project order and chats within projects have separate choices. Existing pinned positions follow the native interface's supported behavior. Attached chats retain their parent relationship and are excluded from the independently sortable sidebar list.
+Project order and chats within projects have separate choices. Native project reordering covers unpinned projects in the default Projects section. Section reordering covers chats inside pinned and custom sections. Attached chats retain their parent relationship.
 
-Name and natural-number sorting apply on demand. After adding or renaming a chat or project, refresh and apply again. Codex shares the chat sort mode between project chats and Recents.
+ChatGPT project-chat ordering and independent name ordering in Recents remain limited by the native interface. Codex shares the saved chat sort mode between project chats and Recents.
 
 ## Background and client lifecycle
 
-Closing the tool window releases its managed UI and runtime. The native tray host continues waiting for system events. Open the application or double-click its tray icon to show the window, and use the tray menu to exit. The tray host can remain running while Codex is closed. Reading and applying order resume when Codex is open.
+Closing the window exits the graphical process while the separate worker and native tray remain running. The tray menu or application entry opens the UI again, and the tray menu provides Exit. The background uses file events and idle waits, reclaiming completed sorting allocations when the UI closes.
 
-Application files and the runtime live in the tool's installation directory. Language preferences use the current user's `LocalAppData/CodexSidebarSorter/settings.json`. Sorting uses the client's existing local tools, and history uses a read-only SQLite connection. The tool discovers the local pipe on each connection. Changes to the client's native interface or history schema require a corresponding adapter update.
+The UI and worker coordinate operations through the tool's own IPC channel. Language and sorting preferences use the tool's user-data directory. Sorting uses the client's existing local tools, history uses a read-only SQLite connection, and endpoints are rediscovered for each connection.
+
+The client interface, access authorization and history schema require version adaptation. Startup, shutdown, actual package replacement and subsequent cold startup are recorded from real execution receipts.
 
 ## Cloud acceptance
 
-Production ordering, translations, settings, read-only history and message framing run on GitHub-hosted Windows, macOS and Ubuntu systems. Windows additionally exercises the bilingual UI, installation, running upgrade, uninstall and tray lifecycle. A separate Windows cloud workflow exercises official client startup, shutdown and the Store update check.
+Ordering, translations, settings, read-only history and message framing passed cross-platform tests. Desktop acceptance uses the production UI, automatic worker and native tray to check additions, renaming, manual choices, unchanged submissions, closing, single instance, reopening and exit.
 
-macOS and Ubuntu results cover shared core logic. The installable GUI targets Windows x64. Actions reports record the actual coverage and outcomes.
+Separate workflows exercise official clients. Protocol-fixture results, official-client results and installer results are recorded in Actions receipts and project acceptance records.
 
 ## Source and build
 
-`src` contains the UI, sorting service, read-only history reader and native tray host. `packaging` contains the bilingual installer definition. `tests` and `.github/workflows` contain cloud tests and builds.
+`desktop` contains the cross-platform UI, background controller and native trays. `src` provides shared ordering, read-only history, settings and translation, along with the existing Windows implementation. `tests` and `.github/workflows` contain cloud acceptance. `packaging` retains the existing Windows installer definition.
 
-Source builds require the .NET 10 SDK, Visual Studio C++ build tools and Inno Setup. Build commands are in `.github/workflows/cloud-validation.yml`. Daily use of an installed release uses its bundled runtime.
+Source builds use .NET 10. Native trays use Windows C++, macOS Cocoa and Linux Ayatana AppIndicator. Current build and runtime commands are in `.github/workflows/desktop.yml`. Release packages are planned to include the runtime and resources.
 
 ## License
 
