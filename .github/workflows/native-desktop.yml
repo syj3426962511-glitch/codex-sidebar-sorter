@@ -1,0 +1,37 @@
+name: Standalone desktop with official client
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build the standalone candidate without an installer
+        run: |
+          dotnet publish desktop/SidebarSorter.Desktop.csproj -c Release -r win-x64 -o artifacts/program
+          ./desktop/NativeTray/build-windows.ps1 -OutputDirectory artifacts/program
+          dotnet publish tests/NativeEndpointProbe.csproj -c Release -r win-x64 -o artifacts/probe
+      - name: Prepare the official Windows package manager
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Install-PackageProvider -Name NuGet -Force | Out-Null
+          Install-Module Microsoft.WinGet.Client -Scope CurrentUser -Repository PSGallery -Force | Out-Null
+          Import-Module Microsoft.WinGet.Client
+          Repair-WinGetPackageManager -AllUsers
+          winget install --id 9PLM9XGG6VKS --exact --source msstore --silent --accept-package-agreements --accept-source-agreements --disable-interactivity
+          if ($LASTEXITCODE -ne 0) { throw 'The official client installation failed.' }
+      - name: Exercise ordinary client lifecycle with the standalone background running
+        shell: powershell
+        run: ./tests/ClientLifecycle.ps1 -ProgramDirectory "$PWD/artifacts/program" -OutputDirectory "$PWD/artifacts/native"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: standalone-official-windows
+          path: artifacts/native/*

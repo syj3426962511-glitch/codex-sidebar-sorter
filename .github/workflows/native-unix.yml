@@ -119,7 +119,7 @@ jobs:
               sleep 1
             done
             scrot artifacts/native/official-client-linux.png
-            artifacts/probe/NativeEndpointProbe artifacts/native/native-linux.json
+            artifacts/probe/NativeEndpointProbe artifacts/native/native-linux.json --read-lists
             probe_exit=$?
             kill -TERM "$client_pid" 2>/dev/null || true
             exit "$probe_exit"

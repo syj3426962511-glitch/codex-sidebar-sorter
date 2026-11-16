@@ -1,5 +1,6 @@
 ﻿param(
-    [Parameter(Mandatory=$true)][string]$InstallerPath,
+    [string]$InstallerPath,
+    [string]$ProgramDirectory,
     [Parameter(Mandatory=$true)][string]$OutputDirectory
 )
 
@@ -10,6 +11,11 @@ New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 $installDirectory = Join-Path $env:RUNNER_TEMP 'Independent Sidebar Sorter'
 $program = Join-Path $installDirectory '聊天排序工具.exe'
 $background = Join-Path $installDirectory '聊天排序后台.exe'
+if ($ProgramDirectory) {
+    $installDirectory = [IO.Path]::GetFullPath($ProgramDirectory)
+    $program = Join-Path $installDirectory 'SidebarSorter.exe'
+    $background = $program
+}
 $report = [ordered]@{ success = $false; accountState = 'fresh cloud profile'; authenticatedSortingVerified = $false }
 
 Add-Type -AssemblyName System.Drawing
@@ -54,16 +60,20 @@ function Close-ClientWindow($Client) {
 }
 
 function Quit-Client($Client) {
+    $window = [Windows.Automation.AutomationElement]::FromHandle($Client.MainWindowHandle)
+    $window.SetFocus()
+    [Windows.Forms.SendKeys]::SendWait('^q')
+    if ($Client.WaitForExit(3000)) { $report.nativeQuitShortcut = 'Ctrl+Q'; return }
     $root = [Windows.Automation.AutomationElement]::RootElement
     $buttons = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::ControlTypeProperty,[Windows.Automation.ControlType]::Button)
-    $icon = @($root.FindAll([Windows.Automation.TreeScope]::Descendants,$buttons) | Where-Object { $_.Current.Name -match '^Codex(?:\r?\n|$)' }) | Select-Object -First 1
+    $icon = @($root.FindAll([Windows.Automation.TreeScope]::Descendants,$buttons) | Where-Object { $_.Current.Name -match '^(?:Codex|ChatGPT)(?:\r?\n|$)' }) | Select-Object -First 1
     if (!$icon) {
         $overflow = $root.FindFirst([Windows.Automation.TreeScope]::Descendants,[Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::NameProperty,'Show hidden icons'))
         if ($overflow) {
             $overflow.GetCurrentPattern([Windows.Automation.InvokePattern]::Pattern).Invoke()
             Start-Sleep -Milliseconds 500
         }
-        $icon = @($root.FindAll([Windows.Automation.TreeScope]::Descendants,$buttons) | Where-Object { $_.Current.Name -match '^Codex(?:\r?\n|$)' }) | Select-Object -First 1
+        $icon = @($root.FindAll([Windows.Automation.TreeScope]::Descendants,$buttons) | Where-Object { $_.Current.Name -match '^(?:Codex|ChatGPT)(?:\r?\n|$)' }) | Select-Object -First 1
     }
     if (!$icon) { throw 'The native Codex notification-area icon was unavailable.' }
     $icon.SetFocus()
@@ -108,14 +118,16 @@ try {
     $report.normalEntry = $script:aumid
     $client = Open-Client
     $originalClientId = $client.Id
-    $arguments = '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP- /TASKS="" /DIR="' + $installDirectory + '"'
-    $setup = Start-Process -FilePath $InstallerPath -ArgumentList $arguments -WindowStyle Hidden -PassThru -Wait
-    if ($setup.ExitCode -ne 0) { throw 'The independent sorter installation failed.' }
+    if ($InstallerPath) {
+        $arguments = '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP- /TASKS="" /DIR="' + $installDirectory + '"'
+        $setup = Start-Process -FilePath $InstallerPath -ArgumentList $arguments -WindowStyle Hidden -PassThru -Wait
+        if ($setup.ExitCode -ne 0) { throw 'The independent sorter installation failed.' }
+    }
+    if (!$InstallerPath -and !$ProgramDirectory) { throw 'Supply an installer or a standalone candidate directory.' }
     if (!(Get-Process -Id $originalClientId -ErrorAction SilentlyContinue)) { throw 'Installing the sorter closed Codex.' }
-    $launch = Start-Process -FilePath $program -ArgumentList '--background' -WindowStyle Hidden -PassThru -Wait
-    if ($launch.ExitCode -ne 0) { throw 'The independent background entry failed.' }
+    $launch = Start-Process -FilePath $program -ArgumentList '--background' -WindowStyle Hidden -PassThru
     $backend = Wait-Condition {
-        Get-CimInstance Win32_Process -Filter "Name='聊天排序后台.exe'" | Where-Object ExecutablePath -EQ $background
+        Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq $background -and (!$ProgramDirectory -or $_.CommandLine -match '--background') }
     } 'The independent background did not start.'
     $report.installPreservesOpenClient = $true
     Save-ClientWindow $client 'official-client-with-sorter.png'
@@ -152,8 +164,14 @@ try {
         $report.clientExecutableAndResourcesUnchanged = $true
     }
     $clientIdBeforeUninstall = $client.Id
-    $uninstall = Start-Process -FilePath (Join-Path $installDirectory 'unins000.exe') -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART' -WindowStyle Hidden -PassThru -Wait
-    if ($uninstall.ExitCode -ne 0) { throw 'The sorter uninstaller failed.' }
+    if ($InstallerPath) {
+        $uninstall = Start-Process -FilePath (Join-Path $installDirectory 'unins000.exe') -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART' -WindowStyle Hidden -PassThru -Wait
+        if ($uninstall.ExitCode -ne 0) { throw 'The sorter uninstaller failed.' }
+    } else {
+        $stop = Start-Process -FilePath $program -ArgumentList '--exit' -WindowStyle Hidden -PassThru -Wait
+        if ($stop.ExitCode -ne 0) { throw 'The standalone sorter did not exit.' }
+        $report.standaloneCandidate = $true
+    }
     if (!(Get-Process -Id $clientIdBeforeUninstall -ErrorAction SilentlyContinue)) { throw 'Uninstalling the sorter closed Codex.' }
     $report.sorterUninstallPreservesOpenClient = $true
     Quit-Client $client
