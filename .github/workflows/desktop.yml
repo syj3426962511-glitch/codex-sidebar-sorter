@@ -31,15 +31,24 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y xvfb libice6 libsm6 libfontconfig1 fonts-noto-cjk libx11-6
+          sudo apt-get install -y xvfb libice6 libsm6 libfontconfig1 fonts-noto-cjk libx11-6 libayatana-appindicator3-dev dbus-x11
       - name: Build the cloud-only desktop acceptance executable
         run: dotnet publish desktop/SidebarSorter.Desktop.csproj -c Release -r ${{ matrix.rid }} -p:CloudSmoke=true -o artifacts/smoke
+      - name: Build the lightweight Windows tray
+        if: runner.os == 'Windows'
+        run: ./desktop/NativeTray/build-windows.ps1 -OutputDirectory artifacts/smoke
+      - name: Build the lightweight Mac status menu
+        if: runner.os == 'macOS'
+        run: clang -O2 -fobjc-arc -dynamiclib -framework Cocoa desktop/NativeTray/macos.m -o artifacts/smoke/libsorter_tray.dylib
+      - name: Build the lightweight Linux indicator
+        if: runner.os == 'Linux'
+        run: cc -O2 -shared -fPIC desktop/NativeTray/linux.c -o artifacts/smoke/libsorter_tray.so $(pkg-config --cflags --libs ayatana-appindicator3-0.1)
       - name: Exercise the real cross-platform desktop and automatic engine
         if: runner.os != 'Linux'
         run: ./artifacts/smoke/SidebarSorter artifacts/desktop
       - name: Exercise the Linux desktop and automatic engine
         if: runner.os == 'Linux'
-        run: xvfb-run -a -s '-screen 0 1440x1000x24' ./artifacts/smoke/SidebarSorter artifacts/desktop
+        run: dbus-run-session -- xvfb-run -a -s '-screen 0 1440x1000x24' ./artifacts/smoke/SidebarSorter artifacts/desktop
       - uses: actions/upload-artifact@v4
         if: always()
         with:

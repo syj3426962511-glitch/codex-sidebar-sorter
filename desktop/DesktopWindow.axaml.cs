@@ -104,6 +104,7 @@ internal sealed partial class DesktopWindow : Window
             string[] args = DesktopProgram.Arguments;
             if (args.Length == 2 && args[0] == "--capture")
             {
+                await Task.Delay(200);
                 SaveScreenshot(args[1]);
                 await app.ExitAsync();
             }
@@ -151,8 +152,12 @@ internal sealed partial class DesktopWindow : Window
         Box("ScopeBox").ItemsSource = scopes;
         Box("ScopeBox").SelectedIndex = Math.Max(0, scopes.FindIndex(scope => scope.Id == selected));
         updating = false;
-        if (expanded.Count == 0 && workspace.Groups.FirstOrDefault(group => group.Chats.Count > 0) is ProjectGroup first) expanded.Add(first.Scope.Id);
         await LoadScopeAsync();
+        if (expanded.Count == 0 && workspace.Groups.FirstOrDefault(group => group.Chats.Count > 0) is ProjectGroup first)
+        {
+            expanded.Add(first.Scope.Id);
+            Render();
+        }
         SetStatus(app.Status.Length > 0 ? app.Status : Localization.Text("已连接"));
     });
 
@@ -162,7 +167,11 @@ internal sealed partial class DesktopWindow : Window
         busy = true;
         await app.OperationGate.WaitAsync();
         Button("ApplyButton").IsEnabled = false;
-        try { await action(); }
+        try
+        {
+            await using var lease = await BackgroundClient.AcquireAsync();
+            await action();
+        }
         catch (Exception error) { SetStatus(error.Message, true); }
         finally { app.OperationGate.Release(); busy = false; Button("ApplyButton").IsEnabled = true; }
     }

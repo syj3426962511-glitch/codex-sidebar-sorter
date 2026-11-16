@@ -24,6 +24,8 @@
     <EmbeddedResource Include="../src/Assets/English.json" LogicalName="SidebarSorter.English" />
     <AvaloniaResource Include="../src/Assets/聊天排序.ico" Link="Assets/app.ico" />
     <AvaloniaResource Include="../src/Assets/聊天排序-Logo-256.png" Link="Assets/logo.png" />
+    <None Include="../src/Assets/聊天排序-Logo-256.png" Link="tray.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="../src/Assets/聊天排序.ico" Link="tray.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
   <PropertyGroup Condition="'$(CloudSmoke)' == 'true'">
     <OutputType>Exe</OutputType>

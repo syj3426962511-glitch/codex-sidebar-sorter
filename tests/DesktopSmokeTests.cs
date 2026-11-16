@@ -16,11 +16,13 @@ internal static class DesktopSmokeTests
     {
         if (Environment.GetEnvironmentVariable("GITHUB_ACTIONS") != "true")
             throw new InvalidOperationException("Desktop acceptance runs on disposable cloud hosts.");
+        if (arguments[0].StartsWith("--", StringComparison.Ordinal)) return DesktopProgram.Run(arguments);
         string output = Path.GetFullPath(arguments[0]);
         Directory.CreateDirectory(output);
         using var server = new FixtureNativeServer();
         Environment.SetEnvironmentVariable("CODEX_HOME", server.Root);
         new ToolSettingsStore().Save(new ToolSettings { Language = "zh-CN" });
+        BackgroundClient.EnsureRunningAsync().GetAwaiter().GetResult();
         var report = new JsonObject
         {
             ["platform"] = System.Runtime.InteropServices.RuntimeInformation.OSDescription,
@@ -41,11 +43,20 @@ internal static class DesktopSmokeTests
                 catch (Exception error) { report["success"] = false; report["error"] = error.ToString(); }
                 finally
                 {
-                    report["checkedAt"] = DateTimeOffset.UtcNow.ToString("O");
-                    File.WriteAllText(Path.Combine(output, "desktop-results.json"), report.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
                     await app.ExitAsync();
                 }
             })).StartWithClassicDesktopLifetime([]);
+        try
+        {
+            if (result == 0) VerifyBackgroundAsync(server, report, output).GetAwaiter().GetResult();
+        }
+        catch (Exception error) { report["success"] = false; report["error"] = error.ToString(); result = 1; }
+        finally
+        {
+            BackgroundClient.NotifyAsync("exit").GetAwaiter().GetResult();
+            report["checkedAt"] = DateTimeOffset.UtcNow.ToString("O");
+            File.WriteAllText(Path.Combine(output, "desktop-results.json"), report.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+        }
         Console.WriteLine(report.ToJsonString());
         return result;
     }
@@ -60,6 +71,40 @@ internal static class DesktopSmokeTests
     internal static void Require(bool condition, string message)
     {
         if (!condition) throw new InvalidOperationException(message);
+    }
+
+    private static async Task VerifyBackgroundAsync(FixtureNativeServer server, JsonObject report, string output)
+    {
+        BackgroundStatus status = await BackgroundClient.ReadStatusAsync();
+        using Process background = Process.GetProcessById(status.ProcessId);
+        BackgroundClient.Launch("--background");
+        await Task.Delay(1500);
+        Require((await BackgroundClient.ReadStatusAsync()).ProcessId == background.Id, "Background startup preserves a single worker.");
+        int writes = server.WriteCount;
+        TimeSpan cpu = background.TotalProcessorTime;
+        var elapsed = Stopwatch.StartNew();
+        await Task.Delay(10000);
+        background.Refresh();
+        report["idleSeconds"] = elapsed.Elapsed.TotalSeconds;
+        report["idleCpuMilliseconds"] = (background.TotalProcessorTime - cpu).TotalMilliseconds;
+        report["backgroundWorkingSetBytes"] = background.WorkingSet64;
+        Require(server.WriteCount == writes, "Idle watching must perform zero native writes.");
+        Require(!background.HasExited, "Closing the UI leaves its independent worker running.");
+        report["closeKeepsBackgroundRunning"] = true;
+        report["idleNativeWrites"] = 0;
+        string project = server.Projects[0].Id;
+        server.AddChat(project, "0000 background new chat");
+        await WaitForAsync(server.IsSortedByName, "Automatic sorting continues with the UI process closed.");
+        report["automaticSortingWhileWindowClosed"] = true;
+        var capture = new ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = false, CreateNoWindow = true };
+        capture.ArgumentList.Add("--capture");
+        capture.ArgumentList.Add(Path.Combine(output, "desktop-reopened.png"));
+        using Process gui = Process.Start(capture)!;
+        await gui.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(90));
+        Require(gui.ExitCode == 0 && File.Exists(Path.Combine(output, "desktop-reopened.png")), "A separate UI process can reopen, render, and close normally.");
+        Require((await BackgroundClient.ReadStatusAsync()).ProcessId == background.Id, "Reopening the UI retains the same independent worker.");
+        report["windowReopenedInSeparateProcess"] = true;
+        report["backgroundSingleInstance"] = true;
     }
 }
 
@@ -86,29 +131,6 @@ internal sealed partial class DesktopApp
         server.AddChat(project, "000 new chat");
         await DesktopSmokeTests.WaitForAsync(server.IsSortedByName, "New projects and chats must automatically join name order.");
         report["newItemsAutomaticallyReordered"] = true;
-        await Task.Delay(2000);
-        int writes = server.WriteCount;
-        using Process current = Process.GetCurrentProcess();
-        TimeSpan cpu = current.TotalProcessorTime;
-        var elapsed = Stopwatch.StartNew();
-        window.Close();
-        await DesktopSmokeTests.WaitForAsync(() => window == null, "Closing releases the desktop window.");
-        await Task.Delay(10000);
-        current.Refresh();
-        report["idleSeconds"] = elapsed.Elapsed.TotalSeconds;
-        report["idleCpuMilliseconds"] = (current.TotalProcessorTime - cpu).TotalMilliseconds;
-        report["backgroundWorkingSetBytes"] = current.WorkingSet64;
-        DesktopSmokeTests.Require(server.WriteCount == writes, "Idle watching must perform zero native writes.");
-        DesktopSmokeTests.Require(ApplicationLifetime is IClassicDesktopStyleApplicationLifetime, "The application stays running after closing its window.");
-        report["closeKeepsBackgroundRunning"] = true;
-        report["idleNativeWrites"] = 0;
-        server.AddChat(project, "0000 background new chat");
-        await DesktopSmokeTests.WaitForAsync(server.IsSortedByName, "Automatic sorting continues with the window closed.");
-        report["automaticSortingWhileWindowClosed"] = true;
-        ShowWindow();
-        await DesktopSmokeTests.WaitForAsync(() => window?.CloudLoaded == true, "The desktop window can reopen.");
-        window!.SaveScreenshot(Path.Combine(output, "desktop-reopened.png"));
-        report["windowReopened"] = true;
     }
 }
 

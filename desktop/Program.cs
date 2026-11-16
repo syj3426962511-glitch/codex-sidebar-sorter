@@ -1,7 +1,5 @@
 using Avalonia;
 using System.IO.Pipes;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace SidebarSorter;
 
@@ -9,10 +7,11 @@ internal static class DesktopProgram
 {
     public static string[] Arguments { get; private set; } = [];
     private static CancellationTokenSource? ipcStopping;
-    internal static TaskCompletionSource<DesktopApp> Ready { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     [STAThread]
-    private static int Main(string[] arguments)
+    private static int Main(string[] arguments) => Run(arguments);
+
+    internal static int Run(string[] arguments)
     {
         if (OperatingSystem.IsWindows())
         {
@@ -22,26 +21,40 @@ internal static class DesktopProgram
             if (handoff != null) return handoff.Value;
         }
         Arguments = arguments;
-        string identity = Path.GetFullPath(NativeBridge.DataRoot);
-        if (OperatingSystem.IsWindows()) identity = identity.ToUpperInvariant();
-        string name = "sst-" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(identity)))[..12];
+        if (arguments.Contains("--background")) return BackgroundHost.Run();
+        if (arguments.Contains("--exit"))
+        {
+            CloseWindowAsync().GetAwaiter().GetResult();
+            try { BackgroundClient.NotifyAsync("exit").GetAwaiter().GetResult(); }
+            catch (TimeoutException) { }
+            using var worker = new Mutex(false, BackgroundClient.Identity + "-bg");
+            try { if (!worker.WaitOne(TimeSpan.FromSeconds(60))) return 1; }
+            catch (AbandonedMutexException) { }
+            worker.ReleaseMutex();
+            return 0;
+        }
+        BackgroundClient.EnsureRunningAsync().GetAwaiter().GetResult();
+        return RunWindow(arguments);
+    }
+
+    private static int RunWindow(string[] arguments)
+    {
+        string name = BackgroundClient.Identity;
         using var mutex = new Mutex(true, name, out bool first);
         if (!first)
         {
             try
             {
-                SendAsync(name, arguments.Contains("--exit") ? "exit" : arguments.Contains("--background") ? "status" : "show").GetAwaiter().GetResult();
-                if (arguments.Contains("--exit"))
+                string? response = SendAsync(name, "show").GetAwaiter().GetResult();
+                if (response == "closing")
                 {
                     try { if (!mutex.WaitOne(TimeSpan.FromSeconds(60))) return 1; }
                     catch (AbandonedMutexException) { }
-                    mutex.ReleaseMutex();
                 }
-                return 0;
+                else return 0;
             }
             catch (Exception error) when (error is IOException or TimeoutException) { return 1; }
         }
-        if (arguments.Contains("--exit")) { mutex.ReleaseMutex(); return 0; }
         ipcStopping = new CancellationTokenSource();
         Task listener = ListenAsync(name, ipcStopping.Token);
         try
@@ -59,14 +72,24 @@ internal static class DesktopProgram
         }
     }
 
-    private static async Task SendAsync(string name, string command)
+    internal static async Task CloseWindowAsync()
+    {
+        try { await SendAsync(BackgroundClient.Identity, "exit"); }
+        catch (TimeoutException) { return; }
+        using var mutex = new Mutex(false, BackgroundClient.Identity);
+        try { if (!mutex.WaitOne(TimeSpan.FromSeconds(60))) throw new TimeoutException("The desktop operation is still finishing."); }
+        catch (AbandonedMutexException) { }
+        mutex.ReleaseMutex();
+    }
+
+    private static async Task<string?> SendAsync(string name, string command)
     {
         using var stream = new NamedPipeClientStream(".", name, PipeDirection.InOut, PipeOptions.Asynchronous);
         await stream.ConnectAsync(3000);
         using var writer = new StreamWriter(stream, leaveOpen: true) { AutoFlush = true };
         await writer.WriteLineAsync(command);
         using var reader = new StreamReader(stream, leaveOpen: true);
-        await reader.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(60));
+        return await reader.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(60));
     }
 
     private static async Task ListenAsync(string name, CancellationToken cancellation)
@@ -82,11 +105,11 @@ internal static class DesktopProgram
                     await server.WaitForConnectionAsync(cancellation);
                     using var reader = new StreamReader(server, leaveOpen: true);
                     string? command = await reader.ReadLineAsync(cancellation);
-                    DesktopApp app = await Ready.Task.WaitAsync(cancellation);
+                    DesktopApp app = await DesktopApp.Ready.Task.WaitAsync(cancellation);
                     if (command == "show") Avalonia.Threading.Dispatcher.UIThread.Post(app.ShowWindow);
                     if (command == "exit") Avalonia.Threading.Dispatcher.UIThread.Post(async () => await app.ExitAsync());
                     using var writer = new StreamWriter(server, leaveOpen: true) { AutoFlush = true };
-                    await writer.WriteLineAsync("ok");
+                    await writer.WriteLineAsync(app.IsClosing ? "closing" : "ok");
                 }
                 catch (IOException) when (!cancellation.IsCancellationRequested) { }
             }
