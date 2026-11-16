@@ -79,7 +79,16 @@ try {
     buttons:[...document.querySelectorAll('button')].map(button => ({text:button.innerText, label:button.getAttribute('aria-label'), title:button.title})),
   })));
   report.desktopSignInRequired = report.page.text?.includes('Sign in to ChatGPT') === true;
-  if (report.desktopSignInRequired) {
+  if (report.desktopSignInRequired && fs.existsSync(path.join(codexHome, 'auth.json'))) {
+    await readCurrentPage(page => page.getByRole('button', {name:'Continue to sign in', exact:true}).click());
+    await delay(3000);
+    await readCurrentPage(page => page.screenshot({path:path.join(output, '02b-desktop-sign-in-continued.png')}));
+    report.desktopAfterContinue = await readCurrentPage(page => page.evaluate(() => ({
+      text:document.body?.innerText?.slice(0,12000),
+      buttons:[...document.querySelectorAll('button')].map(button => ({text:button.innerText, label:button.getAttribute('aria-label')})),
+    })));
+    report.desktopSignInRequired = report.desktopAfterContinue.text?.includes('Sign in to ChatGPT') === true;
+  } else if (report.desktopSignInRequired) {
     await readCurrentPage(async page => {
       await page.getByRole('button', {name:'Sign in another way', exact:true}).click();
     });
