@@ -17,7 +17,7 @@
       <Button Name="ProjectsTab" />
       <Button Grid.Column="1" Name="ChatsTab" />
       <Button Grid.Column="2" Name="AllTab" />
-      <TextBox Grid.Column="4" Name="Search" Watermark="搜索" />
+      <TextBox Grid.Column="4" Name="Search" PlaceholderText="搜索" />
       <Button Grid.Column="5" Name="RefreshButton" Content="刷新" />
     </Grid>
     <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">

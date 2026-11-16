@@ -129,7 +129,7 @@ internal sealed partial class DesktopWindow : Window
         Check("AutomaticBox").Content = Localization.Text("自动保持名称升序");
         Check("AutomaticBox").IsChecked = app.Settings.AutomaticNameSorting;
         Check("ApplyChatsBox").Content = Localization.Text("同时应用项目内对话排序");
-        this.FindControl<TextBox>("Search")!.Watermark = Localization.Text("搜索");
+        this.FindControl<TextBox>("Search")!.PlaceholderText = Localization.Text("搜索");
         int projectsMode = Box("ProjectModeBox").SelectedIndex;
         int chatsMode = Box("ChatModeBox").SelectedIndex;
         Box("ProjectModeBox").ItemsSource = ModeKeys.Select(Localization.Text).ToArray();
@@ -278,7 +278,6 @@ internal sealed partial class DesktopWindow : Window
     private void MoveSelected(int direction, bool edge)
     {
         if (workspace == null || RowList.SelectedItem is not SidebarDisplayRow selected) return;
-        PauseAutomatic();
         TreeEntry source = selected.Entry;
         List<SortRow> movable = Scope?.Kind == "section" ? sectionRows
             : source.IsProject ? workspace.Groups.Where(group => group.CanReorder).Select(group => group.Row).ToList()
@@ -327,7 +326,8 @@ internal sealed partial class DesktopWindow : Window
     public async void RowMoved(object? sender, PointerEventArgs args)
     {
         if (dragPress == null || dragRow == null || !args.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
-        if ((args.GetPosition(this) - dragOrigin).Length < 6) return;
+        Point distance = args.GetPosition(this) - dragOrigin;
+        if (Math.Abs(distance.X) < 6 && Math.Abs(distance.Y) < 6) return;
         PointerPressedEventArgs pressed = dragPress;
         SidebarDisplayRow row = dragRow;
         dragPress = null;
