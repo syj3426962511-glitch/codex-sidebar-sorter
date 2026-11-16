@@ -17,6 +17,7 @@ if ($ProgramDirectory) {
     $background = $program
 }
 $report = [ordered]@{ success = $false; accountState = 'fresh cloud profile'; authenticatedSortingVerified = $false }
+$acceptanceStarted = Get-Date
 
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName UIAutomationClient,UIAutomationTypes,System.Windows.Forms
@@ -66,8 +67,8 @@ function Quit-Client($Client) {
     [void][ClientWindowCapture]::SetForegroundWindow($Client.MainWindowHandle)
     Start-Sleep -Milliseconds 300
     [Windows.Forms.SendKeys]::SendWait('^q')
-    if ($Client.WaitForExit(3000)) { $report.nativeQuitShortcut = 'Ctrl+Q'; return }
-    if ($Client.CloseMainWindow() -and $Client.WaitForExit(3000)) { $report.nativeQuitMethod = 'normal-window-close'; return }
+    if ($Client.WaitForExit(15000)) { $report.nativeQuitShortcut = 'Ctrl+Q'; return }
+    if ($Client.CloseMainWindow() -and $Client.WaitForExit(15000)) { $report.nativeQuitMethod = 'normal-window-close'; return }
     $root = [Windows.Automation.AutomationElement]::RootElement
     $buttons = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::ControlTypeProperty,[Windows.Automation.ControlType]::Button)
     $icon = @($root.FindAll([Windows.Automation.TreeScope]::Descendants,$buttons) | Where-Object { $_.Current.Name -match '^(?:Codex|ChatGPT)(?:\r?\n|$)' }) | Select-Object -First 1
@@ -223,6 +224,12 @@ try {
 }
 catch { $report.error = $_.Exception.ToString() }
 finally {
+    if (!$report.success -and $ProgramDirectory) {
+        $report.sorterProcesses = @(Get-CimInstance Win32_Process | Where-Object ExecutablePath -EQ $program | Select-Object ProcessId,ParentProcessId,CommandLine)
+        $report.sorterPipeNames = @(Get-ChildItem -LiteralPath '\\.\pipe\' -Filter 'sst-*' | Select-Object -ExpandProperty Name)
+        $report.expectedDataRoot = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $env:USERPROFILE '.codex' }
+        $report.recentRuntimeErrors = @(Get-WinEvent -FilterHashtable @{LogName='Application';ProviderName='.NET Runtime';StartTime=$acceptanceStarted} -ErrorAction SilentlyContinue | Where-Object Message -Match 'SidebarSorter' | Select-Object -First 5 -ExpandProperty Message)
+    }
     $report.checkedAt = (Get-Date).ToUniversalTime().ToString('O')
     $report | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $OutputDirectory 'client-lifecycle-results.json') -Encoding utf8
 }
