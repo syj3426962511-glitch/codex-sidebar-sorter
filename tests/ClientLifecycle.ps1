@@ -13,6 +13,7 @@ $background = Join-Path $installDirectory '聊天排序后台.exe'
 $report = [ordered]@{ success = $false; accountState = 'fresh cloud profile'; authenticatedSortingVerified = $false }
 
 Add-Type -AssemblyName System.Drawing
+Add-Type -AssemblyName UIAutomationClient,UIAutomationTypes,System.Windows.Forms
 Add-Type -TypeDefinition @'
 using System;
 using System.Runtime.InteropServices;
@@ -47,9 +48,34 @@ function Open-Client {
     return $client
 }
 
-function Close-Client($Client) {
+function Close-ClientWindow($Client) {
     if (!$Client.CloseMainWindow()) { throw 'Codex did not accept a normal window-close request.' }
-    if (!$Client.WaitForExit(45000)) { throw 'Codex stayed running after normal window close.' }
+    [void](Wait-Condition { $Client.Refresh(); $Client.HasExited -or $Client.MainWindowHandle -eq 0 } 'The Codex window stayed open.')
+}
+
+function Quit-Client($Client) {
+    $root = [Windows.Automation.AutomationElement]::RootElement
+    $buttons = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::ControlTypeProperty,[Windows.Automation.ControlType]::Button)
+    $icon = @($root.FindAll([Windows.Automation.TreeScope]::Descendants,$buttons) | Where-Object { $_.Current.Name -match '^Codex(?:\r?\n|$)' }) | Select-Object -First 1
+    if (!$icon) {
+        $overflow = $root.FindFirst([Windows.Automation.TreeScope]::Descendants,[Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::NameProperty,'Show hidden icons'))
+        if ($overflow) {
+            $overflow.GetCurrentPattern([Windows.Automation.InvokePattern]::Pattern).Invoke()
+            Start-Sleep -Milliseconds 500
+        }
+        $icon = @($root.FindAll([Windows.Automation.TreeScope]::Descendants,$buttons) | Where-Object { $_.Current.Name -match '^Codex(?:\r?\n|$)' }) | Select-Object -First 1
+    }
+    if (!$icon) { throw 'The native Codex notification-area icon was unavailable.' }
+    $icon.SetFocus()
+    [Windows.Forms.SendKeys]::SendWait('+{F10}')
+    $quit = Wait-Condition {
+        $root.FindFirst([Windows.Automation.TreeScope]::Descendants,[Windows.Automation.OrCondition]::new(
+            [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::NameProperty,'Quit Codex'),
+            [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::NameProperty,'Quit')))
+    } 'The native Codex Quit menu did not open.' 10
+    $report.nativeQuitMenuLabel = $quit.Current.Name
+    $quit.GetCurrentPattern([Windows.Automation.InvokePattern]::Pattern).Invoke()
+    if (!$Client.WaitForExit(45000)) { throw 'Codex stayed running after its native Quit command.' }
 }
 
 function Save-ClientWindow($Client, [string]$Name) {
@@ -91,7 +117,11 @@ try {
     } 'The independent background did not start.'
     $report.installPreservesOpenClient = $true
     Save-ClientWindow $client 'official-client-with-sorter.png'
-    Close-Client $client
+    Close-ClientWindow $client
+    $report.normalClientWindowCloseWithSorter = $true
+    $client = Open-Client
+    $report.normalClientWindowReopenWithSorter = $true
+    Quit-Client $client
     if (!(Get-Process -Id $backend.ProcessId -ErrorAction SilentlyContinue)) { throw 'Closing Codex also closed the independent background.' }
     Start-Sleep -Seconds 3
     if (Get-Process -Id $originalClientId -ErrorAction SilentlyContinue) { throw 'The closed Codex process reappeared.' }
@@ -99,7 +129,7 @@ try {
     $report.sorterSurvivesClientExit = $true
     $client = Open-Client
     $report.normalClientReopenWithSorter = $true
-    Close-Client $client
+    Quit-Client $client
     $winget = Get-Command winget.exe -ErrorAction Stop
     $updateOutput = & $winget.Source upgrade --id 9PLM9XGG6VKS --exact --source msstore --silent --accept-package-agreements --accept-source-agreements --disable-interactivity 2>&1
     $report.storeUpdateExitCode = $LASTEXITCODE
@@ -124,10 +154,10 @@ try {
     if ($uninstall.ExitCode -ne 0) { throw 'The sorter uninstaller failed.' }
     if (!(Get-Process -Id $clientIdBeforeUninstall -ErrorAction SilentlyContinue)) { throw 'Uninstalling the sorter closed Codex.' }
     $report.sorterUninstallPreservesOpenClient = $true
-    Close-Client $client
+    Quit-Client $client
     $client = Open-Client
     $report.normalClientStartsAfterSorterUninstall = $true
-    Close-Client $client
+    Quit-Client $client
     $report.success = $true
 }
 catch { $report.error = $_.Exception.ToString() }

@@ -70,7 +70,7 @@ internal sealed class ConversationTree : TreeView
         else graphics.FillEllipse(icon, 68 + indent, top + 19, 5, 5);
 
         (int count, int time) = Columns();
-        bool changed = entry.OriginalPosition > 0 && entry.Position != entry.OriginalPosition;
+        bool changed = entry.OriginalPosition > 0 && entry.Position != entry.OriginalPosition && count - nameLeft >= 190;
         int badgeWidth = changed ? 65 : 0;
         UiStyle.DrawText(graphics, entry.Row.Title, new Rectangle(nameLeft, top, Math.Max(40, count - nameLeft - 14 - badgeWidth), height), UiStyle.Text, entry.IsProject);
         if (changed)
