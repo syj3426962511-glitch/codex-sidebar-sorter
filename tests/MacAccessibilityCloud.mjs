@@ -28,6 +28,72 @@ const report = {route:'macOS Accessibility', fullAcceptancePassed:false};
 let browser;
 let client;
 
+async function desktopRequest(method, params) {
+  return readCurrentPage(page => page.evaluate(async ({method, params}) => {
+    const id = 'sorter-ax-fixture-' + crypto.randomUUID();
+    return new Promise((resolve, reject) => {
+      const listener = event => {
+        const response = event.data?.type === 'mcp-response' ? event.data.message : null;
+        if (response?.id !== id) return;
+        clearTimeout(timer);
+        window.removeEventListener('message', listener);
+        response.error ? reject(new Error(JSON.stringify(response.error))) : resolve(response.result);
+      };
+      const timer = setTimeout(() => {
+        window.removeEventListener('message', listener);
+        reject(new Error('Fixture request timed out for ' + method));
+      }, 30000);
+      window.addEventListener('message', listener);
+      window.electronBridge.sendMessageFromView({
+        type:'mcp-request', hostId:'local', request:{id, method, params},
+        priority:'interactive', source:'sidebar-sorter-cloud-acceptance', timeoutMs:25000,
+      }).catch(error => {
+        clearTimeout(timer);
+        window.removeEventListener('message', listener);
+        reject(error);
+      });
+    });
+  }, {method, params}));
+}
+
+async function createVisibleFixtureChats() {
+  const projects = await desktopRequest('project/list', {limit:100});
+  report.visibleChatFixture = [];
+  for (const name of ['Zulu AX background project', 'Alpha AX background project']) {
+    const directory = path.join(process.env.HOME, 'Documents', 'ChatGPT', name);
+    const project = projects.data.find(project => project.roots?.some(root => root.path === directory));
+    if (!project) throw new Error('The UI-created test project has no backend identity for ' + name);
+    const threads = [];
+    for (const title of ['Zulu AX visible chat', 'Middle AX visible chat', 'Alpha AX visible chat']) {
+      const {thread} = await desktopRequest('thread/start', {cwd:directory, ephemeral:false, approvalPolicy:'never', sandbox:'read-only'});
+      await desktopRequest('thread/name/set', {threadId:thread.id, name:title});
+      await desktopRequest('thread/metadata/update', {threadId:thread.id, projectId:project.id});
+      threads.push({id:thread.id, title});
+    }
+    report.visibleChatFixture.push({name, projectId:project.id, threads});
+  }
+  await readCurrentPage(page => page.reload());
+  await delay(4000);
+  await readCurrentPage(page => page.screenshot({path:path.join(output, '04-visible-fixture-chats.png')}));
+  const snapshot = inspect('04-visible-fixture-tree');
+  report.visibleFixtureChats = snapshot.nodes.filter(node => /^(?:Alpha|Middle|Zulu) AX visible chat$/.test(node.AXTitle ?? ''))
+    .map(node => ({role:node.AXRole, title:node.AXTitle}));
+}
+
+function testBackgroundProjectDrag() {
+  const state = inspect('05-project-drag-before');
+  const alpha = state.nodes.find(node => node.AXRole === 'AXButton' && node.AXTitle === 'Alpha AX background project');
+  const zulu = state.nodes.find(node => node.AXRole === 'AXButton' && node.AXTitle === 'Zulu AX background project');
+  if (!alpha || !zulu) throw new Error('The test project rows are unavailable for background reordering.');
+  const result = inspect('05-project-drag-after', 'drag', zulu.path, alpha.path);
+  const order = result.nodes.filter(node => node.AXRole === 'AXButton'
+    && ['Alpha AX background project', 'Zulu AX background project'].includes(node.AXTitle)).map(node => node.AXTitle);
+  const unchanged = ['frontmostPid', 'mouseX', 'mouseY'].every(key => result.before[key] === result.after[key]);
+  report.projectBackgroundDrag = {before:result.before, after:result.after, order, inputStateUnchanged:unchanged,
+    requestedOrderVerified:order.join('|') === 'Zulu AX background project|Alpha AX background project'};
+  if (!unchanged) throw new Error('The targeted drag changed the foreground application or pointer position.');
+}
+
 function inspect(label, operation = 'inspect', ...parameters) {
   const file = path.join(output, label + '.json');
   execFileSync(helper, [String(client.pid), file, operation, ...parameters], {timeout:60000});
@@ -108,11 +174,6 @@ async function createProjectWithAccessibility(name, sequence) {
 
 try {
   execFileSync(python, ['tests/PrepareMacAccessibility.py'], {timeout:120000});
-  if (fs.existsSync(path.join(codexHome, 'auth.json'))) {
-    const cli = path.join(app, 'Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex');
-    execFileSync(python, ['tests/PrepareMacSidebarFixture.py', cli], {timeout:180000});
-    report.fixtureCreated = true;
-  }
   const log = fs.openSync(path.join(output, 'client.log'), 'a');
   client = spawn(executable, ['--user-data-dir=' + profile, '--remote-debugging-port=9441'], {
     env:{...process.env, CODEX_HOME:codexHome}, stdio:['ignore',log,log],
@@ -180,6 +241,9 @@ try {
       const text = await readCurrentPage(page => page.evaluate(() => document.body?.innerText ?? ''));
       if (!text.includes(name)) await createProjectWithAccessibility(name, index + 1);
     }
+    await createVisibleFixtureChats();
+    testBackgroundProjectDrag();
+    await readCurrentPage(page => page.screenshot({path:path.join(output, '05-background-drag-result.png')}));
   }
 } catch (error) {
   report.error = String(error.stack ?? error);

@@ -31,10 +31,27 @@ func elementAtPath(_ root: AXUIElement, _ path: String) -> AXUIElement? {
     return current
 }
 
+func bounds(_ element: AXUIElement) -> CGRect? {
+    guard let position = attribute(element, kAXPositionAttribute),
+          let size = attribute(element, kAXSizeAttribute),
+          CFGetTypeID(position) == AXValueGetTypeID(),
+          CFGetTypeID(size) == AXValueGetTypeID() else { return nil }
+    var point = CGPoint.zero
+    var dimensions = CGSize.zero
+    guard AXValueGetValue(position as! AXValue, .cgPoint, &point),
+          AXValueGetValue(size as! AXValue, .cgSize, &dimensions),
+          dimensions.width > 0, dimensions.height > 0 else { return nil }
+    return CGRect(origin: point, size: dimensions)
+}
+
 var nodes: [[String: Any]] = []
 func inspect(_ element: AXUIElement, _ path: String, _ depth: Int) {
     guard depth <= 32 && nodes.count < 4000 else { return }
     var node: [String: Any] = ["path": path]
+    if let rectangle = bounds(element) {
+        node["bounds"] = ["x": rectangle.minX, "y": rectangle.minY,
+                          "width": rectangle.width, "height": rectangle.height]
+    }
     for name in [kAXRoleAttribute, kAXSubroleAttribute, kAXTitleAttribute,
                  kAXDescriptionAttribute, kAXHelpAttribute, kAXIdentifierAttribute,
                  kAXEnabledAttribute, kAXFocusedAttribute, kAXSelectedAttribute,
@@ -98,6 +115,27 @@ if operation == "enable" {
         report["setStatus"] = AXUIElementSetAttributeValue(target, args[5] as CFString, value).rawValue
     } else { report["error"] = "The accessibility path changed before the edit." }
     Thread.sleep(forTimeInterval: 1)
+} else if operation == "drag" && args.count >= 6 {
+    if let source = elementAtPath(root, args[4]), let destination = elementAtPath(root, args[5]),
+       let startBounds = bounds(source), let endBounds = bounds(destination) {
+        let start = CGPoint(x: startBounds.midX, y: startBounds.midY)
+        let end = CGPoint(x: endBounds.midX, y: endBounds.minY + 2)
+        let down = CGEvent(mouseEventSource: nil, mouseType: .leftMouseDown, mouseCursorPosition: start, mouseButton: .left)
+        down?.setIntegerValueField(.mouseEventClickState, value: 1)
+        down?.postToPid(pid)
+        for step in 1...20 {
+            let fraction = Double(step) / 20.0
+            let location = CGPoint(x: start.x + (end.x - start.x) * fraction,
+                                   y: start.y + (end.y - start.y) * fraction)
+            CGEvent(mouseEventSource: nil, mouseType: .leftMouseDragged,
+                    mouseCursorPosition: location, mouseButton: .left)?.postToPid(pid)
+            Thread.sleep(forTimeInterval: 0.02)
+        }
+        CGEvent(mouseEventSource: nil, mouseType: .leftMouseUp,
+                mouseCursorPosition: end, mouseButton: .left)?.postToPid(pid)
+        report["targetedDragSubmitted"] = true
+        Thread.sleep(forTimeInterval: 1)
+    } else { report["error"] = "The accessibility drag targets have no current bounds." }
 } else if operation == "key" && args.count >= 5, let code = UInt16(args[4]) {
     let down = CGEvent(keyboardEventSource: nil, virtualKey: code, keyDown: true)
     let up = CGEvent(keyboardEventSource: nil, virtualKey: code, keyDown: false)

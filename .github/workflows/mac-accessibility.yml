@@ -6,11 +6,16 @@ on:
         type: boolean
         default: false
         description: Request a fresh official device authorization for this disposable cloud session
+      runner_label:
+        type: choice
+        options: [macos-latest, macos-15, macos-26]
+        default: macos-latest
+        description: Select an available Apple Silicon cloud image
 permissions:
   contents: read
 jobs:
   macos:
-    runs-on: macos-latest
+    runs-on: ${{ inputs.runner_label || 'macos-latest' }}
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
