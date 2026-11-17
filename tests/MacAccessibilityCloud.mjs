@@ -3,6 +3,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {spawn, execFileSync} from 'node:child_process';
 import {createRequire} from 'node:module';
+import {desktopRequest as sendDesktopRequest} from './DesktopRequest.mjs';
 
 if (process.env.GITHUB_ACTIONS !== 'true' || process.platform !== 'darwin') {
   throw new Error('Use the disposable cloud Mac.');
@@ -29,31 +30,7 @@ let browser;
 let client;
 
 async function desktopRequest(method, params) {
-  return readCurrentPage(page => page.evaluate(async ({method, params}) => {
-    const id = 'sorter-ax-fixture-' + crypto.randomUUID();
-    return new Promise((resolve, reject) => {
-      const listener = event => {
-        const response = event.data?.type === 'mcp-response' ? event.data.message : null;
-        if (response?.id !== id) return;
-        clearTimeout(timer);
-        window.removeEventListener('message', listener);
-        response.error ? reject(new Error(JSON.stringify(response.error))) : resolve(response.result);
-      };
-      const timer = setTimeout(() => {
-        window.removeEventListener('message', listener);
-        reject(new Error('Fixture request timed out for ' + method));
-      }, 30000);
-      window.addEventListener('message', listener);
-      window.electronBridge.sendMessageFromView({
-        type:'mcp-request', hostId:'local', request:{id, method, params},
-        priority:'interactive', source:'sidebar-sorter-cloud-acceptance', timeoutMs:25000,
-      }).catch(error => {
-        clearTimeout(timer);
-        window.removeEventListener('message', listener);
-        reject(error);
-      });
-    });
-  }, {method, params}));
+  return readCurrentPage(page => sendDesktopRequest(page, method, params));
 }
 
 async function createVisibleFixtureChats() {

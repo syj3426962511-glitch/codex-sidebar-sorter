@@ -37,7 +37,7 @@ if mode == "start":
         if url and code:
             info = {"verificationUrl": url.group().rstrip(".,)"), "userCode": code.group(),
                     "issuedAt": time.time(), "cloudRun": os.environ["GITHUB_RUN_ID"],
-                    "purpose": "Independent Mac desktop sidebar sorter acceptance"}
+                    "purpose": os.environ.get("SORTER_CLOUD_LOGIN_PURPOSE", "Independent Mac desktop sidebar sorter acceptance")}
             public.write_text(json.dumps(info, indent=2))
             print("The one-time device authorization details are available in the public-login artifact.")
             break

@@ -1,0 +1,63 @@
+name: Linux authenticated sidebar acceptance
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Install independent cloud diagnostics and the official client
+        run: |
+          npm install --prefix "$RUNNER_TEMP/sorter-test-tools" --no-audit --no-fund playwright @actions/artifact@2.3.2
+          curl --fail --location --retry 2 --max-time 300 https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_amd64.deb -o "$RUNNER_TEMP/chatgpt.deb"
+          sudo apt-get update -qq
+          sudo apt-get install -y "$RUNNER_TEMP/chatgpt.deb" xvfb libayatana-appindicator3-dev dbus-x11
+          package=$(dpkg-deb -f "$RUNNER_TEMP/chatgpt.deb" Package)
+          cli=$(dpkg -L "$package" | awk '/\/codex$/ {print; exit}')
+          test -x "$cli"
+          echo "SORTER_OFFICIAL_CLI=$cli" >> "$GITHUB_ENV"
+      - name: Issue official device authorization
+        env:
+          SORTER_CLOUD_LOGIN_PURPOSE: Linux official desktop sidebar sorting acceptance
+        run: python tests/CloudDeviceLogin.py start "$SORTER_OFFICIAL_CLI"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-public-login
+          path: artifacts/login/public-login.json
+          retention-days: 1
+      - name: Wait for official device authorization
+        run: python tests/CloudDeviceLogin.py wait
+      - name: Retain the isolated authenticated desktop for fixes
+        uses: actions/github-script@v7
+        env:
+          SORTER_CLOUD_DRIVER: tests/LinuxNativeCloud.mjs
+          SORTER_CLOUD_ARTIFACT_PREFIX: linux-live
+          SORTER_CLOUD_ONESHOT: 'false'
+        with:
+          script: |
+            const {spawn} = require('node:child_process');
+            const path = require('node:path');
+            const python = path.join(process.env.pythonLocation, 'bin', 'python');
+            await new Promise((resolve, reject) => {
+              const child = spawn('dbus-run-session', ['--', 'xvfb-run', '-a', '-s', '-screen 0 1440x1000x24', process.execPath, 'tests/CloudAcceptanceHost.mjs', '/usr/bin/chatgpt', python], {stdio:'inherit', env:process.env});
+              child.once('error', reject);
+              child.once('exit', code => code === 0 ? resolve() : reject(new Error('Linux acceptance host exited with ' + code)));
+            });
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linux-authenticated-receipts
+          path: artifacts/linux-live-*/**
+          retention-days: 3
