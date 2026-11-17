@@ -34,6 +34,8 @@ The updated skill ZIP, English description, guided demonstration, preview downlo
 
 On November 17, the existing product was updated to **v1.4.2 LATEST**. The updated ZIP, changelog, and three verified 1.4.2 screenshots were accepted. The public page showed v1.4.2 in both version history and package contents, a USD 9.50 purchase entry, and a passed security scan. The same skill ZIP is attached to the GitHub release together with the accepted Windows installer.
 
+The November 17 metadata revision added the latest compatibility review to the full description and Compatibility Note. The public page was read back with the six constructed schema fixtures, the exact Windows lifecycle build, pending per-build authenticated sorting and actual client replacement, and the implementation status of future adaptation. It links directly to the updated public compatibility record.
+
 The owner authorized direct GitHub and marketplace publication on November 16, 2026 and retained cloud-only functional testing. Publication uses the disclosed Windows preview scope. Authenticated real-client acceptance, actual client version replacement, macOS/Linux consumer packages, and the independent adapter update system remain project work. A paid buyer transaction and licensed MCP delivery have yet to be exercised in an actual buyer account.
 
 [Live product](https://www.agensi.io/skills/codex-sidebar-sorter-for-windows) · [Client compatibility](../docs/04-compatibility.md)

@@ -39,9 +39,13 @@ Current ordering support covers unpinned projects in the default Projects sectio
 
 ## Current release and adaptation
 
-The public Windows package is a preview. Windows, macOS, and Linux each passed 26 core checks, and the Windows installed-upgrade checks passed. Authenticated official-client sidebar ordering and actual client version replacement remain pending.
+The public Windows 1.4.2 package is a preview. Windows, macOS, and Linux each passed 26 core checks, and Windows installed-upgrade acceptance passed. Desktop tests use fictional protocol data.
 
-Historical field detection and grouped operation-name preflight are implemented. Full parameter negotiation, independent adapter packages, and signed adapter updates are specified in the published design and remain implementation work. New client builds receive their own compatibility result. [Compatibility design](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/blob/main/docs/05-future-compatibility.md)
+The November 17 compatibility review covers six constructed historical-schema fixtures and Windows client 26.1111.2228.0 lifecycle checks with a signed-out profile. Per-build authenticated sidebar ordering and actual replacement between client versions remain pending. Mac and Linux consumer installers remain in development.
+
+Historical field detection and grouped operation-name preflight are implemented. The current bridge uses compiled parameter and response mappings. Full parameter and response negotiation, independent adapter packages, signed adapter updates, and automated new-build detection remain implementation work.
+
+Future builds retaining the consumed transport, authorization, parameters, response fields, and history layout can reuse the existing path. Each build receives its compatibility result after cloud execution. [Current compatibility review](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/blob/main/docs/04-compatibility.md#compatibility-review-on-november-17-2026) · [Future adaptation design](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/blob/main/docs/05-future-compatibility.md)
 
 ## Purchase
 

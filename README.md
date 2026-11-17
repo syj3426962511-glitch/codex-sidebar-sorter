@@ -59,7 +59,7 @@ The source repository and Windows preview installer are public. The installer do
 | Multilingual desktop and automatic worker | Twelve languages, 30 fictional projects, 360 fictional chats |
 | Windows 1.4.2 installer | Cloud installed-upgrade acceptance passed, including custom paths, bundled runtime, retained settings, full exit and reopening, uninstall |
 | Official Windows client 26.1111.2228.0 | Window close, full exit, reopening, worker independence, update check, and unchanged client files |
-| Official macOS client | Accessibility permission granted and 218 actual login-screen controls read. Signed-in sidebar reordering is pending |
+| Official macOS client | Accessibility permission granted and a signed-in test session reached project pages. Full background sidebar reordering is pending |
 | Official Linux client | Tool catalog read. Signed-in sidebar reordering is pending |
 | Actual client version replacement | Pending |
 | macOS and Linux consumer installers | Pending real-client acceptance |
@@ -71,6 +71,8 @@ Native project ordering covers unpinned projects in the default Projects section
 Cloud execution resumed after the repository became public. The authorized local installation has been upgraded to the cloud-accepted 1.4.2 preview. Functional testing continues on disposable cloud hosts.
 
 The 1.4.2 candidate detects historical name, timestamp, project, agent-path, and attached-parent fields. Its expanded 26-check suite passed on all three cloud platforms. Grouped project and chat submissions preflight required operation names before the first write. Client-build support is tracked in the compatibility record. The future-version design specifies consumed-contract matching, independent adapters, signed adapter updates, interrupted-batch recovery, and per-build cloud acceptance. These additional mechanisms have their implementation status recorded in the design. [Compatibility record](docs/04-compatibility.md) · [Future compatibility design](docs/05-future-compatibility.md)
+
+The November 17 compatibility review records six constructed history-schema fixtures and one exact Windows client lifecycle build. Per-build authenticated sidebar ordering, actual client replacement, full parameter and response negotiation, and automatic adapter delivery remain open work. The current bridge checks operation names and uses compiled request and response mappings. Each client build receives its own execution result. [Current compatibility review](docs/04-compatibility.md#compatibility-review-on-november-17-2026)
 
 [Shared core results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43888466005) · [Desktop results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43888466496) · [Windows installer results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43888952292) · [Windows client lifecycle](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43854854495)
 

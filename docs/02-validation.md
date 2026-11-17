@@ -1,6 +1,6 @@
 # Validation record
 
-Updated on November 16, 2026.
+Updated on November 17, 2026.
 
 ## Current 1.4.2 cloud candidate
 
@@ -40,6 +40,8 @@ Windows client `26.1111.2228.0` passed ordinary window close, complete exit, reo
 
 macOS granted Accessibility permission and returned 218 actual controls from the login screen. Frontmost application and pointer coordinates matched before and after the read, and client file hashes matched. Background sorting after authentication remains pending. Earlier local-tool requests were rejected with `untrusted-code-signing-identity`.
 
+The later authenticated Mac session reached the project pages and created two Accessibility test projects. The latest downloaded report has `desktopSignInRequired=false` and `fullAcceptancePassed=false`. Its project views still showed no chats. Full background sorting and its production integration remain open. The temporary session has ended. [Authenticated Mac session](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43897768093)
+
 Linux returned its tool catalog. Signed-out list calls timed out, and signed-in real-sidebar sorting remains pending.
 
 [Windows lifecycle](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43854854495) · [Mac Accessibility probe](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43864624646)
@@ -51,12 +53,13 @@ Linux returned its tool catalog. Signed-out list calls timed out, and signed-in 
 - Linux real-sidebar synchronization.
 - Actual client version replacement and subsequent cold startup.
 - macOS and Linux consumer installers with installation and upgrade acceptance.
-- Public installer delivery and a verified Agensi buyer path.
+- A verified paid-buyer transaction and licensed Agensi MCP delivery.
+- Full parameter and response negotiation, signed adapter updates, and automated new-build validation.
 
 Cloud execution resumed after source publication. The current candidate results appear above. The locally installed companion is now 1.4.2, and functional tests continue on disposable cloud hosts.
 
 ## Marketplace status
 
-The owner requested a USD 9.50 one-time Agensi listing. Submission preparation and marketplace review are recorded separately in the Agensi delivery folder.
+The Windows preview installer is public, and the Agensi companion skill is live as v1.4.2 at USD 9.50 one-time. The listing explains the purchase contents, supported scope, remaining real-client acceptance, and planned adaptation mechanisms. The November 17 compatibility review records the exact evidence and remaining per-build work. [Compatibility review](04-compatibility.md#compatibility-review-on-november-17-2026)
 
 [Agensi delivery](../agensi/README.md)

@@ -14,6 +14,27 @@ The owner requires client-version compatibility and cloud-only functional accept
 | macOS and Linux real-sidebar ordering | Cloud acceptance pending |
 | Candidate source | 1.4.2, 26 shared-core checks passed on each cloud platform and Windows installed-upgrade acceptance passed |
 
+## Compatibility review on November 17, 2026
+
+The review checked the published installer's production inputs, current tool definitions, cloud JSON receipts, and completed workflow results. It added zero real-client executions. Source, desktop, packaging, and the consumed acceptance inputs match the accepted Windows build `43ee877`.
+
+| Question | Recorded result |
+| --- | --- |
+| Historical data reading | Six constructed schema fixtures passed on all three platforms |
+| Every historical desktop build | Per-build authenticated sorting and lifecycle records remain to be established |
+| Exact Windows lifecycle build | `26.1111.2228.0`, signed out, with `authenticatedSortingVerified=false` |
+| Actual desktop version replacement | `crossVersionUpdateVerified=false`, with the same Windows build before and after the update check |
+| Mac native connection | Signing-identity rejection recorded for build `26.1112.11217` |
+| Later authenticated Mac Accessibility session | Test project pages reached, with `fullAcceptancePassed=false` |
+| Linux native connection | Catalog readable, list request timed out, full authenticated ordering pending |
+| Future releases | Reuse depends on matching transport, authorization, consumed request and response fields, and history layout |
+
+`NativeBridge` stores advertised operation names and sends compiled request mappings. Full parameter and response negotiation remains planned. `LocalHistoryReader` probes known optional fields while consuming the existing global-state file, `state_*.sqlite`, and required thread columns. Changes to those consumed contracts require an adapter revision and cloud acceptance.
+
+The automatic worker currently schedules at most six delayed retries for an I/O failure and then waits for another history event or explicit trigger. Independent endpoint-ready detection, interrupted-batch recovery, and saved-order read-back remain implementation work. Platform Accessibility integration, signed adapter delivery, and automated new-build detection also remain planned.
+
+New builds retaining the consumed contracts can reuse the existing connection path. A build receives a supported result after its authenticated ordering and lifecycle execution have passed. [Future implementation status](05-future-compatibility.md#implementation-sequence-and-current-status)
+
 ## Existing integration mechanisms
 
 The companion rediscovers local endpoints for each connection and reads the client's advertised tool catalog. Requests use the operations exposed by that catalog. The independent worker and tray have their own process lifecycle and settings.
