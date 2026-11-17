@@ -1,6 +1,6 @@
 # Validation record
 
-Updated on November 17, 2026.
+Updated on November 18, 2026.
 
 ## November 18 Unix installation candidates
 

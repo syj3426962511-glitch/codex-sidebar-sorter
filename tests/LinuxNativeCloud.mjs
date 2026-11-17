@@ -41,7 +41,7 @@ async function createFixture() {
     const page = await activePage();
     const text = await page.locator('body').innerText();
     if (!text.includes(name)) {
-      await page.getByRole('button', {name:'Add new project', exact:true}).click();
+      await page.getByRole('button', {name:'Add new project', exact:true}).press('Enter');
       await page.getByRole('textbox', {name:'Project name', exact:true}).fill(name);
       await page.getByRole('button', {name:'Create project', exact:true}).click();
       await delay(1000);

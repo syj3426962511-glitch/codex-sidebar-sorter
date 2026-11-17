@@ -6,6 +6,8 @@
 
 源码与 Windows 1.4.2 预览安装包已公开。1.4.2 在三平台各通过 26 项核心检查，Windows 安装候选已通过旧版运行中升级、设置保留及卸载验收。登录后的真实排序、实际客户端版本替换、macOS 和 Linux 安装包继续验收。[Windows 预览版](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-preview)
 
+11 月 18 日已新增 Intel Mac 和 Linux x64 自带运行环境的安装候选包，并公开下载。云端已通过中文及空格路径安装、关窗后台、自动排序、运行中覆盖、设置保留、完整退出重开及卸载，使用 30 个测试项目与 360 条测试对话。正式客户端真实排序继续验收，Apple 芯片 Mac 安装检查受到云端 ARM64 主机分配失败影响。[Mac 与 Linux 安装候选](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-unix-candidate)
+
 [English guide](README.md)
 
 未来版本适配方案包含能力协商、独立适配器、签名更新和云端回归。历史字段探测及操作名预检已实现，完整参数协商、签名适配更新和新构建自动检测继续待开发。[未来版本适配方案](docs/05-未来版本适配方案.md)
@@ -24,7 +26,8 @@
 | macOS 官方客户端 | 原生侧栏接口以 `untrusted-code-signing-identity` 拒绝请求。辅助功能会话已登录并进入测试项目，完整后台排序待验收 |
 | Linux 官方客户端 | 工具目录读取通过，登录前的列表调用超时，真实排序待验收 |
 | Windows 1.4.2 安装候选 | 自带运行时、12 个语言选项、中文与空格路径、旧版运行中升级、设置保留、完整退出后重开及卸载通过 |
-| macOS、Linux 安装包与对应版本发布 | 待完整验收 |
+| Intel Mac、Linux x64 安装候选 | 已公开下载，安装与工具生命周期通过，正式客户端排序继续验收 |
+| Apple 芯片 Mac 安装候选 | 云端主机分配失败，安装验收待补齐 |
 
 功能与安装验收使用 GitHub 托管的独立云端环境。
 
