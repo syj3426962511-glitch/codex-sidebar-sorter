@@ -108,14 +108,11 @@ internal static class UnixInstalledAcceptance
 
     private static async Task RunAsync(string executable, params string[] arguments)
     {
-        var start = new ProcessStartInfo(executable) { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
+        var start = new ProcessStartInfo(executable) { UseShellExecute = false };
         foreach (string argument in arguments) start.ArgumentList.Add(argument);
         using Process process = Process.Start(start)!;
-        Task<string> standard = process.StandardOutput.ReadToEndAsync();
-        Task<string> errors = process.StandardError.ReadToEndAsync();
         await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(120));
-        Require(process.ExitCode == 0, executable + " exited " + process.ExitCode + " " + await errors);
-        await standard;
+        Require(process.ExitCode == 0, executable + " exited " + process.ExitCode);
     }
 
     private static async Task WaitAsync(Func<bool> condition, string message)

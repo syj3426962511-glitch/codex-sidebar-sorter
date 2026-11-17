@@ -99,6 +99,7 @@ else:
     launcher.write_text('#!/bin/sh\nset -eu\nroot=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)\n'
                         'export LD_LIBRARY_PATH="$root/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"\n'
                         'exec "$root/SidebarSorter" "$@"\n')
+    launcher.chmod(0o777)
     run("chmod", "-R", "a+rwX", str(application))
     payload = work / "payload.tar.gz"
     with tarfile.open(payload, "w:gz") as archive:
