@@ -49,6 +49,8 @@ Choosing a custom rule, moving rows, or resetting the preview pauses automatic n
 
 Close the companion window to keep its worker and tray running. Use **Open Sidebar Sorter** in the tray to reopen the window and **Exit** to stop the companion.
 
+Self-contained Intel Mac and Linux x64 installation candidates now have accepted cloud installation and companion lifecycle results. Their authenticated official-client sorting acceptance remains in progress. [Unix candidate downloads and validation](docs/06-unix-installers.md)
+
 The source repository and Windows preview installer are public. The installer download was checked without authentication. The Agensi Windows companion skill is live at USD 9.50 one-time. Authenticated real-client production acceptance remains in progress. [Agensi product](https://www.agensi.io/skills/codex-sidebar-sorter-for-windows)
 
 ## Compatibility and verification

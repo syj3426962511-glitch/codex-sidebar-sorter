@@ -2,6 +2,10 @@
 
 Updated on November 17, 2026.
 
+## November 18 Unix installation candidates
+
+Self-contained Intel Mac and Linux x64 packages passed cloud installation, custom Unicode paths, bundled runtime and source, automatic sorting with fictional protocol fixtures, window close with continued background sorting, running replacement, preference retention, full exit and reopening, and removal. The packages were built from `291b894`. Their reports record `authenticatedOfficialClientSortingVerified=false`. The Apple Silicon installer job ended before any step ran because a hosted ARM64 runner could not be acquired. [Unix candidate packages and exact results](06-unix-installers.md)
+
 ## Current 1.4.2 cloud candidate
 
 The 1.4.2 preview installer from `43ee877` includes the production changes from `fa6ec55`, which passed 26 core checks on each cloud platform and all three desktop jobs. Windows installed-upgrade acceptance passed for `43ee877`. The installer is 44,327,746 bytes. The six history-schema cases cover historical data generations, and the new regression checks missing-operation preflight before grouped mutations.
