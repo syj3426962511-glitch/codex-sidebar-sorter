@@ -1,11 +1,11 @@
 {
-  "name": "Codex Sidebar Sorter for Windows",
+  "name": "Codex Sidebar Sorter for Windows and Linux",
   "slug": "codex-sidebar-sorter-windows",
   "version": "1.4.2",
-  "summary": "Set up and operate the standalone Codex Sidebar Sorter Windows companion with seven sorting modes, twelve interface languages, automatic name ordering, previews, and an independent background worker.",
-  "description": "## Organize Codex projects and chats\n\nCodex Sidebar Sorter for Windows is an agent skill for setting up and operating the standalone Codex Sidebar Sorter companion. It helps you choose an interface language, configure project and chat ordering, use the persistent background worker, and resolve connection or upgrade messages.\n\n## What you get\n\n- A complete agent workflow for installation, connection, sorting, language selection, tray operation, and troubleshooting.\n- Seven sorting choices covering names, natural numbers, update times, and manual order.\n- Instructions for continuous ascending-name sorting after additions and renaming.\n- Guidance for twelve interface languages, including Arabic right-to-left layout.\n- The current compatibility and validation record.\n\nThe companion supplies the desktop interface and background worker. Your agent can operate the controls when an authorized desktop-control surface is available, or guide you through the same controls.\n\n## Getting started\n\n1. Download and install the self-contained Windows preview. [Windows installer](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.2-preview/CodexSidebarSorter-1.4.2-Windows-Setup.exe)\n2. Open a compatible, signed-in Codex Desktop on the same computer.\n3. Load this skill through Agensi and describe the project, chat scope, language, and sorting rule.\n4. Review the companion's preview and apply the selected order.\n\n## Sorting and background use\n\nProjects and project chats have separate sorting choices. Use Name A to Z, Name Z to A, Natural numeric order, Reverse natural order, Recently updated first, Oldest update first, or Manual order.\n\nKeep names sorted A to Z enables continuous alphabetical synchronization for supported sidebar items. Closing the companion window leaves its worker and tray running. Open Sidebar Sorter and Exit are available from the tray.\n\n## Compatibility\n\nThis listing targets Windows x64 and the Codex Sidebar Sorter 1.4.2 preview companion. The desktop installer includes its runtime. Codex Desktop compatibility depends on the client's available local interface and authorization.\n\nShared logic and desktop tests passed on Windows x64, macOS ARM64, and Linux x64 with fictional projects and chats. Mac and Linux consumer installers, authenticated real-client sorting acceptance, and actual client version replacement have remaining validation work.\n\nCurrent ordering support covers unpinned projects in the default Projects section, supported Codex project chats, and chats in pinned or custom sections. Additional client support is needed for ChatGPT project-chat ordering, independent alphabetical Recents ordering, and pinned project placement.\n\n## Current release and adaptation\n\nThe public Windows 1.4.2 package is a preview. Windows, macOS, and Linux each passed 26 core checks, and Windows installed-upgrade acceptance passed. Desktop tests use fictional protocol data.\n\nThe November 17 compatibility review covers six constructed historical-schema fixtures and Windows client 26.1111.2228.0 lifecycle checks with a signed-out profile. Per-build authenticated sidebar ordering and actual replacement between client versions remain pending. Mac and Linux consumer installers remain in development.\n\nHistorical field detection and grouped operation-name preflight are implemented. The current bridge uses compiled parameter and response mappings. Full parameter and response negotiation, independent adapter packages, signed adapter updates, and automated new-build detection remain implementation work.\n\nFuture builds retaining the consumed transport, authorization, parameters, response fields, and history layout can reuse the existing path. Each build receives its compatibility result after cloud execution. [Current compatibility review](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/blob/main/docs/04-compatibility.md#compatibility-review-on-november-17-2026) · [Future adaptation design](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/blob/main/docs/05-future-compatibility.md)\n\n## Purchase\n\nUSD 9.50, one-time. The purchase supplies this agent skill through Agensi. The Windows companion installer is a separate prerequisite supplied at no additional charge.\n\nThe project uses the MIT license. Product support and download access are described in the linked documentation.",
-  "demo_request": "Use Codex Sidebar Sorter for Windows to help me select German, keep my projects and their chats in ascending name order, and explain how to temporarily sort one project by natural numbers.",
-  "demo_result": "## Requested configuration\n\n| Setting | Selection |\n| --- | --- |\n| Interface language | Deutsch |\n| Project order | Name A to Z |\n| Chats within each project | Name A to Z |\n| Continuous sorting | Enabled |\n| Background use | Worker and tray remain after closing the window |\n\n## Apply the configuration\n\nOpen the installed Codex Sidebar Sorter companion and a compatible, signed-in Codex Desktop on the same Windows computer. Select Refresh and check the project and chat preview.\n\nIn the companion's language selector, choose Deutsch. Enable Namen automatisch aufsteigend sortieren. The companion saves the language choice and enables ascending-name ordering for projects and their supported chats.\n\nKeep the Codex client running while the companion synchronizes its sidebar. Closing the companion window leaves the independent worker and tray running. Open Sidebar Sorter in the tray reopens the interface.\n\n## Temporarily use natural numeric order\n\nSelect the named project in Scope. Choose Natürliche Zahlenfolge for its chats. Review the preview and apply the order to the sidebar.\n\nNatural order places Item 2 before Item 10 and Item 20. Choosing this manual rule pauses continuous alphabetical sorting. Enable Namen automatisch aufsteigend sortieren again when you want continuous alphabetical order to resume.\n\n## Completion check\n\nRead the companion's status and refreshed saved order after applying. Check the same project in the Codex sidebar. If a connection or project-membership message appears, keep that exact message and the client version available for troubleshooting.\n\nThis is a guided example of the delivered workflow. The visible desktop screenshots use fictional test projects and chats.",
+  "summary": "Organize Codex projects and chats with seven sorting modes, twelve languages, automatic name ordering and an independent background worker on Windows x64 and tested Ubuntu Linux x64.",
+  "description": "## Organize Codex projects and chats\n\nCodex Sidebar Sorter is an independent desktop companion. This agent skill helps you install it, choose a language, configure project and chat ordering, use the background worker and resolve connection messages.\n\n## What you get\n\n- An agent workflow for installation, connection, sorting, languages, tray use and troubleshooting.\n- Seven modes for ascending and descending names, natural numbers, update times and manual order.\n- Automatic ascending-name sorting after additions and renaming.\n- Twelve interface languages, including Arabic right-to-left layout.\n- Download links for the self-contained Windows and Linux companion installers.\n\nThe companion provides the desktop interface and persistent worker. An agent with an authorized desktop-control surface can operate the controls. Conversational agents can guide the same steps.\n\n## Install and use\n\nChoose the Windows x64 or tested Ubuntu 26.04.1 x64 installer. Both include their runtimes. Use a compatible, signed-in Codex Desktop on the same computer, open the companion and select Refresh. Review the projects and chats, keep automatic name sorting enabled or choose another rule and apply it.\n\n[Windows installer](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.2-preview/CodexSidebarSorter-1.4.2-Windows-Setup.exe) · [Linux installer](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.2-preview/CodexSidebarSorter-1.4.2-Linux-x64-Setup.run)\n\nClose the companion window to retain its worker and tray. Use Open Sidebar Sorter to reopen the interface and Exit to stop the companion. Installation allows a selected destination and retains preferences during replacement.\n\n## Verified scope\n\nThe Linux 1.4.2 installer passed authenticated ordering with official client 26.1111.21308 on Ubuntu 26.04.1 x64. Two isolated local projects and six chats passed all seven modes and saved-order read-back. Automatic renaming after companion window close, client exit with the worker retained, recovery after client reopening, and companion removal while the client stayed running passed. The original client executable and archive matched before and after the run.\n\nWindows installation, running replacement, background operation and removal passed with fictional protocol fixtures. Official Windows client 26.1111.2228.0 passed signed-out lifecycle checks. Windows authenticated ordering and actual client version replacement remain open acceptance work.\n\nIntel Mac has a public installation candidate. Authenticated Mac sidebar ordering, production Accessibility integration, Apple Silicon installation acceptance and consumer distribution signing remain open.\n\n[Validation record](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/blob/main/docs/02-validation.md) · [Linux real-client acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44125514300)\n\n## Compatibility and maintenance\n\nSupported ordering covers eligible unpinned projects, Codex project chats and chats in pinned or custom sections. Independent alphabetical Recents ordering, pinned project placement and ChatGPT project-chat ordering need additional client support. Other Linux distributions and client builds receive separate results.\n\nThe bridge currently checks operation names and uses compiled request and response mappings. Full contract negotiation, independently signed adapter updates and automatic new-build detection remain implementation work.\n\n[Compatibility record](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/blob/main/docs/04-compatibility.md) · [Future compatibility design](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/blob/main/docs/05-future-compatibility.md)\n\n## Purchase\n\nUSD 9.50, one-time. The purchase supplies this agent skill through Agensi. Companion installers are available at no additional charge. The source project uses the MIT license.\n",
+  "demo_request": "Use Codex Sidebar Sorter for Windows and Linux to help me select German, keep my projects and their chats in ascending name order, and explain how to temporarily sort one project by natural numbers.",
+  "demo_result": "## Requested configuration\n\n| Setting | Selection |\n| --- | --- |\n| Interface language | Deutsch |\n| Project order | Name A to Z |\n| Chats within each project | Name A to Z |\n| Continuous sorting | Enabled |\n| Background use | Worker and tray remain after closing the window |\n\n## Apply the configuration\n\nOpen the installed Codex Sidebar Sorter companion and a compatible, signed-in Codex Desktop on the same supported computer. Select Refresh and check the project and chat preview.\n\nIn the companion's language selector, choose Deutsch. Enable Namen automatisch aufsteigend sortieren. The companion saves the language choice and enables ascending-name ordering for projects and their supported chats.\n\nKeep the Codex client running while the companion synchronizes its sidebar. Closing the companion window leaves the independent worker and tray running. Open Sidebar Sorter in the tray reopens the interface.\n\n## Temporarily use natural numeric order\n\nSelect the named project in Scope. Choose Natürliche Zahlenfolge for its chats. Review the preview and apply the order to the sidebar.\n\nNatural order places Item 2 before Item 10 and Item 20. Choosing this manual rule pauses continuous alphabetical sorting. Enable Namen automatisch aufsteigend sortieren again when you want continuous alphabetical order to resume.\n\n## Completion check\n\nRead the companion's status and refreshed saved order after applying. Check the same project in the Codex sidebar. If a connection or project-membership message appears, keep that exact message and the client version available for troubleshooting.\n\nThis is a guided example of the delivered workflow. The visible desktop screenshots use fictional test projects and chats.",
   "pricing": {
     "model": "one-time",
     "currency": "USD",
@@ -18,6 +18,7 @@
   "tags": [
     "codex",
     "windows",
+    "linux",
     "sidebar",
     "sorting",
     "multilingual",
@@ -31,11 +32,11 @@
     "Manage background and tray operation",
     "Diagnose companion connection messages"
   ],
-  "compatibility": "Windows x64 with Codex Sidebar Sorter 1.4.2 and a compatible signed-in Codex Desktop on the same PC. Windows client 26.1111.2228.0 has signed-out lifecycle evidence. Per-build authenticated ordering and actual client replacement remain pending. Future builds require matching consumed contracts and cloud validation. The installer bundles its runtime.",
+  "compatibility": "Windows x64 and tested Ubuntu 26.04.1 x64 with companion 1.4.2 and a compatible signed-in Codex Desktop. Linux client 26.1111.21308 passed authenticated seven-mode ordering, background operation and exit/reopen recovery. Windows client 26.1111.2228.0 has signed-out lifecycle evidence. Other builds and actual client replacement require separate acceptance. Mac consumer delivery remains pending.",
   "requires": [
-    "Windows x64",
+    "Windows x64 or tested Ubuntu 26.04.1 x64",
     "Codex Sidebar Sorter 1.4.2 companion",
-    "Compatible signed-in Codex Desktop",
+    "Compatible signed-in Codex Desktop on the same computer",
     "Agensi connection for skill delivery"
   ],
   "optional": [
@@ -58,7 +59,7 @@
   "faq": [
     {
       "question": "What does the purchase include?",
-      "answer": "A complete agent skill for installing, configuring, operating, and troubleshooting the Windows companion. The companion installer is a separate prerequisite supplied at no additional charge."
+      "answer": "An agent skill for installing, configuring, operating and troubleshooting the Windows and tested Ubuntu Linux companion. Companion installers are supplied at no additional charge."
     },
     {
       "question": "Which languages are available?",
@@ -70,15 +71,15 @@
     },
     {
       "question": "Which systems does this listing target?",
-      "answer": "Windows x64. The shared code and fictional-data tests cover macOS and Linux, while their consumer installers and authenticated real-client sorting require further acceptance."
+      "answer": "Windows x64 and tested Ubuntu 26.04.1 x64. Linux official client 26.1111.21308 has authenticated ordering and background lifecycle evidence. Mac consumer delivery remains pending."
     },
     {
       "question": "Does the AI operate the application directly?",
       "answer": "An agent with an authorized desktop-control surface can operate the companion. Other compatible agents can guide the same controls and explain the resulting status."
     }
   ],
-  "submission_status": "live",
-  "sale_readiness": "Live at USD 9.50 one-time. Public preview download and purchase entry verified. Authenticated official-client ordering, production acceptance, and an actual paid-buyer delivery remain open.",
+  "submission_status": "update-ready",
+  "sale_readiness": "Windows listing is live at USD 9.50. The Windows and Linux update package is prepared for submission. A paid-buyer delivery transaction remains unverified.",
   "draft_url": "https://www.agensi.io/dashboard/submit?draft=f3ef0bc3-a1e9-43b5-8f6f-3dc15f82bf77",
   "security_scan": "passed",
   "public_url": "https://www.agensi.io/skills/codex-sidebar-sorter-for-windows",
@@ -87,5 +88,27 @@
   "marketplace_version_status": "LATEST",
   "marketplace_edit_url": "https://www.agensi.io/dashboard/submit/7315b1b4-cae3-4871-b7d5-9a6d34189c0d",
   "owner_publication_choice": "Direct source and marketplace publication authorized. Source is public and cloud jobs resumed. Functional acceptance remains cloud-only.",
-  "source_candidate_version": "1.4.2"
+  "source_candidate_version": "1.4.2",
+  "live_snapshot": {
+    "name": "Codex Sidebar Sorter for Windows",
+    "version": "1.4.2",
+    "public_url": "https://www.agensi.io/skills/codex-sidebar-sorter-for-windows",
+    "price_usd": 9.5,
+    "current_package": "01-codex-sidebar-sorter-windows-1.4.2.zip"
+  },
+  "installers": [
+    {
+      "file": "CodexSidebarSorter-1.4.2-Windows-Setup.exe",
+      "bytes": 44327746,
+      "source_commit": "43ee877",
+      "public_download_url": "https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.2-preview/CodexSidebarSorter-1.4.2-Windows-Setup.exe"
+    },
+    {
+      "file": "CodexSidebarSorter-1.4.2-Linux-x64-Setup.run",
+      "bytes": 93839351,
+      "source_commit": "291b89406e9a25b9e7f6272a01f876ff847ccca9",
+      "public_download_url": "https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.2-preview/CodexSidebarSorter-1.4.2-Linux-x64-Setup.run"
+    }
+  ],
+  "marketplace_update_status": "Prepared locally. CUA returned GetCursorPos access denied and the existing OpenCLI Browser Bridge extension is not connected. The live listing still has its preceding Windows-only package."
 }

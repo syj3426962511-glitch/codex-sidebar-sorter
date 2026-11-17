@@ -1,24 +1,37 @@
 ---
-name: codex-sidebar-sorter-windows
-description: Help install, configure, and operate the independent Codex Sidebar Sorter Windows companion. Use for project and chat ordering, seven sort modes, twelve interface languages, automatic name sorting, tray operation, and companion connection or upgrade problems.
+name: codex-sidebar-sorter
+description: Help install, configure, and operate the independent Codex Sidebar Sorter companion on Windows x64 and the tested Ubuntu Linux x64 release. Use for project and chat ordering, seven sort modes, twelve interface languages, automatic name sorting, tray operation, and companion connection or upgrade problems.
 license: MIT
 metadata:
   version: "1.4.2"
-  product: "Codex Sidebar Sorter for Windows"
-  platform: "Windows x64"
+  product: "Codex Sidebar Sorter for Windows and Linux"
+  platform: "Windows x64, Ubuntu 26.04.1 x64"
 ---
 
-# Codex Sidebar Sorter for Windows
+# Codex Sidebar Sorter for Windows and Linux
 
 Help the user operate the installed Codex Sidebar Sorter desktop companion. The companion supplies the sorting interface and persistent background worker. Agensi delivers these agent instructions through MCP.
 
 ## Required environment
 
-Use a Windows x64 computer, an installed Codex Sidebar Sorter 1.4.2 companion, and a compatible signed-in Codex Desktop on that computer. The companion installer includes its runtime. The current public package is a preview with authenticated real-client ordering and actual client replacement acceptance still pending.
+Use a Windows x64 computer or the tested Ubuntu 26.04.1 x64 environment, an installed Codex Sidebar Sorter 1.4.2 companion, and a compatible signed-in Codex Desktop on that computer. The companion installers include their runtimes.
+
+Linux client 26.1111.21308 passed authenticated seven-mode sorting and saved-order read-back, automatic changes with the companion window closed, client exit and reopening with the worker retained, and companion removal while the client stayed running. Windows authenticated official-client ordering and actual replacement between client builds remain acceptance work.
 
 Determine the installed companion path from the user's shortcut or installation record. The examples use the application name, so adapt to the user's chosen installation directory.
 
 The public Windows preview installer has 44,327,746 bytes and includes its runtime and source. Read the current compatibility record when explaining its supported scope. [Windows preview download](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.2-preview/CodexSidebarSorter-1.4.2-Windows-Setup.exe) · [Validation record](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/blob/main/docs/02-validation.md)
+
+The Linux installer has 93,839,351 bytes and includes its runtime, native indicator dependencies, ICU, SQLite, icon, languages, and source. [Linux installer](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.2-preview/CodexSidebarSorter-1.4.2-Linux-x64-Setup.run)
+
+For a terminal installation, use the buyer's requested directory.
+
+```sh
+chmod +x CodexSidebarSorter-1.4.2-Linux-x64-Setup.run
+./CodexSidebarSorter-1.4.2-Linux-x64-Setup.run --prefix "$HOME/Applications/CodexSidebarSorter"
+```
+
+The Linux installer also offers a folder chooser when Zenity is available. Reusing the same destination replaces the existing companion and retains its preferences. Run the same installer with `--uninstall --prefix` and the installed directory to remove it while retaining preferences.
 
 ## Interpret the request
 
@@ -90,7 +103,9 @@ Record client interface or authorization errors as pending integration work, wit
 
 ## Compatibility
 
-The desktop architecture and fictional-data tests cover Windows x64, macOS ARM64, and Linux x64. This listing targets the Windows companion. Mac and Linux consumer packages and their authenticated real-client sorting acceptance remain in development.
+The shared architecture and fictional-data tests cover Windows x64, macOS ARM64, and Linux x64. Windows and Linux installation checks also exercise the self-contained production applications. Linux has authenticated official-client evidence for the exact build recorded above. Other Linux distributions and client builds need their own results.
+
+Intel Mac has an installation candidate with passing installation and companion lifecycle checks. Authenticated Mac sidebar ordering, production Accessibility integration, Apple Silicon installation acceptance, and consumer distribution signing remain open.
 
 Current ordering scope covers supported unpinned projects, supported Codex project chats, and chats in pinned or custom sections. ChatGPT project-chat ordering, independent alphabetical Recents ordering, and pinned project placement require additional client support.
 

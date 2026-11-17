@@ -1,41 +1,17 @@
-# Agensi submission
+# Agensi delivery
 
-The owner requested a USD 9.50 one-time listing for the Windows companion skill.
+The live product is Codex Sidebar Sorter for Windows at USD 9.50 one-time. Its existing approved package is `01-codex-sidebar-sorter-windows-1.4.2.zip`.
 
-## Upload file
+## Prepared Windows and Linux update
 
-The live listing uses `01-codex-sidebar-sorter-windows-1.4.2.zip`. The ZIP contains one SKILL.md, its compatibility reference, and the MIT license.
+`01-codex-sidebar-sorter-windows-linux-1.4.2.zip` contains the updated `codex-sidebar-sorter` skill, a current compatibility reference and the MIT license. The package has three files and includes both public installer links.
 
-## Listing copy
+`02-listing.en.md` supplies the English title, description, guided example and FAQ. `listing.json` contains the prepared field values and a `live_snapshot` of the preceding marketplace publication. Price remains USD 9.50 one-time.
 
-`02-listing.en.md` contains the English title, summary, description, full guided demonstration, price, and FAQ. `listing.json` stores the same field values.
+Linux client 26.1111.21308 on Ubuntu 26.04.1 x64 passed authenticated seven-mode ordering and the published-installer background and client exit/reopen checks. Mac consumer delivery remains open.
 
-Use the existing application logo and the English, Japanese, and Arabic desktop screenshots referenced below. The screenshots show fictional test projects and chats.
+## Submission status
 
-[Application logo](../src/Assets/聊天排序-Logo-256.png) · [English screenshot](../docs/assets/sidebar-sorter-english.png) · [Japanese screenshot](../docs/assets/sidebar-sorter-japanese.png) · [Arabic screenshot](../docs/assets/sidebar-sorter-arabic.png)
+The Windows and Linux update is prepared locally. The live product still uses its preceding Windows-only package. The browser-control connection returned `GetCursorPos` access denied. The existing OpenCLI fallback reports that its Browser Bridge extension is not connected. Submission and public-page verification remain pending restoration of a working authenticated browser connection.
 
-## Buyer delivery
-
-Agensi delivers the skill through MCP. The Windows companion installer is supplied through a verified external download. The paid listing is scoped to the agent workflow for the Windows companion.
-
-The source repository and Windows 1.4.2 preview installer are public. The preview passed 26 core checks on each cloud platform, all three desktop jobs, and Windows installed-upgrade acceptance. Its unauthenticated download returned HTTP 200 and the expected 44,327,746-byte content length. The authorized local installation has been upgraded to the same Windows preview.
-
-The paid purchase delivers the agent skill through Agensi. The companion installer is supplied at no additional charge. The product page describes the Windows preview's current evidence and pending authenticated real-sidebar and client-version-replacement acceptance. [Windows preview](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-preview)
-
-## Platform rules checked
-
-The current packaging guide accepts a SKILL.md ZIP and text references. Executable file types are flagged by its upload scan. Keep the skill instructions and required reference information in text.
-
-[Agensi packaging guide](https://www.agensi.io/docs/packaging) · [Website submission guide](https://www.agensi.io/docs/submit-on-the-website) · [Review states](https://www.agensi.io/docs/review-and-approval)
-
-## Submission record
-
-The updated skill ZIP, English description, guided demonstration, preview download, compatibility note, logo, screenshot, requirements, and permissions were submitted on November 16, 2026. Creator Studio returned **Live** and **USD 9.50**. The public product page showed its purchase button and **Security scan passed today**.
-
-On November 17, the existing product was updated to **v1.4.2 LATEST**. The updated ZIP, changelog, and three verified 1.4.2 screenshots were accepted. The public page showed v1.4.2 in both version history and package contents, a USD 9.50 purchase entry, and a passed security scan. The same skill ZIP is attached to the GitHub release together with the accepted Windows installer.
-
-The November 17 metadata revision added the latest compatibility review to the full description and Compatibility Note. The public page was read back with the six constructed schema fixtures, the exact Windows lifecycle build, pending per-build authenticated sorting and actual client replacement, and the implementation status of future adaptation. It links directly to the updated public compatibility record.
-
-The owner authorized direct GitHub and marketplace publication on November 16, 2026 and retained cloud-only functional testing. Publication uses the disclosed Windows preview scope. Authenticated real-client acceptance, actual client version replacement, macOS/Linux consumer packages, and the independent adapter update system remain project work. A paid buyer transaction and licensed MCP delivery have yet to be exercised in an actual buyer account.
-
-[Live product](https://www.agensi.io/skills/codex-sidebar-sorter-for-windows) · [Client compatibility](../docs/04-compatibility.md)
+[Current product](https://www.agensi.io/skills/codex-sidebar-sorter-for-windows) · [Existing product editor](https://www.agensi.io/dashboard/submit/7315b1b4-cae3-4871-b7d5-9a6d34189c0d) · [Linux acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44125514300)

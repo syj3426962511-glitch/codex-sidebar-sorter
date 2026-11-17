@@ -14,7 +14,7 @@ A standalone desktop companion for organizing Codex projects and chats. Preview 
 - Search, scope selection, project and chat views, change previews, drag ordering, and movement buttons.
 - An independent background worker and native tray menu that continue after the window closes.
 - Twelve interface languages, including Arabic right-to-left layout.
-- A self-contained Windows installer with the runtime, application icon, language resources, and source.
+- Self-contained Windows and Linux installers with runtimes, icons, language resources, and source.
 
 Sidebar synchronization depends on the installed Codex client's local interface and access authorization. The compatibility table below records the current evidence.
 
@@ -40,7 +40,7 @@ Choosing a custom rule, moving rows, or resetting the preview pauses automatic n
 
 ## Getting started
 
-1. Obtain the self-contained Windows 1.4.2 preview installer from the public release page. Authenticated official-client sidebar ordering and actual client version replacement remain open acceptance items for this preview. [Windows preview](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-preview)
+1. Obtain the self-contained Windows or tested Ubuntu Linux x64 1.4.2 preview installer from the public release page. The compatibility table records each platform result. [Installers](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-preview)
 2. Choose an installation directory and install the bundled application.
 3. Open a compatible, signed-in Codex Desktop client.
 4. Open Codex Sidebar Sorter and select **Refresh**.
@@ -49,9 +49,7 @@ Choosing a custom rule, moving rows, or resetting the preview pauses automatic n
 
 Close the companion window to keep its worker and tray running. Use **Open Sidebar Sorter** in the tray to reopen the window and **Exit** to stop the companion.
 
-Self-contained Intel Mac and Linux x64 installation candidates now have accepted cloud installation and companion lifecycle results. Their authenticated official-client sorting acceptance remains in progress. [Unix candidate downloads and validation](docs/06-unix-installers.md)
-
-The source repository and Windows preview installer are public. The installer download was checked without authentication. The Agensi Windows companion skill is live at USD 9.50 one-time. Authenticated real-client production acceptance remains in progress. [Agensi product](https://www.agensi.io/skills/codex-sidebar-sorter-for-windows)
+The source and Windows and Linux installers are public. Intel Mac has an installation candidate. The live Agensi product currently retains its preceding Windows companion skill at USD 9.50 one-time. The Windows and Linux skill update is prepared for marketplace submission. [Installers](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-preview) · [Mac candidate](docs/06-unix-installers.md) · [Agensi product](https://www.agensi.io/skills/codex-sidebar-sorter-for-windows)
 
 ## Compatibility and verification
 
@@ -62,9 +60,10 @@ The source repository and Windows preview installer are public. The installer do
 | Windows 1.4.2 installer | Cloud installed-upgrade acceptance passed, including custom paths, bundled runtime, retained settings, full exit and reopening, uninstall |
 | Official Windows client 26.1111.2228.0 | Window close, full exit, reopening, worker independence, update check, and unchanged client files |
 | Official macOS client | Accessibility permission granted and a signed-in test session reached project pages. Full background sidebar reordering is pending |
-| Official Linux client | Tool catalog read. Signed-in sidebar reordering is pending |
+| Official Linux client 26.1111.21308 on Ubuntu 26.04.1 x64 | Seven modes with saved-order read-back, automatic changes after companion window close, retained worker after client exit, recovery after reopening, and removal while the client stayed running passed |
 | Actual client version replacement | Pending |
-| macOS and Linux consumer installers | Pending real-client acceptance |
+| Linux x64 installer | Published with signed-in official-client acceptance |
+| macOS consumer installer | Intel installation candidate published, authenticated sidebar ordering and Apple Silicon installation remain open |
 
 The Windows official-client lifecycle run used a signed-out cloud profile. Authenticated real-client sorting has its own remaining acceptance work. The Windows installer and desktop automation results use fictional protocol fixtures.
 

@@ -4,15 +4,15 @@
 
 语言包括简体中文、繁体中文、英语、日语、韩语、法语、德语、西班牙语、葡萄牙语、意大利语、俄语和阿拉伯语。界面、菜单和工具自身提示随选择切换，偏好保存于工具自身设置。阿拉伯语使用从右到左的布局。
 
-源码与 Windows 1.4.2 预览安装包已公开。1.4.2 在三平台各通过 26 项核心检查，Windows 安装候选已通过旧版运行中升级、设置保留及卸载验收。登录后的真实排序、实际客户端版本替换、macOS 和 Linux 安装包继续验收。[Windows 预览版](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-preview)
+Windows 与 Linux x64 的 1.4.2 安装包已公开，均自带运行环境、图标和源码。Linux 在 Ubuntu 26.04.1、官方客户端 26.1111.21308 上完成七种排序、保存回读、关窗后台自动排序、客户端退出和重开恢复，以及工具卸载后客户端继续运行的云端验收。Windows 安装与生命周期证据见下表。[安装包](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-preview) · [Linux 真实验收](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44125514300)
 
-11 月 18 日已新增 Intel Mac 和 Linux x64 自带运行环境的安装候选包，并公开下载。云端已通过中文及空格路径安装、关窗后台、自动排序、运行中覆盖、设置保留、完整退出重开及卸载，使用 30 个测试项目与 360 条测试对话。正式客户端真实排序继续验收，Apple 芯片 Mac 安装检查受到云端 ARM64 主机分配失败影响。[Mac 与 Linux 安装候选](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-unix-candidate)
+Intel Mac 安装候选已公开，工具安装及生命周期检查通过，正式客户端排序与生产辅助功能接入继续待完成。Apple 芯片 Mac 安装检查受到云端 ARM64 主机分配失败影响。[Mac 安装候选](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-unix-candidate)
 
 [English guide](README.md)
 
 未来版本适配方案包含能力协商、独立适配器、签名更新和云端回归。历史字段探测及操作名预检已实现，完整参数协商、签名适配更新和新构建自动检测继续待开发。[未来版本适配方案](docs/05-未来版本适配方案.md)
 
-11 月 17 日核查确认，当前证据覆盖六类构造的历史数据结构，以及 Windows 客户端 `26.1111.2228.0` 的未登录生命周期。每个旧版本的认证侧栏排序、真实版本替换及后续新构建的适配仍需逐项验收。[兼容性核查](docs/04-compatibility.md#compatibility-review-on-november-17-2026)
+11 月 17 日核查记录了六类构造的历史数据结构，以及 Windows 客户端 `26.1111.2228.0` 的未登录生命周期。每个旧版本的认证侧栏排序、真实版本替换及后续新构建的适配仍需逐项验收。[兼容性核查](docs/04-compatibility.md#compatibility-review-on-november-17-2026)
 
 ## 当前验收状态
 
@@ -24,9 +24,10 @@
 | 关窗后台、后台单实例、重新打开界面、安全退出 | 三平台云端通过 |
 | Windows 官方客户端 | 普通关窗、完整退出、重开、后台独立保留和商店更新检查后启动通过，跨版本替换待验证 |
 | macOS 官方客户端 | 原生侧栏接口以 `untrusted-code-signing-identity` 拒绝请求。辅助功能会话已登录并进入测试项目，完整后台排序待验收 |
-| Linux 官方客户端 | 工具目录读取通过，登录前的列表调用超时，真实排序待验收 |
+| Linux 官方客户端 26.1111.21308 / Ubuntu 26.04.1 x64 | 2 个独立测试项目和 6 条聊天的七种排序及保存回读通过。公开安装包完成关窗后台自动排序、客户端退出后后台保留、重开自动恢复及工具卸载后客户端继续运行 |
 | Windows 1.4.2 安装候选 | 自带运行时、12 个语言选项、中文与空格路径、旧版运行中升级、设置保留、完整退出后重开及卸载通过 |
-| Intel Mac、Linux x64 安装候选 | 已公开下载，安装与工具生命周期通过，正式客户端排序继续验收 |
+| Linux x64 安装包 | 已发布，公开安装包与登录后的正式客户端验收通过 |
+| Intel Mac 安装候选 | 已公开下载，安装与工具生命周期通过，正式客户端排序继续验收 |
 | Apple 芯片 Mac 安装候选 | 云端主机分配失败，安装验收待补齐 |
 
 功能与安装验收使用 GitHub 托管的独立云端环境。

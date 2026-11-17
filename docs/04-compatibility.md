@@ -77,3 +77,8 @@ On November 16, 2026, the owner authorized direct GitHub and marketplace publica
 ## Future-version design
 
 The design specifies an adapter boundary at the existing native bridge, consumed-contract capability negotiation, per-scope batch preflight, signed data-only adapter updates, interrupted-batch recovery, and new-build cloud validation. Each mechanism's implementation status is recorded in the design. [Future compatibility design](05-future-compatibility.md) · [中文方案](05-未来版本适配方案.md)
+
+
+## Authenticated Linux result on November 18, 2026
+
+Ubuntu 26.04.1 x64 with official client 26.1111.21308 passed all seven modes on two isolated local projects and six chats, saved-order read-back, automatic changes after companion window close, retained worker when the official client exited, recovery after reopening, and removal while the official client remained running. The published Linux installer was used, and the original executable and archive matched before and after. The report records `fullAcceptancePassed=true`. Client version replacement, other Linux distributions and other client builds have separate remaining acceptance work. [Execution result](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44125514300)

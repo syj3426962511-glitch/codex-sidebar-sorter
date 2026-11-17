@@ -2,6 +2,10 @@
 
 Updated on November 18, 2026.
 
+## November 18 authenticated Linux acceptance
+
+The published 93,839,351-byte Linux installer passed on Ubuntu 26.04.1 x64 with official client 26.1111.21308. Two isolated local projects and six chats passed all seven ordering modes and saved-order read-back. The installed production application kept sorting renamed chats after its window closed, retained the same worker when the official client exited, recovered automatic ordering after client reopening, and uninstalled while the official client stayed running. The original client executable and application archive matched before and after the run. The terminal report records `fullAcceptancePassed=true` and the workflow completed successfully. Actual client version replacement remains open. [Authenticated Linux acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44125514300)
+
 ## November 18 Unix installation candidates
 
 Self-contained Intel Mac and Linux x64 packages passed cloud installation, custom Unicode paths, bundled runtime and source, automatic sorting with fictional protocol fixtures, window close with continued background sorting, running replacement, preference retention, full exit and reopening, and removal. The packages were built from `291b894`. Their reports record `authenticatedOfficialClientSortingVerified=false`. The Apple Silicon installer job ended before any step ran because a hosted ARM64 runner could not be acquired. [Unix candidate packages and exact results](06-unix-installers.md)
@@ -46,7 +50,7 @@ macOS granted Accessibility permission and returned 218 actual controls from the
 
 The later authenticated Mac session reached the project pages and created two Accessibility test projects. The latest downloaded report has `desktopSignInRequired=false` and `fullAcceptancePassed=false`. Its project views still showed no chats. Full background sorting and its production integration remain open. The temporary session has ended. [Authenticated Mac session](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43897768093)
 
-Linux returned its tool catalog. Signed-out list calls timed out, and signed-in real-sidebar sorting remains pending.
+The earlier signed-out Linux probe returned its catalog and timed out during list calls. The November 18 authenticated Linux run and published-installer checks passed as recorded above.
 
 [Windows lifecycle](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43854854495) · [Mac Accessibility probe](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43864624646)
 
@@ -54,9 +58,8 @@ Linux returned its tool catalog. Signed-out list calls timed out, and signed-in 
 
 - Authenticated real-client sorting acceptance.
 - Background macOS ordering through an accepted interface.
-- Linux real-sidebar synchronization.
 - Actual client version replacement and subsequent cold startup.
-- macOS and Linux consumer installers with installation and upgrade acceptance.
+- macOS consumer installer and production Accessibility integration. Additional Linux distributions and client builds need separate acceptance.
 - A verified paid-buyer transaction and licensed Agensi MCP delivery.
 - Full parameter and response negotiation, signed adapter updates, and automated new-build validation.
 
