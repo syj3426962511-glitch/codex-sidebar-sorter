@@ -8,9 +8,9 @@ on:
         description: Request a fresh official device authorization for this disposable cloud session
       runner_label:
         type: choice
-        options: [macos-latest, macos-15, macos-26]
+        options: [macos-latest, macos-15, macos-26, macos-15-intel]
         default: macos-latest
-        description: Select an available Apple Silicon cloud image
+        description: Select an available Mac cloud image
 permissions:
   contents: read
 jobs:
@@ -36,6 +36,8 @@ jobs:
           ditto "$app" "$RUNNER_TEMP/SorterAXOfficial.app"
           hdiutil detach "$RUNNER_TEMP/sorter-ax-mount"
           codesign --verify --deep --strict "$RUNNER_TEMP/SorterAXOfficial.app"
+          file "$RUNNER_TEMP/SorterAXOfficial.app/Contents/MacOS/"*
+          "$RUNNER_TEMP/SorterAXOfficial.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex" --version
       - name: Prepare cloud-only Accessibility authorization
         run: python tests/PrepareMacAccessibility.py
       - name: Issue a fresh official device authorization
