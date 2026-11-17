@@ -3,6 +3,8 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {spawn, execFileSync} from 'node:child_process';
 import {createRequire} from 'node:module';
+import net from 'node:net';
+import os from 'node:os';
 import {desktopRequest} from './DesktopRequest.mjs';
 
 if (process.env.GITHUB_ACTIONS !== 'true' || process.platform !== 'linux') {
@@ -23,6 +25,90 @@ const originalHash = hash(executablePath);
 const report = {fullAcceptancePassed:false, route:'Linux official local tools', dataKind:'isolated cloud-local projects and chats'};
 let client;
 let browser;
+let sorterLauncher;
+const clientArguments = ['--user-data-dir=' + profile, '--remote-debugging-port=9442', '--disable-dev-shm-usage'];
+const childEnvironment = {...process.env, CODEX_HOME:codexHome};
+
+async function startOfficialClient() {
+  const log = fs.openSync(path.join(output, 'client.log'), 'a');
+  client = spawn(executable, clientArguments, {env:childEnvironment, stdio:['ignore',log,log]});
+  fs.closeSync(log);
+  for (let attempt = 0; attempt < 60; attempt++) {
+    try { browser = await chromium.connectOverCDP('http://127.0.0.1:9442'); break; }
+    catch { await delay(1000); }
+  }
+  if (!browser) throw new Error('The official Linux desktop diagnostic port did not open.');
+  await delay(6000);
+}
+
+async function stopOfficialClient() {
+  if (browser) { await browser.close(); browser = null; }
+  if (client && client.exitCode === null && client.signalCode === null) {
+    client.kill('SIGTERM');
+    await Promise.race([new Promise(resolve => client.once('exit', resolve)), delay(5000)]);
+  }
+  if (client && client.exitCode === null && client.signalCode === null) throw new Error('The official client has not finished exiting.');
+}
+
+async function backgroundStatus() {
+  const identity = 'sst-' + crypto.createHash('sha256').update(path.resolve(codexHome)).digest('hex').slice(0,12).toUpperCase();
+  return new Promise((resolve, reject) => {
+    const socket = net.createConnection(path.join(os.tmpdir(), 'CoreFxPipe_' + identity + '-bg'));
+    let text = '';
+    socket.setTimeout(20000, () => socket.destroy(new Error('Companion status timed out.')));
+    socket.on('error', reject);
+    socket.on('connect', () => socket.write('status\n'));
+    socket.on('data', data => {
+      text += data.toString();
+      if (text.includes('\n')) { socket.end(); resolve(JSON.parse(text.split('\n')[0])); }
+    });
+  });
+}
+
+async function verifyInstalledCompanion(fixture) {
+  const installer = path.join(root, 'official-client-sorter.run');
+  if (!fs.existsSync(installer)) {
+    execFileSync('curl', ['--fail','--location','--retry','2','--max-time','240',
+      'https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.2-unix-candidate/CodexSidebarSorter-1.4.2-Linux-x64-Candidate.run',
+      '-o', installer], {stdio:'inherit',timeout:750000});
+  }
+  const prefix = path.join(root, 'Installed companion');
+  sorterLauncher = path.join(prefix, 'Start Sidebar Sorter');
+  execFileSync('bash', [installer, '--prefix', prefix, '--no-launch'], {env:childEnvironment,stdio:'inherit',timeout:120000});
+  execFileSync(sorterLauncher, ['--capture',path.join(output,'04-published-companion-with-official-client.png')], {env:childEnvironment,stdio:'inherit',timeout:120000});
+  await delay(1500);
+  const firstWorker = await backgroundStatus();
+  report.installedCompanionWorker = firstWorker;
+  if (!firstWorker.Automatic) throw new Error('The published companion did not enable automatic name ordering.');
+  const fixtureFile = path.join(root,'linux-visible-fixture.json');
+  const thread = fixture.threads[0];
+  async function renameAndCheck(title, label) {
+    await desktopRequest(await activePage(), 'thread/name/set', {threadId:thread.id, name:title});
+    thread.title = title;
+    fs.writeFileSync(fixtureFile, JSON.stringify(fixture,null,2));
+    const resultFile = path.join(output,label+'.json');
+    execFileSync(path.resolve('artifacts/linux-native-probe/NativeEndpointProbe'), [resultFile,'--existing-profile','--verify-name-order',fixtureFile], {
+      env:{...childEnvironment,CODEX_THREAD_ID:thread.id},stdio:'inherit',timeout:120000,
+    });
+    const status = await backgroundStatus();
+    if (status.ProcessId !== firstWorker.ProcessId || status.Error) throw new Error('The installed worker did not retain a healthy automatic session.');
+  }
+  await renameAndCheck('0000 Linux live renamed chat','05-automatic-with-window-closed');
+  report.automaticRenameWithCompanionWindowClosed = true;
+  await stopOfficialClient();
+  const closedStatus = await backgroundStatus();
+  if (closedStatus.ProcessId !== firstWorker.ProcessId) throw new Error('The companion exited with the official client.');
+  report.workerContinuesAfterOfficialClientExit = true;
+  await startOfficialClient();
+  await renameAndCheck('ZZZZ Linux live renamed chat','06-automatic-after-client-reopen');
+  report.automaticRecoveryAfterOfficialClientReopen = true;
+  await (await activePage()).screenshot({path:path.join(output,'07-official-client-reopened.png')});
+  execFileSync('bash',[installer,'--uninstall','--prefix',prefix,'--no-launch'],{env:childEnvironment,stdio:'inherit',timeout:120000});
+  sorterLauncher = null;
+  if ((await activePage()).isClosed() || client.exitCode !== null || client.signalCode !== null) throw new Error('Companion removal interrupted the official client.');
+  report.companionRemovalKeepsOfficialClientRunning = true;
+  report.publishedInstallerVerifiedWithOfficialClient = true;
+}
 
 async function activePage() {
   for (let attempt = 0; attempt < 60; attempt++) {
@@ -68,16 +154,7 @@ async function createFixture() {
 }
 
 try {
-  const log = fs.openSync(path.join(output, 'client.log'), 'a');
-  client = spawn(executable, ['--user-data-dir=' + profile, '--remote-debugging-port=9442', '--disable-dev-shm-usage'], {
-    env:{...process.env, CODEX_HOME:codexHome}, stdio:['ignore',log,log],
-  });
-  for (let attempt = 0; attempt < 60; attempt++) {
-    try { browser = await chromium.connectOverCDP('http://127.0.0.1:9442'); break; }
-    catch { await delay(1000); }
-  }
-  if (!browser) throw new Error('The official Linux desktop diagnostic port did not open.');
-  await delay(6000);
+  await startOfficialClient();
   let page = await activePage();
   if ((await page.locator('body').innerText()).includes('Sign in to ChatGPT')) {
     const continued = page.getByRole('button', {name:'Continue to sign in', exact:true});
@@ -106,15 +183,17 @@ try {
   }
   await (await activePage()).screenshot({path:path.join(output, '03-official-linux-sorted.png')});
   report.authenticatedSidebarOrderingPassed = report.nativeOrdering?.savedOrderModesVerified?.length === 7;
+  if (report.authenticatedSidebarOrderingPassed) await verifyInstalledCompanion(fixture);
 } catch (error) {
   report.error = String(error.stack ?? error);
 } finally {
-  if (browser) await browser.close();
-  if (client && client.exitCode === null) {
-    client.kill('SIGTERM');
-    await Promise.race([new Promise(resolve => client.once('exit', resolve)), delay(5000)]);
+  if (sorterLauncher && fs.existsSync(sorterLauncher)) {
+    try { execFileSync(sorterLauncher,['--exit'],{env:childEnvironment,stdio:'inherit',timeout:90000}); }
+    catch (error) { report.companionCleanupError = String(error.message); }
   }
+  await stopOfficialClient();
   report.clientFilesUnchanged = hash(executablePath) === originalHash;
+  report.fullAcceptancePassed = report.publishedInstallerVerifiedWithOfficialClient === true && report.clientFilesUnchanged;
   fs.writeFileSync(path.join(output, 'results.json'), JSON.stringify(report, null, 2));
 }
 console.log(JSON.stringify({authenticatedSidebarOrderingPassed:report.authenticatedSidebarOrderingPassed, clientFilesUnchanged:report.clientFilesUnchanged, error:report.error}));
