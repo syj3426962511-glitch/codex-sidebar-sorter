@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="UnixInstalledAcceptance.cs" />
+    <Compile Include="FixtureNativeServer.cs" />
+    <Compile Include="../src/SorterService.cs" />
+    <Compile Include="../src/NativeBridge.cs" />
+    <Compile Include="../src/LocalHistoryReader.cs" />
+    <Compile Include="../src/WorkspacePreview.cs" />
+    <Compile Include="../src/Localization.cs" />
+    <Compile Include="../src/ToolSettings.cs" />
+    <EmbeddedResource Include="../src/Assets/English.json" LogicalName="SidebarSorter.English" />
+    <EmbeddedResource Include="../src/Assets/Languages.json" LogicalName="SidebarSorter.Languages" />
+  </ItemGroup>
+</Project>

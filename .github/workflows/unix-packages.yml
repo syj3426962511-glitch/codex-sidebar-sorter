@@ -1,0 +1,54 @@
+name: Unix installer candidates
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            rid: osx-arm64
+          - os: macos-15-intel
+            rid: osx-x64
+          - os: ubuntu-latest
+            rid: linux-x64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare Linux desktop build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y xvfb libayatana-appindicator3-dev libfontconfig1 fonts-noto-cjk dbus-x11
+      - name: Build self-contained platform installer
+        run: python packaging/build-unix.py ${{ matrix.rid }}
+      - name: Build the installed acceptance driver
+        run: dotnet publish tests/UnixInstalledAcceptance.csproj -c Release -r ${{ matrix.rid }} --self-contained true -o artifacts/installed-driver
+      - name: Install and replace the macOS application
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p "$RUNNER_TEMP/sorter-candidate-mount"
+          hdiutil attach artifacts/unix-package/*.dmg -nobrowse -readonly -mountpoint "$RUNNER_TEMP/sorter-candidate-mount"
+          artifacts/installed-driver/UnixInstalledAcceptance "$RUNNER_TEMP/sorter-candidate-mount/Install Codex Sidebar Sorter.command" artifacts/unix-installed
+          hdiutil detach "$RUNNER_TEMP/sorter-candidate-mount"
+      - name: Install and replace the Linux application
+        if: runner.os == 'Linux'
+        run: dbus-run-session -- xvfb-run -a -s '-screen 0 1440x1000x24' artifacts/installed-driver/UnixInstalledAcceptance "$(realpath artifacts/unix-package/*.run)" artifacts/unix-installed
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: installer-candidate-${{ matrix.rid }}
+          path: |
+            artifacts/unix-package/*
+            artifacts/unix-installed/*
+          retention-days: 3
