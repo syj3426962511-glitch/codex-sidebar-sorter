@@ -21,21 +21,39 @@ const {chromium} = require('playwright');
 const delay = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 const executablePath = fs.realpathSync(executable);
 const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
-const originalHash = hash(executablePath);
+const clientFiles = {executable:executablePath, archive:path.join(path.dirname(process.env.SORTER_OFFICIAL_CLI),'app.asar')};
+const originalHashes = Object.fromEntries(Object.entries(clientFiles).map(([name,file]) => [name,hash(file)]));
 const report = {fullAcceptancePassed:false, route:'Linux official local tools', dataKind:'isolated cloud-local projects and chats'};
 let client;
 let browser;
 let sorterLauncher;
-const clientArguments = ['--user-data-dir=' + profile, '--remote-debugging-port=9442', '--disable-dev-shm-usage'];
+const clientArguments = ['--user-data-dir=' + profile, '--remote-debugging-port=0', '--disable-dev-shm-usage'];
 const childEnvironment = {...process.env, CODEX_HOME:codexHome};
 
 async function startOfficialClient() {
-  const log = fs.openSync(path.join(output, 'client.log'), 'a');
+  const logFile = path.join(output, 'client.log');
+  const log = fs.openSync(logFile, 'a');
+  let readOffset = fs.fstatSync(log).size;
+  let startupText = '';
   client = spawn(executable, clientArguments, {env:childEnvironment, stdio:['ignore',log,log]});
   fs.closeSync(log);
   for (let attempt = 0; attempt < 60; attempt++) {
-    try { browser = await chromium.connectOverCDP('http://127.0.0.1:9442'); break; }
-    catch { await delay(1000); }
+    const size = fs.statSync(logFile).size;
+    if (size > readOffset) {
+      const input = fs.openSync(logFile,'r');
+      const added = Buffer.alloc(size-readOffset);
+      fs.readSync(input,added,0,added.length,readOffset);
+      fs.closeSync(input);
+      readOffset = size;
+      startupText += added.toString();
+    }
+    const endpoint = startupText.match(/DevTools listening on (ws:\/\/[^\s]+)/)?.[1];
+    if (endpoint) {
+      try { browser = await chromium.connectOverCDP(endpoint); break; }
+      catch { }
+    }
+    if (client.exitCode !== null || client.signalCode !== null) throw new Error('The official client exited during startup.');
+    await delay(1000);
   }
   if (!browser) throw new Error('The official Linux desktop diagnostic port did not open.');
   await delay(6000);
@@ -192,9 +210,10 @@ try {
     catch (error) { report.companionCleanupError = String(error.message); }
   }
   await stopOfficialClient();
-  report.clientFilesUnchanged = hash(executablePath) === originalHash;
+  report.clientFilesChecked = Object.keys(clientFiles);
+  report.clientFilesUnchanged = Object.entries(clientFiles).every(([name,file]) => hash(file) === originalHashes[name]);
   report.fullAcceptancePassed = report.publishedInstallerVerifiedWithOfficialClient === true && report.clientFilesUnchanged;
   fs.writeFileSync(path.join(output, 'results.json'), JSON.stringify(report, null, 2));
 }
 console.log(JSON.stringify({authenticatedSidebarOrderingPassed:report.authenticatedSidebarOrderingPassed, clientFilesUnchanged:report.clientFilesUnchanged, error:report.error}));
-process.exitCode = report.authenticatedSidebarOrderingPassed && report.clientFilesUnchanged ? 0 : 1;
+process.exitCode = report.fullAcceptancePassed ? 0 : 1;
