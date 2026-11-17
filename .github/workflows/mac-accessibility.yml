@@ -29,7 +29,12 @@ jobs:
         run: npm install --prefix "$RUNNER_TEMP/sorter-test-tools" --no-audit --no-fund playwright @actions/artifact@2.3.2
       - name: Install the original official Mac client
         run: |
-          curl --fail --location --retry 2 --max-time 240 https://persistent.oaistatic.com/codex-app-prod/Codex.dmg -o "$RUNNER_TEMP/sorter-ax.dmg"
+          if [ "$(uname -m)" = x86_64 ]; then
+            client_url=https://persistent.oaistatic.com/codex-app-prod/Codex-latest-x64.dmg
+          else
+            client_url=https://persistent.oaistatic.com/codex-app-prod/Codex.dmg
+          fi
+          curl --fail --location --retry 2 --max-time 240 "$client_url" -o "$RUNNER_TEMP/sorter-ax.dmg"
           mkdir -p "$RUNNER_TEMP/sorter-ax-mount"
           hdiutil attach "$RUNNER_TEMP/sorter-ax.dmg" -nobrowse -readonly -mountpoint "$RUNNER_TEMP/sorter-ax-mount"
           app=$(find "$RUNNER_TEMP/sorter-ax-mount" -maxdepth 1 -name '*.app' -print -quit)
