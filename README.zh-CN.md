@@ -1,6 +1,6 @@
-# Codex 聊天排序工具
+# Codex Sidebar Sorter
 
-独立运行的聊天排序工具，默认自动保持名称升序。当前 1.4.2 预览版提供 12 个语言选项，采用共享的三平台界面、独立排序后台和系统原生托盘。
+独立运行的 Codex 聊天排序工具，默认自动保持名称升序。当前 1.4.2 预览版提供 12 个语言选项，采用共享的三平台界面、独立排序后台和系统原生托盘。
 
 语言包括简体中文、繁体中文、英语、日语、韩语、法语、德语、西班牙语、葡萄牙语、意大利语、俄语和阿拉伯语。界面、菜单和工具自身提示随选择切换，偏好保存于工具自身设置。阿拉伯语使用从右到左的布局。
 
@@ -8,7 +8,7 @@ Windows 与 Linux x64 的 1.4.2 安装包已公开，均自带运行环境、图
 
 Intel Mac 安装候选已公开，工具安装及生命周期检查通过，正式客户端排序与生产辅助功能接入继续待完成。Apple 芯片 Mac 安装检查受到云端 ARM64 主机分配失败影响。[Mac 安装候选](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-unix-candidate)
 
-[English guide](README.md)
+[统一交付包](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.2-preview/CodexSidebarSorter-1.4.2-Delivery.zip) · [使用说明](docs/07-统一交付说明.md) · [English guide](README.md)
 
 未来版本适配方案包含能力协商、独立适配器、签名更新和云端回归。历史字段探测及操作名预检已实现，完整参数协商、签名适配更新和新构建自动检测继续待开发。[未来版本适配方案](docs/05-未来版本适配方案.md)
 

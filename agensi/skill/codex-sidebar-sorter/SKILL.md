@@ -4,11 +4,11 @@ description: Help install, configure, and operate the independent Codex Sidebar 
 license: MIT
 metadata:
   version: "1.4.2"
-  product: "Codex Sidebar Sorter for Windows and Linux"
+  product: "Codex Sidebar Sorter"
   platform: "Windows x64, Ubuntu 26.04.1 x64"
 ---
 
-# Codex Sidebar Sorter for Windows and Linux
+# Codex Sidebar Sorter
 
 Help the user operate the installed Codex Sidebar Sorter desktop companion. The companion supplies the sorting interface and persistent background worker. Agensi delivers these agent instructions through MCP.
 

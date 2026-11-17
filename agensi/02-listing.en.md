@@ -1,4 +1,4 @@
-# Codex Sidebar Sorter for Windows and Linux
+# Codex Sidebar Sorter
 
 Organize Codex projects and chats with seven sorting modes, twelve languages, automatic name ordering and an independent background worker on Windows x64 and tested Ubuntu Linux x64.
 
@@ -17,6 +17,8 @@ Codex Sidebar Sorter is an independent desktop companion. This agent skill helps
 The companion provides the desktop interface and persistent worker. An agent with an authorized desktop-control surface can operate the controls. Conversational agents can guide the same steps.
 
 ## Install and use
+
+Download the combined delivery bundle to obtain both supported installers, the agent skill, English and Chinese guides, and the compatibility record. [Combined delivery bundle](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.2-preview/CodexSidebarSorter-1.4.2-Delivery.zip)
 
 Choose the Windows x64 or tested Ubuntu 26.04.1 x64 installer. Both include their runtimes. Use a compatible, signed-in Codex Desktop on the same computer, open the companion and select Refresh. Review the projects and chats, keep automatic name sorting enabled or choose another rule and apply it.
 
@@ -48,7 +50,7 @@ USD 9.50, one-time. The purchase supplies this agent skill through Agensi. Compa
 
 ## Example request
 
-Use Codex Sidebar Sorter for Windows and Linux to help me select German, keep my projects and their chats in ascending name order, and explain how to temporarily sort one project by natural numbers.
+Use Codex Sidebar Sorter to help me select German, keep my projects and their chats in ascending name order, and explain how to temporarily sort one project by natural numbers.
 
 ## Guided example
 

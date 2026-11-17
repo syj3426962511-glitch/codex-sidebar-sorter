@@ -4,7 +4,7 @@ A standalone desktop companion for organizing Codex projects and chats. Preview 
 
 ![Codex Sidebar Sorter in English](docs/assets/sidebar-sorter-english.png)
 
-[简体中文](README.zh-CN.md) · [User guide](docs/03-product-guide.md) · [Validation results](docs/02-validation.md) · [Future compatibility design](docs/05-future-compatibility.md) · [Agensi submission](agensi/README.md)
+[Combined delivery bundle](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.2-preview/CodexSidebarSorter-1.4.2-Delivery.zip) · [简体中文](README.zh-CN.md) · [User guide](docs/03-product-guide.md) · [Validation results](docs/02-validation.md) · [Future compatibility design](docs/05-future-compatibility.md) · [Agensi submission](agensi/README.md)
 
 ## Features
 
@@ -49,7 +49,7 @@ Choosing a custom rule, moving rows, or resetting the preview pauses automatic n
 
 Close the companion window to keep its worker and tray running. Use **Open Sidebar Sorter** in the tray to reopen the window and **Exit** to stop the companion.
 
-The source and Windows and Linux installers are public. Intel Mac has an installation candidate. The live Agensi product currently retains its preceding Windows companion skill at USD 9.50 one-time. The Windows and Linux skill update is prepared for marketplace submission. [Installers](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-preview) · [Mac candidate](docs/06-unix-installers.md) · [Agensi product](https://www.agensi.io/skills/codex-sidebar-sorter-for-windows)
+The source and Windows and Linux installers are public. Intel Mac has an installation candidate. The live Agensi product currently retains its preceding Windows companion skill at USD 9.50 one-time. The product name is Codex Sidebar Sorter. Its unified skill and combined delivery bundle are prepared for the existing marketplace product. [Installers](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-preview) · [Mac candidate](docs/06-unix-installers.md) · [Agensi product](https://www.agensi.io/skills/codex-sidebar-sorter-for-windows)
 
 ## Compatibility and verification
 
