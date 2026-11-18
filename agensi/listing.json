@@ -1,11 +1,11 @@
 {
   "name": "Codex Sidebar Sorter",
   "slug": "codex-sidebar-sorter",
-  "version": "1.4.3",
-  "summary": "Sort Codex projects and chats with seven modes, continuous alphabetical ordering, and an independent tray worker. English by default with twelve language options.",
-  "description": "## Organize Codex projects and chats\n\nCodex Sidebar Sorter is an independent desktop companion with seven sorting methods, an English default interface, and twelve selectable languages. Use this agent skill to choose an installer, set up continuous name ordering, apply a different rule, and troubleshoot the local connection.\n\nThe desktop worker stays active after the window closes. It can sort supported projects and chats after new items are added or renamed. The desktop application stores its own preferences.\n\n## Install and use\n\nChoose the preview installer for Windows x64 or supported Ubuntu Linux x64. Open a compatible, signed-in Codex Desktop client. Start the companion, select **Refresh**, and leave **Keep names sorted A to Z** enabled or apply a different rule. [Download and release notes](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases) \u00b7 [User guide](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/blob/main/docs/07-delivery.md)\n\nThe Ubuntu 26.04.1 x64 installer from 1.4.2 passed authenticated seven-mode sorting with the official client 26.1111.21308. The Windows preview has installed fixture and signed-out client lifecycle evidence. Both Mac architectures have installation previews. Mac authenticated sidebar sorting still requires verification. [Compatibility matrix](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/blob/main/docs/04-compatibility.md)\n\n## What the purchase includes\n\nThe one-time USD 9.50 purchase delivers the English agent skill through Agensi. The desktop installers are available separately on GitHub. An agent with authorized desktop controls can operate the companion. Other agents can guide the same workflow.",
-  "demo_request": "Keep my Codex projects in ascending name order. Show how to temporarily order the chats in Research Plan so Task 2 appears before Task 10 and Task 20.",
-  "demo_result": "Open Codex Sidebar Sorter in English and select **Refresh**. Keep **Keep names sorted A to Z** enabled for everyday ordering.\n\nSelect **Research Plan** from **Scope**. Choose **Natural numeric order** for the chats. The preview shows **Task 2**, **Task 10**, and **Task 20**. Select **Apply to sidebar** and check the order in Codex. Enable **Keep names sorted A to Z** again to resume continuous alphabetical ordering.",
+  "version": "1.4.4",
+  "summary": "Sort supported Codex projects and chats by name, natural number, update time, or manual order. The desktop preview runs on Windows x64 and tested Ubuntu Linux x64, with English as the default and twelve selectable languages.",
+  "description": "## Organize Codex projects and chats\n\nSort supported Codex projects and chats by name, natural number, update time, or manual order. The desktop preview runs on Windows x64 and tested Ubuntu Linux x64, with English as the default and twelve selectable languages. Close the companion window to keep its tray worker active.\n\n## Install\n\nChoose [Windows x64](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.3-preview/CodexSidebarSorter-1.4.3-Windows-Setup.exe) or [Ubuntu Linux x64](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.3-preview/CodexSidebarSorter-1.4.3-Linux-x64-Setup.run). Start a compatible, signed-in Codex Desktop client and select **Refresh** in the companion. See the [release page](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.3-preview) for the Mac installation previews and exact test results.\n\n## What the purchase includes\n\nUSD 9.50 one-time for the English agent skill. The skill explains installation, the seven sorting modes, background operation, and troubleshooting. The desktop installers are available on GitHub.",
+  "demo_request": "Sort the chats in Research Plan by natural number so Task 2 appears before Task 10 and Task 20. Keep name ordering enabled for everyday use.",
+  "demo_result": "1. Start a compatible signed-in Codex Desktop client and open Codex Sidebar Sorter. Select **Refresh**.\n2. Select **Research Plan** under **Scope**. These examples use fictional chat names.\n3. Choose **Natural numeric order** for chats. Read the preview in this order: **Task 2**, **Task 10**, **Task 20**.\n4. Select **Apply to sidebar** and verify the order in Codex. If the list changed since the preview, refresh and check the scope before applying again.\n5. Turn on **Keep names sorted A to Z** to resume continuous alphabetical ordering. Close the companion window to leave the tray worker running.",
   "faq": [
     {
       "question": "What will I receive after purchase?",
@@ -41,7 +41,7 @@
   "docs_url": "https://github.com/syj3426962511-glitch/codex-sidebar-sorter",
   "listing_url": "https://www.agensi.io/skills/codex-sidebar-sorter",
   "marketplace_edit_url": "https://www.agensi.io/dashboard/submit/7315b1b4-cae3-4871-b7d5-9a6d34189c0d",
-  "publication_status": "live",
+  "publication_status": "prepared",
   "last_confirmed_version": {
     "name": "Codex Sidebar Sorter",
     "slug": "codex-sidebar-sorter",
@@ -50,13 +50,14 @@
     "security_status": "approved"
   },
   "delivery_package": "CodexSidebarSorter-1.4.3-AgentSkill.zip",
-  "public_downloads": "https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases",
-  "compatibility": "Windows x64 and Ubuntu Linux x64 previews require a compatible, signed-in Codex Desktop on the same machine. The 1.4.3 Windows client lifecycle check used official Codex 26.1111.9265.0. Signed-in seven-mode Linux ordering was verified with 1.4.2 on Ubuntu 26.04.1 x64 and Codex 26.1111.21308.",
-  "known_limitations": "Intel and Apple Silicon Mac packages are installation previews. Signed-in 1.4.3 client ordering, distinct client-version replacement, and signed consumer distribution on Mac are pending.",
+  "public_downloads": "https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.3-preview",
+  "compatibility": "Windows x64 and Ubuntu Linux x64 with a compatible, signed-in Codex Desktop on the same machine. The 1.4.3 Windows lifecycle check used Codex 26.1111.9265.0. The signed-in Linux ordering test used companion 1.4.2 on Ubuntu 26.04.1 x64 with Codex 26.1111.21308.",
+  "known_limitations": "Intel Mac and Apple Silicon packages are installation previews. Signed-in 1.4.3 ordering, replacement between distinct Codex client builds, and notarized Mac distribution remain open.",
   "requirements": [
     "Windows x64 or compatible Ubuntu Linux x64",
     "Compatible Codex Desktop signed in on the same computer"
   ],
-  "requirement_note": "Install Codex Sidebar Sorter 1.4.3 on Windows x64 or compatible Ubuntu Linux x64. Open a compatible signed-in Codex Desktop on the same computer. The installer bundles the companion runtime.",
-  "marketplace_notes": "Creator access to the approved 1.4.3 skill was verified. The title and long description are live on the new slug. Seller-page Summary, Compatibility and Requirements still show legacy Windows-only metadata at the time of this read-back."
+  "requirement_note": "Install Codex Sidebar Sorter 1.4.3 on Windows x64 or compatible Ubuntu Linux x64, then open a compatible signed-in Codex Desktop on the same machine. The companion includes its runtime.",
+  "marketplace_notes": "The 1.4.4 English skill and seller fields are prepared. The confirmed live listing state is tracked separately.",
+  "desktop_version": "1.4.3"
 }

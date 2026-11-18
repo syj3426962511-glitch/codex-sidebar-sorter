@@ -1,7 +1,18 @@
 # Platform compatibility
 
-Use [GitHub Releases](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases) for the current companion installers and check the [compatibility matrix](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/blob/main/docs/04-compatibility.md) for exact Codex client builds.
+The Agensi skill is **1.4.4**. The installer and companion are **1.4.3**.
 
-The Ubuntu 26.04.1 x64 1.4.2 release passed official authenticated ordering with Codex 26.1111.21308. Windows has signed-out client lifecycle and installed fixture coverage. Both macOS architectures have installation previews. Official authenticated Mac ordering remains open.
+| System | Download | Recorded scope |
+| --- | --- | --- |
+| Windows x64 | [Windows setup](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.3-preview/CodexSidebarSorter-1.4.3-Windows-Setup.exe) | Installed upgrade and signed-out official client lifecycle passed |
+| Ubuntu Linux x64 | [Linux setup](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.3-preview/CodexSidebarSorter-1.4.3-Linux-x64-Setup.run) | Installed checks passed with 1.4.3. Signed-in ordering with official Codex was verified with 1.4.2 |
+| Intel Mac | [Intel Mac installer](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.3-preview/CodexSidebarSorter-1.4.3-macOS-x64-Candidate.dmg) | Installation preview |
+| Apple Silicon Mac | [Apple Silicon installer](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.3-preview/CodexSidebarSorter-1.4.3-macOS-arm64-Candidate.dmg) | Installation preview |
 
-Supported ordering covers eligible projects and chats in supported Codex projects, pinned chats, and custom sections. Independent alphabetical Recents, pinned project placement, and ChatGPT project chats require additional client support. Ask for the visible status if the companion requests a refresh or reports an incompatible client.
+Windows x64 and Ubuntu Linux x64 with a compatible, signed-in Codex Desktop on the same machine. The 1.4.3 Windows lifecycle check used Codex 26.1111.9265.0. The signed-in Linux ordering test used companion 1.4.2 on Ubuntu 26.04.1 x64 with Codex 26.1111.21308.
+
+Intel Mac and Apple Silicon packages are installation previews. Signed-in 1.4.3 ordering, replacement between distinct Codex client builds, and notarized Mac distribution remain open.
+
+The companion can order eligible projects and chats in supported Codex projects, pinned chats, and custom sections. Independent alphabetical Recents, pinned project placement, and ChatGPT project chats require additional client capabilities.
+
+[Exact acceptance results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/blob/main/docs/02-validation.md) · [Client compatibility](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/blob/main/docs/04-compatibility.md)
