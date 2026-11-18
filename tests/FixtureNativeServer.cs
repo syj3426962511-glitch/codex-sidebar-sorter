@@ -226,14 +226,17 @@ internal sealed class FixtureNativeServer : IDisposable
     {
         lock (modelLock)
         {
-            List<SortRow> expectedProjects = Projects.Select(project => new SortRow(project.Id, project.Name)).ToList();
+            var projectNames = Projects.ToDictionary(project => project.Id, project => project.Name);
+            List<SortRow> expectedProjects = projectOrder.Select(id => new SortRow(id, projectNames[id])).ToList();
             SorterService.Sort(expectedProjects, 0);
             if (!projectOrder.SequenceEqual(expectedProjects.Select(row => row.Id))) return false;
             foreach (var project in Chats)
             {
-                List<SortRow> expected = project.Value.Where(row => !sectionOrders["pinned"].Contains(row.Id)).ToList();
+                string[] saved = chatOrders[project.Key].Where(id => !sectionOrders["pinned"].Contains(id)).ToArray();
+                var rows = project.Value.ToDictionary(row => row.Id);
+                List<SortRow> expected = saved.Select(id => rows[id]).ToList();
                 SorterService.Sort(expected, 0);
-                if (!chatOrders[project.Key].Where(id => !sectionOrders["pinned"].Contains(id)).SequenceEqual(expected.Select(row => row.Id))) return false;
+                if (!saved.SequenceEqual(expected.Select(row => row.Id))) return false;
             }
             return true;
         }
