@@ -72,8 +72,8 @@ internal sealed class WorkspacePreview
 
     public void SortChats(int mode)
     {
-        foreach (ProjectGroup group in Groups) SortGroupChats(group, mode);
-        SorterService.Sort(LooseChats, mode);
+        foreach (ProjectGroup group in Groups.Where(group => group.IsLoaded && group.Scope.Source == "codex"))
+            SortGroupChats(group, mode);
     }
 
     public static void SortGroupChats(ProjectGroup group, int mode)

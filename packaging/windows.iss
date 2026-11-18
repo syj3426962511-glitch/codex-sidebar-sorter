@@ -31,7 +31,7 @@ RestartApplications=no
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
-Name: "chinesesimp"; MessagesFile: "ChineseSimplified.isl"
+Name: "chinesesimp"; MessagesFile: "Languages\ChineseSimplified.isl"
 Name: "chinesetrad"; MessagesFile: "Languages\ChineseTraditional.isl"
 Name: "japanese"; MessagesFile: "Languages\Japanese.isl"
 Name: "korean"; MessagesFile: "Languages\Korean.isl"
@@ -118,6 +118,15 @@ Name: "{autoprograms}\Codex Sidebar Sorter"; Filename: "{app}\SidebarSorter.exe"
 Filename: "{app}\SidebarSorter.exe"; Description: "{cm:OpenApplication}"; Flags: nowait postinstall skipifsilent
 
 [Code]
+function LegacyProgramName(Background: Boolean): String;
+begin
+  Result := Chr($804A) + Chr($5929) + Chr($6392) + Chr($5E8F);
+  if Background then
+    Result := Result + Chr($540E) + Chr($53F0) + '.exe'
+  else
+    Result := Result + Chr($5DE5) + Chr($5177) + '.exe';
+end;
+
 function PreviousUninstallerPath(): String;
 var
   RegistryKey: String;
@@ -147,8 +156,7 @@ begin
   begin
     Found := False;
     Processes := Services.ExecQuery('SELECT ExecutablePath FROM Win32_Process WHERE Name=''' +
-      #$804A#$5929#$6392#$5E8F#$5DE5#$5177 + '.exe'' OR Name=''' +
-      #$804A#$5929#$6392#$5E8F#$540E#$53F0 + '.exe''');
+      LegacyProgramName(False) + ''' OR Name=''' + LegacyProgramName(True) + '''');
     for Index := 0 to Processes.Count - 1 do
     begin
       PreviousProcess := Processes.ItemIndex(Index);
@@ -187,7 +195,7 @@ begin
       Result := CustomMessage('ExitBeforeUpdate');
     Exit;
   end;
-  PreviousBackground := PreviousDirectory + #$804A#$5929#$6392#$5E8F#$540E#$53F0 + '.exe';
+  PreviousBackground := PreviousDirectory + LegacyProgramName(True);
   if FileExists(PreviousBackground) then
   begin
     if not Exec(PreviousBackground, '--exit', '', SW_HIDE, ewWaitUntilTerminated, ExitCode) then

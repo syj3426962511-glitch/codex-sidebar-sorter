@@ -1,118 +1,18 @@
 ---
 name: codex-sidebar-sorter
-description: Help install, configure, and operate the independent Codex Sidebar Sorter companion on Windows x64 and the tested Ubuntu Linux x64 release. Use for project and chat ordering, seven sort modes, twelve interface languages, automatic name sorting, tray operation, and companion connection or upgrade problems.
-license: MIT
-metadata:
-  version: "1.4.2"
-  product: "Codex Sidebar Sorter"
-  platform: "Windows x64, Ubuntu 26.04.1 x64"
+description: Install and use Codex Sidebar Sorter to preview and organize Codex projects and chats, enable automatic name ordering, select a sort mode, and diagnose the desktop connection.
 ---
 
 # Codex Sidebar Sorter
 
-Help the user operate the installed Codex Sidebar Sorter desktop companion. The companion supplies the sorting interface and persistent background worker. Agensi delivers these agent instructions through MCP.
+Guide the user through the independent desktop companion. Check the installed operating system and exact Codex client version and follow [the compatibility reference](references/compatibility.md). Select the corresponding package from [GitHub Releases](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases).
 
-## Required environment
+1. Install the companion, start a compatible signed-in Codex Desktop, and open the companion. A fresh installation opens in English.
+2. Select **Refresh** and inspect the projects, chats, and connection status. Select the intended **Scope**.
+3. Leave **Keep names sorted A to Z** on for continuous sorting. To order a selected project differently, select a rule, review the preview, and select **Apply to sidebar**.
+4. Confirm the resulting order in the same Codex sidebar. If the list changed or the client reports a loading or compatibility issue, refresh and report the actual status.
+5. Close the companion window for tray operation. Select **Open Sidebar Sorter** in the tray to reopen it, or **Exit** to stop the worker.
 
-Use a Windows x64 computer or the tested Ubuntu 26.04.1 x64 environment, an installed Codex Sidebar Sorter 1.4.2 companion, and a compatible signed-in Codex Desktop on that computer. The companion installers include their runtimes.
+Use the user's authorized desktop controls when available. Otherwise, walk the user through the same controls. Dedicate examples to fictional data. For example, natural numeric order places **Task 2**, **Task 10**, and **Task 20** in that order. Preserve the user's actual preferences when changing the language.
 
-Linux client 26.1111.21308 passed authenticated seven-mode sorting and saved-order read-back, automatic changes with the companion window closed, client exit and reopening with the worker retained, and companion removal while the client stayed running. Windows authenticated official-client ordering and actual replacement between client builds remain acceptance work.
-
-Determine the installed companion path from the user's shortcut or installation record. The examples use the application name, so adapt to the user's chosen installation directory.
-
-The public Windows preview installer has 44,327,746 bytes and includes its runtime and source. Read the current compatibility record when explaining its supported scope. [Windows preview download](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.2-preview/CodexSidebarSorter-1.4.2-Windows-Setup.exe) · [Validation record](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/blob/main/docs/02-validation.md)
-
-The Linux installer has 93,839,351 bytes and includes its runtime, native indicator dependencies, ICU, SQLite, icon, languages, and source. [Linux installer](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.2-preview/CodexSidebarSorter-1.4.2-Linux-x64-Setup.run)
-
-For a terminal installation, use the buyer's requested directory.
-
-```sh
-chmod +x CodexSidebarSorter-1.4.2-Linux-x64-Setup.run
-./CodexSidebarSorter-1.4.2-Linux-x64-Setup.run --prefix "$HOME/Applications/CodexSidebarSorter"
-```
-
-The Linux installer also offers a folder chooser when Zenity is available. Reusing the same destination replaces the existing companion and retains its preferences. Run the same installer with `--uninstall --prefix` and the installed directory to remove it while retaining preferences.
-
-## Interpret the request
-
-Identify the requested scope, sorting rule, and whether the user wants continuous automatic name sorting or a manual application. Use the user's named project or section when given. Keep each chat associated with its existing project while reordering.
-
-Respond in the user's language. The application's language selector controls its own interface language.
-
-## Open and connect
-
-Open the companion using its normal shortcut. Open a compatible, signed-in Codex Desktop and select Refresh in the companion. Review the project and chat preview and the status message.
-
-With an authorized desktop-control surface, perform the requested application actions and observe the result. With a conversational-only surface, provide the exact controls for the user to select and report the action as awaiting their check.
-
-## Continuous alphabetical sorting
-
-Select Keep names sorted A to Z. The default project and project-chat modes become ascending names. The worker synchronizes supported sidebar items after additions and renaming.
-
-Close the companion window to leave the worker and native tray running. The client receives sorting requests while its supported local connection is available.
-
-## Apply another sorting rule
-
-1. Select the target Scope.
-2. Choose the project rule and the chat rule needed for the request.
-3. Use Also sort chats in each project when the requested scope includes those chats.
-4. Review the preview and select Apply to sidebar.
-5. Read the resulting status and the refreshed saved order.
-
-Choosing a custom rule or moving a row pauses continuous alphabetical sorting. Re-enable Keep names sorted A to Z when the user asks to resume it.
-
-| Requested order | Application choice |
-| --- | --- |
-| Alphabetical ascending | Name A to Z |
-| Alphabetical descending | Name Z to A |
-| Item 2 before Item 10 | Natural numeric order |
-| Reverse numeric order | Reverse natural order |
-| Most recently updated first | Recently updated first |
-| Oldest updated first | Oldest update first |
-| Exact custom arrangement | Manual order |
-
-For Manual order, drag rows or use Move up, Move down, To top, and To bottom. Missing update timestamps sort last for both date modes. Chinese name comparison follows the companion's zh-CN ordering rule.
-
-Reset preview restores the saved preview baseline. After an interrupted apply, use Refresh to read the saved client state before another attempt.
-
-## Change the interface language
-
-Use the language selector at the top of the companion. Choose the system-language option or one of the twelve supported languages.
-
-Simplified Chinese, Traditional Chinese, English, Japanese, Korean, French, German, Spanish, Portuguese, Italian, Russian, and Arabic are available. Arabic uses right-to-left layout. The companion saves its language preference.
-
-## Background lifecycle
-
-Closing the companion window exits the graphical process while its worker and tray continue. Open Sidebar Sorter in the tray reopens the window. Exit in the tray stops the companion.
-
-The installed executable supports these entry points.
-
-- `--show` opens the companion interface.
-- `--background` starts or retains the worker.
-- `--exit` coordinates a complete companion exit.
-
-Use the actual installed executable for a requested entry-point action. Check the resulting process or application state before reporting completion.
-
-## Connection and update support
-
-Start with the actual status message and installed companion and client versions. Refresh after the client has started. When the status names a membership mismatch, expand the named Codex project and refresh the companion before retrying the requested operation.
-
-Use an accepted companion installer for an upgrade. The installer coordinates the preceding companion worker and preserves its preferences.
-
-Record client interface or authorization errors as pending integration work, with the specific message and version. The companion's normal controls and local tools are the supported ordering path.
-
-## Compatibility
-
-The shared architecture and fictional-data tests cover Windows x64, macOS ARM64, and Linux x64. Windows and Linux installation checks also exercise the self-contained production applications. Linux has authenticated official-client evidence for the exact build recorded above. Other Linux distributions and client builds need their own results.
-
-Intel Mac has an installation candidate with passing installation and companion lifecycle checks. Authenticated Mac sidebar ordering, production Accessibility integration, Apple Silicon installation acceptance, and consumer distribution signing remain open.
-
-Current ordering scope covers supported unpinned projects, supported Codex project chats, and chats in pinned or custom sections. ChatGPT project-chat ordering, independent alphabetical Recents ordering, and pinned project placement require additional client support.
-
-Client version replacement has a separate acceptance step. Use the current product validation record for supported versions and observed results.
-
-## Report the result
-
-Give the selected scope, sorting mode, automatic-sorting state, language, and the observed apply or connection result. Mark a result as applied after reading the application's completion state. For guided-only sessions, give the exact remaining user check.
-
-The desktop screenshots in the product materials show fictional test projects and chats. Describe them as test examples when explaining a demonstration.
+[English guide](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/blob/main/docs/07-delivery.md)

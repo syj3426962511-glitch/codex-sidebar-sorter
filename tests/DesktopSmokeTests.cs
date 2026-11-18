@@ -206,6 +206,31 @@ internal sealed partial class DesktopWindow
             report["missingOperationPreflightPreservesOrder"] = true;
         }
         finally { server.UnavailableTool = null; }
+        {
+            var service = new SorterService();
+            List<SortScope> scopes = await service.RefreshAsync();
+            SortScope scope = scopes.First(item => item.Kind == "project" && item.Id != server.Projects[0].Id);
+            List<SortRow> projectRows = await service.GetRowsAsync(scopes[0]);
+            List<SortRow> staleRows = await service.GetRowsAsync(scope);
+            server.AddChat(scope.Id, "New review item");
+            bool rejected = false;
+            try { await service.ApplyWorkspaceAsync(projectRows, true, [new(scope, staleRows)], false); }
+            catch (InvalidOperationException error) when (error.Message == "Chat membership changed. Refresh the list and apply again.") { rejected = true; }
+            DesktopSmokeTests.Require(rejected && server.WriteCount == writes, "Adding a chat invalidates the whole pending write plan.");
+            report["stalePreviewPreflightPreservesOrder"] = true;
+            await RefreshAsync();
+            Box("ScopeBox").SelectedItem = this.scopes.First(item => item.Id == scope.Id);
+            await DesktopSmokeTests.WaitForAsync(() => loadedScope?.Id == scope.Id && !busy, "Load the project scope.");
+            Box("ChatModeBox").SelectedIndex = 4;
+            string[] expected = Groups().Single().Chats.Select(SorterService.RowKey).ToArray();
+            await RunAsync(ApplyAsync);
+            await service.RefreshAsync();
+            var saved = await service.GetRowsAsync(scope);
+            DesktopSmokeTests.Require(saved.Select(SorterService.RowKey).SequenceEqual(expected), "Most recent mode persists the displayed preview.");
+            report["newestOrderMatchesSavedPreview"] = true;
+            Box("ScopeBox").SelectedIndex = 0;
+            await DesktopSmokeTests.WaitForAsync(() => loadedScope?.Kind == "projects" && !busy, "Return to the project list.");
+        }
         report["manualRulePausesAutomaticSorting"] = true;
         report["repeatedApplyMakesZeroWrites"] = true;
         RowList.SelectedIndex = 0;

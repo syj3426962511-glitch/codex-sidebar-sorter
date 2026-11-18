@@ -107,7 +107,7 @@ internal sealed class NativeBridge : IDisposable
         if (response["success"] is not JsonValue success || !success.TryGetValue(out bool succeeded))
             throw InvalidResponse();
         if (!succeeded)
-            throw new InvalidOperationException(detail.Length > 0 ? detail : Localization.Text("客户端操作失败。"));
+            throw new InvalidOperationException(detail.Length > 0 ? detail : Localization.Text("The Codex operation failed."));
         return ParseObject(detail);
     }
 
@@ -127,7 +127,7 @@ internal sealed class NativeBridge : IDisposable
     {
         string[] missing = required.Distinct(StringComparer.Ordinal).Where(tool => !Tools.Contains(tool)).ToArray();
         if (missing.Length > 0)
-            throw new InvalidOperationException(Localization.Text("当前客户端尚未提供这项排序操作。") + "\n" + string.Join(", ", missing));
+            throw new InvalidOperationException(Localization.Text("This Codex version does not expose this sorting operation.") + "\n" + string.Join(", ", missing));
     }
 
     public void RequireArguments(string tool, JsonObject arguments)
@@ -136,7 +136,7 @@ internal sealed class NativeBridge : IDisposable
         // Earlier catalogs advertised only operation names. If a catalog supplies a schema,
         // check the fields used by this adapter before submitting the operation.
         if (inputSchemas.TryGetValue(tool, out JsonNode? schema) && !MatchesSchema(arguments, schema))
-            throw new InvalidOperationException(Localization.Text("当前客户端尚未提供这项排序操作。") + "\n" + tool + " (input schema)");
+            throw new InvalidOperationException(Localization.Text("This Codex version does not expose this sorting operation.") + "\n" + tool + " (input schema)");
     }
 
     private static bool MatchesSchema(JsonNode? value, JsonNode? schema)
@@ -177,12 +177,12 @@ internal sealed class NativeBridge : IDisposable
 
     private static string? TextValue(JsonNode? node) => node is JsonValue value && value.TryGetValue(out string? text) ? text : null;
 
-    private static InvalidDataException InvalidResponse() => new(Localization.Text("客户端返回了无法读取的排序回执。"));
+    private static InvalidDataException InvalidResponse() => new(Localization.Text("The sorting result from Codex could not be read."));
 
     private static JsonObject ParseObject(string text)
     {
         try { return JsonNode.Parse(text) as JsonObject ?? throw InvalidResponse(); }
-        catch (JsonException error) { throw new InvalidDataException(Localization.Text("客户端返回了无法读取的排序回执。"), error); }
+        catch (JsonException error) { throw new InvalidDataException(Localization.Text("The sorting result from Codex could not be read."), error); }
     }
 
     private async Task<JsonObject> RequestAsync(string method, JsonObject parameters)
@@ -194,7 +194,7 @@ internal sealed class NativeBridge : IDisposable
         {
             ["id"] = requestId, ["jsonrpc"] = "2.0", ["method"] = method, ["params"] = parameters
         }.ToJsonString());
-        if (payload.Length > MaximumFrameBytes) throw new InvalidDataException(Localization.Text("请求超出本地接口支持的大小。"));
+        if (payload.Length > MaximumFrameBytes) throw new InvalidDataException(Localization.Text("The request exceeds the local interface size limit."));
         try
         {
             await stream.WriteAsync(BitConverter.GetBytes(payload.Length), timeout.Token);
@@ -202,19 +202,19 @@ internal sealed class NativeBridge : IDisposable
             byte[] header = new byte[4];
             await stream.ReadExactlyAsync(header, timeout.Token);
             int length = BitConverter.ToInt32(header);
-            if (length < 1 || length > MaximumFrameBytes) throw new InvalidDataException(Localization.Text("客户端返回了异常长度。"));
+            if (length < 1 || length > MaximumFrameBytes) throw new InvalidDataException(Localization.Text("The Codex response has an invalid length."));
             byte[] body = new byte[length];
             await stream.ReadExactlyAsync(body, timeout.Token);
             JsonObject message = ParseObject(Encoding.UTF8.GetString(body));
             if (message["id"] is not JsonValue id || !id.TryGetValue(out int number) || number != requestId)
-                throw new InvalidDataException(Localization.Text("客户端回执序号异常。"));
+                throw new InvalidDataException(Localization.Text("The Codex response has an unexpected request ID."));
             if (message["error"] is JsonObject error)
-                throw new InvalidOperationException(TextValue(error["message"]) ?? Localization.Text("客户端操作失败。"));
-            return message["result"] as JsonObject ?? throw new InvalidDataException(Localization.Text("客户端回执缺少结果。"));
+                throw new InvalidOperationException(TextValue(error["message"]) ?? Localization.Text("The Codex operation failed."));
+            return message["result"] as JsonObject ?? throw new InvalidDataException(Localization.Text("The Codex response is missing a result."));
         }
         catch (OperationCanceledException error) when (!cancellationToken.IsCancellationRequested)
         {
-            throw new IOException(Localization.Text("连接超时，请刷新后重试。"), error);
+            throw new IOException(Localization.Text("The connection timed out. Refresh and try again."), error);
         }
     }
 
@@ -240,7 +240,7 @@ internal sealed class NativeBridge : IDisposable
         }
         string? inherited = Environment.GetEnvironmentVariable("CODEX_THREAD_ID");
         if (Guid.TryParse(inherited, out _)) return inherited!;
-        throw new IOException(Localization.Text("请先在客户端建立一条本机聊天，随后点击刷新。"));
+        throw new IOException(Localization.Text("Create a local chat in Codex, then click Refresh."));
     }
 
     public void Dispose() => stream.Dispose();

@@ -1,109 +1,43 @@
 # Codex Sidebar Sorter
 
-A standalone desktop companion for organizing Codex projects and chats. Preview two levels of ordering, choose from seven sorting modes, and keep supported sidebar items in ascending name order with an independent background worker.
+Codex Sidebar Sorter is an independent desktop companion for organizing projects and chats in the Codex sidebar. Preview the order, select from seven methods, or keep project and chat names in ascending order automatically.
 
-![Codex Sidebar Sorter in English](docs/assets/sidebar-sorter-english.png)
+![Codex Sidebar Sorter showing English sample data](docs/assets/sidebar-sorter-english.png)
 
-[Combined delivery bundle](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.2-preview/CodexSidebarSorter-1.4.2-Delivery.zip) · [简体中文](README.zh-CN.md) · [User guide](docs/03-product-guide.md) · [Validation results](docs/02-validation.md) · [Future compatibility design](docs/05-future-compatibility.md) · [Agensi submission](agensi/README.md)
+[Download and release notes](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases) · [Installation and user guide](docs/07-delivery.md) · [Compatibility and validation](docs/04-compatibility.md) · [Agensi](https://www.agensi.io/skills/codex-sidebar-sorter-for-windows)
 
-## Features
+## Start here
 
-- Separate sorting choices for projects and chats within each project.
-- Seven modes covering names, natural numbers, update times, and manual order.
-- Automatic ascending-name sorting after additions and renaming.
-- Search, scope selection, project and chat views, change previews, drag ordering, and movement buttons.
-- An independent background worker and native tray menu that continue after the window closes.
-- Twelve interface languages, including Arabic right-to-left layout.
-- Self-contained Windows and Linux installers with runtimes, icons, language resources, and source.
+1. Choose your platform on the release page. Check the exact client and platform evidence in the release notes before installing.
+2. Start and sign in to a compatible Codex Desktop client on the same computer.
+3. Open Codex Sidebar Sorter and select **Refresh**. The application opens in English on a new installation.
+4. Leave **Keep names sorted A to Z** on for continuous sorting. Choose another rule and select **Apply to sidebar** to save a specific order.
 
-Sidebar synchronization depends on the installed Codex client's local interface and access authorization. The compatibility table below records the current evidence.
+The companion includes its runtime and keeps its own preferences. Closing its window leaves the background worker and tray active. Use **Open Sidebar Sorter** in the tray to reopen it, or **Exit** to stop the companion.
 
-## Languages
+## Ordering and languages
 
-Simplified Chinese, Traditional Chinese, English, Japanese, Korean, French, German, Spanish, Portuguese, Italian, Russian, and Arabic.
-
-The system-language option selects a supported interface language. A manual selection is saved in the companion's own preferences.
-
-## Sorting modes
-
-| Mode | Behavior |
+| Mode | How it orders items |
 | --- | --- |
-| Name A to Z | Ascending names, with Chinese comparison based on `zh-CN` |
-| Name Z to A | Descending names |
-| Natural numeric order | Numeric parts follow 2, 10, 20 |
-| Reverse natural order | Descending natural numbers |
-| Recently updated first | Newest timestamps first, missing values last |
-| Oldest update first | Oldest timestamps first, missing values last |
-| Manual order | Drag rows or use Move up, Move down, To top, and To bottom |
+| Name A to Z and Z to A | Compare names, ignoring case |
+| Natural numeric order and reverse natural order | Put Task 2 before Task 10 in ascending order |
+| Recently updated and oldest update first | Use the latest known update time for each item. Missing times sort last |
+| Manual order | Drag rows within the same group or use the movement buttons |
 
-Choosing a custom rule, moving rows, or resetting the preview pauses automatic name sorting. Selecting **Keep names sorted A to Z** resumes it. **Apply to sidebar** submits a manual choice.
+The scope picker includes supported projects, project chats, pinned chats and custom sections. Search and the project and chat tabs help you review large lists. Archived records and attached child sessions are outside the active chat count. Some chats can be displayed with limited context when the installed client exposes partial data.
 
-## Getting started
+The optional interface languages are English, Simplified Chinese, Traditional Chinese, Japanese, Korean, French, German, Spanish, Portuguese, Italian, Russian, and Arabic. Arabic uses a right-to-left layout. **System language** follows your operating system after you select it.
 
-1. Obtain the self-contained Windows or tested Ubuntu Linux x64 1.4.2 preview installer from the public release page. The compatibility table records each platform result. [Installers](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-preview)
-2. Choose an installation directory and install the bundled application.
-3. Open a compatible, signed-in Codex Desktop client.
-4. Open Codex Sidebar Sorter and select **Refresh**.
-5. Select the scope and review the project and chat preview.
-6. Use automatic ascending-name sorting or choose and apply a manual rule.
+## Compatibility
 
-Close the companion window to keep its worker and tray running. Use **Open Sidebar Sorter** in the tray to reopen the window and **Exit** to stop the companion.
+The companion runs independently of the client. Synchronizing the original sidebar requires an authorized local interface on that client build. The companion checks operation names, schema information when available, and the current scope membership before submitting a change. Preview and connection status describe what your current installation can expose.
 
-The source and Windows and Linux installers are public. Intel Mac has an installation candidate. The live Agensi product currently retains its preceding Windows companion skill at USD 9.50 one-time. The product name is Codex Sidebar Sorter. Its unified skill and combined delivery bundle are prepared for the existing marketplace product. [Installers](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-preview) · [Mac candidate](docs/06-unix-installers.md) · [Agensi product](https://www.agensi.io/skills/codex-sidebar-sorter-for-windows)
+Ubuntu 26.04.1 x64 and official client 26.1111.21308 have authenticated seven-mode evidence with the published 1.4.2 release. Windows has signed-out client lifecycle evidence and installed sorting results with isolated test data. Mac packages are installation previews. Consult the matrix for the current release, including builds and outcomes for each test. [Compatibility matrix](docs/04-compatibility.md)
 
-## Compatibility and verification
+People who purchase the optional Agensi skill receive an English agent guide through Agensi. Desktop downloads are available through GitHub. [Agensi delivery](agensi/README.md)
 
-| Component | Verified scope |
-| --- | --- |
-| Windows x64, macOS ARM64, Linux x64 shared core | 26 checks per platform in 1.4.2, including six historical data-schema generations and missing-operation preflight |
-| Multilingual desktop and automatic worker | Twelve languages, 30 fictional projects, 360 fictional chats |
-| Windows 1.4.2 installer | Cloud installed-upgrade acceptance passed, including custom paths, bundled runtime, retained settings, full exit and reopening, uninstall |
-| Official Windows client 26.1111.2228.0 | Window close, full exit, reopening, worker independence, update check, and unchanged client files |
-| Official macOS client | Accessibility permission granted and a signed-in test session reached project pages. Full background sidebar reordering is pending |
-| Official Linux client 26.1111.21308 on Ubuntu 26.04.1 x64 | Seven modes with saved-order read-back, automatic changes after companion window close, retained worker after client exit, recovery after reopening, and removal while the client stayed running passed |
-| Actual client version replacement | Pending |
-| Linux x64 installer | Published with signed-in official-client acceptance |
-| macOS consumer installer | Intel installation candidate published, authenticated sidebar ordering and Apple Silicon installation remain open |
+## Build and contribute
 
-The Windows official-client lifecycle run used a signed-out cloud profile. Authenticated real-client sorting has its own remaining acceptance work. The Windows installer and desktop automation results use fictional protocol fixtures.
-
-Native project ordering covers unpinned projects in the default Projects section. Chat ordering covers supported Codex project chats and chats in pinned or custom sections. ChatGPT project-chat ordering, independent alphabetical Recents ordering, and pinned project placement require additional client support.
-
-Cloud execution resumed after the repository became public. The authorized local installation has been upgraded to the cloud-accepted 1.4.2 preview. Functional testing continues on disposable cloud hosts.
-
-The 1.4.2 candidate detects historical name, timestamp, project, agent-path, and attached-parent fields. Its expanded 26-check suite passed on all three cloud platforms. Grouped project and chat submissions preflight required operation names before the first write. Client-build support is tracked in the compatibility record. The future-version design specifies consumed-contract matching, independent adapters, signed adapter updates, interrupted-batch recovery, and per-build cloud acceptance. These additional mechanisms have their implementation status recorded in the design. [Compatibility record](docs/04-compatibility.md) · [Future compatibility design](docs/05-future-compatibility.md)
-
-The November 17 compatibility review records six constructed history-schema fixtures and one exact Windows client lifecycle build. Per-build authenticated sidebar ordering, actual client replacement, full parameter and response negotiation, and automatic adapter delivery remain open work. The current bridge checks operation names and uses compiled request and response mappings. Each client build receives its own execution result. [Current compatibility review](docs/04-compatibility.md#compatibility-review-on-november-17-2026)
-
-[Shared core results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43888466005) · [Desktop results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43888466496) · [Windows installer results](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43888952292) · [Windows client lifecycle](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43854854495)
-
-## Architecture
-
-The desktop UI, sorting worker, and native tray have separate lifecycle responsibilities. The worker coalesces local file events and waits while idle. Application operations use the companion's IPC channel for coordination.
-
-The companion stores its own language and sorting preferences. History queries use read-only SQLite connections. Supported ordering requests go through Codex's existing local tools. Client interfaces, authorization, and history schemas are versioned integration dependencies.
-
-## Build
-
-Source builds use .NET 10. Native trays use Windows C++, macOS Cocoa, and Linux Ayatana AppIndicator.
-
-```sh
-dotnet build desktop/SidebarSorter.Desktop.csproj -c Release
-dotnet run --project tests/CoreTests.csproj -c Release -- src artifacts/core-results.json
-```
-
-- `desktop/` contains the shared UI, worker host, and native trays.
-- `src/` contains ordering, history reading, settings, localization, and legacy upgrade fixtures.
-- `tests/` contains core, desktop, installer, and official-client acceptance drivers.
-- `packaging/windows.iss` defines the current Windows installer.
-- `.github/workflows/` contains platform-specific build and acceptance workflows.
-
-[Development notes](docs/01-development.md)
-
-## Marketplace companion
-
-The live Agensi listing provides an English agent skill for installing, configuring, and operating the Windows preview companion. Its price is **USD 9.50 for a one-time purchase**. Its package, listing copy, compatibility requirements, and publication record are maintained in `agensi/`. [Agensi product](https://www.agensi.io/skills/codex-sidebar-sorter-for-windows)
-
-## License
+Use .NET 10. Platform packaging and cloud acceptance commands are recorded in [Development and build](docs/01-development.md).
 
 MIT. See [LICENSE](LICENSE).

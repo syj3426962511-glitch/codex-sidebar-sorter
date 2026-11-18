@@ -1,42 +1,24 @@
 # Development and build
 
-## Components
+Use .NET 10 for the Avalonia desktop application and shared ordering code. The native tray uses Windows C++, macOS Cocoa, or Linux Ayatana AppIndicator.
 
 | Directory | Responsibility |
 | --- | --- |
-| desktop | Avalonia UI, background host, IPC coordination, native tray |
-| src | Sorting, read-only history access, localization, own preferences |
-| tests | Shared core, protocol fixtures, desktop, installer, official-client checks |
-| packaging | Windows setup definition and installer translations |
-| agensi | Agent skill source, marketplace copy, upload package, submission record |
-
-The current desktop implementation uses Avalonia and .NET 10. The preceding Windows implementation is retained as an upgrade fixture.
-
-## Build commands
+| desktop | UI, worker host, IPC and native trays |
+| src | Ordering, read-only history, localization and preferences |
+| tests | Sorting, interface, installer and client acceptance |
+| packaging | Self-contained platform packages and installer translation files |
+| agensi | Marketplace copy and optional agent skill |
 
 ```sh
 dotnet build desktop/SidebarSorter.Desktop.csproj -c Release
 dotnet run --project tests/CoreTests.csproj -c Release -- src artifacts/core-results.json
 ```
 
-For a self-contained Windows build, publish with runtime identifier `win-x64`, build the Windows native tray, and compile `packaging/windows.iss` with Inno Setup. Platform-specific native tray commands are maintained in the desktop workflow.
+Publish Windows with runtime identifier `win-x64`, build its native tray, and compile `packaging/windows.iss` using the version from the desktop project. Unix packaging runs on the target architecture. The legacy Windows app are preserved in historical Git revisions.
 
-[Desktop workflow](../.github/workflows/desktop.yml) · [Windows installer workflow](../.github/workflows/windows-update.yml)
+Functional and client acceptance run on disposable cloud hosts. Authenticated desktop acceptance requires an isolated test account and a private test repository. Standard public runs use fictional data, or the official client with a signed-out profile.
 
-## Integration boundaries
+English strings are the source caption keys. Embedded catalogs hold the optional localized strings. English is the fresh default. Files in `packaging/Languages` hold the localized Windows setup resources.
 
-Apply sidebar ordering through the client's available local tools. Read the history index through the existing read-only SQLite path. Store companion settings in its own user-data directory.
-
-Client access authorization, tool contracts, and history schemas require current version checks. Record a connection rejection with its actual client version and request result before choosing an adapter change.
-
-## Language resources
-
-The desktop supports twelve language options. Chinese source messages, the English catalog, and the additional language catalogs are embedded resources. Interface-language changes retain sorting choices. Arabic uses right-to-left layout.
-
-The Windows installer includes its matching language resources.
-
-## Acceptance
-
-Functional and client lifecycle acceptance use disposable cloud hosts. The owner separately authorized the local Windows upgrade and installed-state checks.
-
-[Validation record](02-validation.md)
+[Desktop acceptance](../.github/workflows/desktop.yml) · [Windows build and upgrade](../.github/workflows/windows-update.yml) · [Unix build and upgrade](../.github/workflows/unix-packages.yml)
