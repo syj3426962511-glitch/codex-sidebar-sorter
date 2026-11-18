@@ -20,7 +20,7 @@ Sort the chats in Research Plan by natural number so Task 2 appears before Task 
 
 ## Compatibility note
 
-Windows x64 and Ubuntu Linux x64 with a compatible, signed-in Codex Desktop on the same machine. The Windows installer upgrade and the three-platform history checks passed for 1.4.4. The earlier signed-out Windows lifecycle check used Codex 26.1111.9265.0. The signed-in Linux ordering test used companion 1.4.2 on Ubuntu 26.04.1 x64 with Codex 26.1111.21308.
+Windows x64 and Ubuntu Linux x64 with a compatible, signed-in Codex Desktop on the same machine. Companion 1.4.4 passed the Windows installer upgrade, the signed-out lifecycle check with Codex 26.1111.2228.0, and three-platform history checks. The signed-in Linux ordering test used companion 1.4.2 on Ubuntu 26.04.1 x64 with Codex 26.1111.21308.
 
 ## Known limitations
 
