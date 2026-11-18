@@ -144,6 +144,27 @@ internal static class CoreTests
             catch (InvalidOperationException) { rejected = true; }
             Require(rejected && stream.Length == 0, "A changed argument contract must be detected before sending a request.");
         });
+        await CheckAction("thread-list-catalog-accepts-json-integer-limits", () =>
+        {
+            using var stream = new MemoryStream();
+            using var bridge = new NativeBridge(stream, "fixture-caller");
+            bridge.ReadToolCatalog(JsonNode.Parse("""
+                {"tools":[{"namespace":"codex_app","name":"list_threads","inputSchema":
+                {"type":"object","properties":{"limit":{"type":"integer"}},"additionalProperties":false}}]}
+                """)!.AsObject());
+
+            bridge.RequireArguments("list_threads", new JsonObject { ["limit"] = 50 });
+            bridge.RequireArguments("list_threads", new JsonObject { ["limit"] = 50L });
+            bridge.RequireArguments("list_threads", new JsonObject { ["limit"] = 50.0m });
+            bridge.RequireArguments("list_threads", new JsonObject { ["limit"] = JsonNode.Parse("5e1") });
+            foreach (JsonValue invalid in new[] { JsonValue.Create(50.5m), JsonValue.Create("50") })
+            {
+                bool rejected = false;
+                try { bridge.RequireArguments("list_threads", new JsonObject { ["limit"] = invalid }); }
+                catch (InvalidOperationException) { rejected = true; }
+                Require(rejected, "Reject fractional and string limits before sending a request.");
+            }
+        });
         await CheckAction("timestamp-variants-and-invalid-values", () =>
         {
             const long expected = 1_790_000_000_000;
