@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Install Codex Sidebar Sorter</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #f2f5fc; color: #172b48; font: 18px/1.55 "Times New Roman", serif; }
+  main { max-width: 810px; margin: 9vh auto; padding: 0 24px; }
+  header { display: flex; align-items: center; gap: 18px; margin-bottom: 30px; }
+  header img { width: 56px; height: 56px; }
+  h1 { margin: 0; font-size: clamp(28px, 5vw, 37px); line-height: 1.15; }
+  header p { margin: 7px 0 0; }
+  .card { background: white; border: 1px solid #d3ddf1; border-radius: 18px; padding: clamp(18px, 4vw, 34px); }
+  nav { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 26px; }
+  nav button, .action { min-height: 45px; padding: 8px 18px; border-radius: 8px; font: inherit; }
+  nav button { border: 1px solid #acbdd9; background: #fff; color: inherit; cursor: pointer; }
+  nav button[aria-pressed="true"], .action { background: #3049d9; border: 1px solid #3049d9; color: #fff; }
+  .action { display: inline-flex; align-items: center; text-decoration: none; margin: 0 8px 8px 0; }
+  h2 { margin: 0 0 8px; font-size: 27px; }
+  p { margin: 8px 0 16px; }
+  a { color: #2337ae; }
+  a:focus-visible, button:focus-visible { outline: 3px solid #1f397a; outline-offset: 3px; }
+  code { overflow-wrap: anywhere; }
+  .help { margin-top: 16px; }
+  [hidden] { display: none; }
+</style>
+<main>
+  <header>
+    <img src="logo.png" alt="">
+    <div>
+      <h1>Install Codex Sidebar Sorter</h1>
+      <p>Version @VERSION@ · Offline setup</p>
+    </div>
+  </header>
+  <div class="card">
+    <p id="host" aria-live="polite"></p>
+    <nav aria-label="Choose an operating system">
+      <button type="button" data-system="windows" aria-pressed="false">Windows</button>
+      <button type="button" data-system="macos" aria-pressed="false">macOS</button>
+      <button type="button" data-system="linux" aria-pressed="false">Linux</button>
+    </nav>
+    <section data-panel="windows">
+      <h2>Windows x64</h2>
+      <p>Open Windows Setup and choose an installation folder.</p>
+      <a class="action" href="Installers/CodexSidebarSorter-@VERSION@-Windows-Setup.exe" download>Windows Setup</a>
+    </section>
+    <section data-panel="macos">
+      <h2>macOS</h2>
+      <p>Open <strong>Install macOS.command</strong> in the extracted folder to select the disk image for your chip automatically. The disk images are installation previews.</p>
+      <a class="action" href="Installers/CodexSidebarSorter-@VERSION@-macOS-arm64-Candidate.dmg" download>Apple Silicon</a>
+      <a class="action" href="Installers/CodexSidebarSorter-@VERSION@-macOS-x64-Candidate.dmg" download>Intel Mac</a>
+    </section>
+    <section data-panel="linux">
+      <h2>Linux x64</h2>
+      <p>Open a terminal in the extracted folder and run:</p>
+      <p><code>sh Installers/CodexSidebarSorter-@VERSION@-Linux-x64-Setup.run</code></p>
+      <a class="action" href="Installers/CodexSidebarSorter-@VERSION@-Linux-x64-Setup.run" download>Linux Setup</a>
+    </section>
+  </div>
+  <p class="help"><a href="Installation-Guide.en.md">Installation and system selection guide</a></p>
+</main>
+<script>
+  const systems = { windows: "Windows", macos: "macOS", linux: "Linux" };
+  const browserPlatform = navigator.userAgentData?.platform || navigator.platform;
+  const current = /^win/i.test(browserPlatform) ? "windows"
+    : /^mac/i.test(browserPlatform) ? "macos"
+    : /^linux/i.test(browserPlatform) ? "linux" : null;
+  document.querySelector("#host").textContent = current
+    ? "Detected " + systems[current]
+    : "Choose the system where Codex runs.";
+  const choices = Array.from(document.querySelectorAll("[data-system]"));
+  const panels = Array.from(document.querySelectorAll("[data-panel]"));
+  function selectSystem(selected) {
+    choices.forEach(button => button.setAttribute("aria-pressed", String(button.dataset.system === selected)));
+    panels.forEach(panel => { panel.hidden = panel.dataset.panel !== selected; });
+  }
+  choices.forEach(button => button.addEventListener("click", () => selectSystem(button.dataset.system)));
+  selectSystem(current);
+</script>
+</html>

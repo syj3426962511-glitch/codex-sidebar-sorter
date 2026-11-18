@@ -4,10 +4,19 @@ on:
     branches: [main]
     paths: ['desktop/**', 'src/**', 'tests/DesktopSmokeTests.cs', 'tests/FixtureNativeServer.cs', '.github/workflows/desktop.yml']
   workflow_dispatch:
+    inputs:
+      windows_run:
+        description: Windows installer run for the unified offline package
+        type: string
+      unix_run:
+        description: Unix installer run for the unified offline package
+        type: string
 permissions:
   contents: read
+  actions: read
 jobs:
   desktop:
+    if: inputs.windows_run == '' && inputs.unix_run == ''
     strategy:
       fail-fast: false
       matrix:
@@ -56,3 +65,9 @@ jobs:
         with:
           name: desktop-${{ matrix.rid }}
           path: artifacts/desktop/*
+  integrated-installer:
+    if: inputs.windows_run != '' && inputs.unix_run != ''
+    uses: ./.github/workflows/integrated-installer.yml
+    with:
+      windows_run: ${{ inputs.windows_run }}
+      unix_run: ${{ inputs.unix_run }}

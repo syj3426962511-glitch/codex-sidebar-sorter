@@ -1,0 +1,119 @@
+name: Unified offline installer
+on:
+  workflow_call:
+    inputs:
+      windows_run:
+        description: Accepted Windows installed-upgrade workflow run
+        type: string
+        required: true
+      unix_run:
+        description: Accepted Unix native installer workflow run
+        type: string
+        required: true
+permissions:
+  contents: read
+  actions: read
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-desktop-upgrade
+          path: artifacts/native/windows
+          run-id: ${{ inputs.windows_run }}
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: installer-candidate-*
+          path: artifacts/native/unix
+          run-id: ${{ inputs.unix_run }}
+          github-token: ${{ github.token }}
+      - name: Assemble the only download and test its offline system selector
+        run: |
+          python packaging/build-integrated.py artifacts/native artifacts/unified
+          unzip -q artifacts/unified/*.zip -d artifacts/extracted
+          npm install --prefix "$RUNNER_TEMP/installer-browser" --no-audit --no-fund playwright
+          "$RUNNER_TEMP/installer-browser/node_modules/.bin/playwright" install chromium
+          node tests/IntegratedInstaller.mjs artifacts/extracted artifacts/installer-ui "$RUNNER_TEMP/installer-browser"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: integrated-setup
+          compression-level: 0
+          path: artifacts/unified/*.zip
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: installer-selection
+          path: artifacts/installer-ui/*
+
+  install:
+    needs: assemble
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: macos-latest
+            rid: osx-arm64
+          - os: macos-15-intel
+            rid: osx-x64
+          - os: ubuntu-latest
+            rid: linux-x64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/download-artifact@v4
+        with:
+          name: integrated-setup
+          path: artifacts/shared
+      - name: Install the Windows setup from the unified archive
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $bundle = Get-ChildItem artifacts/shared -Filter '*.zip'
+          Expand-Archive -LiteralPath $bundle.FullName -DestinationPath artifacts/extracted
+          $installer = Get-ChildItem artifacts/extracted/Installers -Filter '*-Windows-Setup.exe'
+          dotnet run --project tests/InstalledDesktopAcceptance.csproj -c Release -- $installer.FullName artifacts/installed
+      - name: Prepare the Linux desktop session
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y xvfb libayatana-appindicator3-dev libfontconfig1 fonts-noto-cjk dbus-x11
+      - name: Install through the automatic macOS chip launcher
+        if: runner.os == 'macOS'
+        run: |
+          set -o pipefail
+          unzip -q artifacts/shared/*.zip -d artifacts/extracted
+          test -x 'artifacts/extracted/Install macOS.command'
+          dotnet run --project tests/UnixInstalledAcceptance.csproj -c Release -- "$PWD/artifacts/extracted/Install macOS.command" artifacts/installed | tee artifacts/mac-installer.log
+          expected_chip="${RUNTIME#osx-}"
+          grep -F "macOS installer: $expected_chip" artifacts/mac-installer.log
+        env:
+          RUNTIME: ${{ matrix.rid }}
+      - name: Install the Linux setup from the unified archive
+        if: runner.os == 'Linux'
+        run: |
+          unzip -q artifacts/shared/*.zip -d artifacts/extracted
+          installer=$(realpath artifacts/extracted/Installers/*-Linux-x64-Setup.run)
+          dbus-run-session -- xvfb-run -a -s '-screen 0 1440x1000x24' dotnet run --project tests/UnixInstalledAcceptance.csproj -c Release -- "$installer" artifacts/installed
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integrated-install-${{ matrix.rid }}
+          path: |
+            artifacts/installed/*
+            artifacts/mac-installer.log
