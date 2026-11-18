@@ -6,7 +6,9 @@ Windows, Linux and macOS each passed 30 core checks. The desktop tests loaded 36
 
 This release fixes the chat-list error when a client advertises an optional integer page size. The companion uses the client's page size for the sidebar snapshot and reads history to the final available page.
 
-[Core](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44227799420) · [Desktop pagination](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44227798568) · [Windows upgrade](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44227798707) · [Unix installation](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44227798502)
+The official Windows client 26.1111.2228.0 passed signed-out startup, close, full exit, reopening, and coexistence during companion removal. The Store offered no newer build at the time of testing. The client executable and application archive matched before and after the check.
+
+[Core](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44227799420) · [Desktop pagination](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44228577133) · [Windows upgrade](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44228576897) · [Unix installation](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44228576877) · [Official Windows lifecycle](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44229052601)
 
 ## Codex Sidebar Sorter 1.4.3
 

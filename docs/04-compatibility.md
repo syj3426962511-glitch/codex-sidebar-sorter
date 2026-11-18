@@ -5,7 +5,7 @@ The compatibility matrix records the exact combination of companion version, ope
 | Platform | Real client evidence | Package scope |
 | --- | --- | --- |
 | Ubuntu 26.04.1 x64 | Codex 26.1111.21308 passed signed-in ordering in all seven modes with the published 1.4.2 installer | Linux x64 preview |
-| Windows x64 | Codex 26.1111.9265.0 passed signed-out lifecycle and Store update check with 1.4.3. Signed-in ordering and a change between two Store client versions still require validation | Windows x64 preview |
+| Windows x64 | Codex 26.1111.2228.0 passed signed-out lifecycle and the Store update check with 1.4.4. Signed-in ordering and a change between two Store client versions still require validation | Windows x64 preview |
 | Intel Mac | The installed companion has fixture coverage. The client rejected the earlier external ordering connection. Signed-in sidebar ordering remains open | Intel Mac installation preview |
 | Apple Silicon Mac | The installed companion has fixture coverage for the new arm64 package. Signed-in sidebar ordering remains open | Apple Silicon installation preview |
 
