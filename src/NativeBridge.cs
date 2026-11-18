@@ -170,7 +170,10 @@ internal sealed class NativeBridge : IDisposable
         "string" => value?.GetValueKind() == JsonValueKind.String,
         "boolean" => value?.GetValueKind() is JsonValueKind.True or JsonValueKind.False,
         "number" => value?.GetValueKind() == JsonValueKind.Number,
-        "integer" => value is JsonValue number && number.TryGetValue(out long _),
+        // Compare the JSON number, regardless of the CLR type used to build it.
+        "integer" => value?.GetValueKind() == JsonValueKind.Number
+            && JsonSerializer.SerializeToElement(value).TryGetDecimal(out decimal number)
+            && decimal.Truncate(number) == number,
         "null" => value == null,
         _ => false
     };

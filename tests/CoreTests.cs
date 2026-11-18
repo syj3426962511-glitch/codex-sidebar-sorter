@@ -157,7 +157,7 @@ internal static class CoreTests
             bridge.RequireArguments("list_threads", new JsonObject { ["limit"] = 50L });
             bridge.RequireArguments("list_threads", new JsonObject { ["limit"] = 50.0m });
             bridge.RequireArguments("list_threads", new JsonObject { ["limit"] = JsonNode.Parse("5e1") });
-            foreach (JsonValue invalid in new[] { JsonValue.Create(50.5m), JsonValue.Create("50") })
+            foreach (JsonValue? invalid in new[] { JsonValue.Create(50.5m), JsonValue.Create("50") })
             {
                 bool rejected = false;
                 try { bridge.RequireArguments("list_threads", new JsonObject { ["limit"] = invalid }); }

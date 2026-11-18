@@ -15,8 +15,8 @@ The installers bundle the companion runtime. Install Codex Desktop separately an
 Use the file from your release. Replace `<version>` with its actual version. A folder chooser is available on desktops with Zenity. The terminal option works with an explicit directory.
 
 ```sh
-chmod +x CodexSidebarSorter-1.4.3-Linux-x64-Setup.run
-./CodexSidebarSorter-1.4.3-Linux-x64-Setup.run --prefix "$HOME/Applications/CodexSidebarSorter"
+chmod +x CodexSidebarSorter-1.4.4-Linux-x64-Setup.run
+./CodexSidebarSorter-1.4.4-Linux-x64-Setup.run --prefix "$HOME/Applications/CodexSidebarSorter"
 ```
 
 Open **Codex Sidebar Sorter** in the applications menu after installing.
