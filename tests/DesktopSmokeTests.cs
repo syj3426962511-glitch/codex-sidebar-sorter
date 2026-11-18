@@ -206,6 +206,9 @@ internal sealed partial class DesktopWindow
         report["selectedSystems"] = selectedSystems;
         report["explicitSystemReconnected"] = true;
         await Task.Delay(200);
+        DesktopSmokeTests.Require(Label("StatusText").Text is "Connected" or "Keep names sorted A to Z",
+            "The selected system keeps the current English status after switching from other languages.");
+        report["selectedSystemStatusInEnglish"] = true;
         SaveScreenshot(Path.Combine(output, "desktop-system-selected.png"));
 
         Box("ProjectModeBox").SelectedIndex = 1;

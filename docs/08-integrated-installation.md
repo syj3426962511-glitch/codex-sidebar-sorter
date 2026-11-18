@@ -13,3 +13,5 @@ Extract the entire ZIP to a folder and open **Install.html**. The setup page sho
 Start a compatible local Codex Desktop client and open **Codex Sidebar Sorter**. **System** is in the header. **Auto** selects the current operating system. Choosing its name explicitly reloads the list using that system's local connection. The app clears the preview when the setting changes, and a different system selection displays the current system needed for connection.
 
 The same archive installs on each computer. The Windows companion connects through the local Windows named pipe. The macOS and Linux companions use their respective local sockets. Sidebar writes require the corresponding signed-in client to authorize the operation. Review the platform's exact acceptance scope in the [compatibility matrix](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/blob/main/docs/04-compatibility.md).
+
+The official macOS client used in the cloud refused the independent socket connection. macOS installation and system selection are available for preview while native sidebar writes await an authorized connection.

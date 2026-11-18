@@ -171,6 +171,7 @@ internal sealed partial class DesktopWindow : Window
         Box("ScopeBox").SelectedItem = selectedScope;
         Label("StatusText").Text = Localization.Text(status);
         if (!CanUseSelectedSystem) SetStatus("");
+        UpdateTabCounts();
         updating = false;
     }
 
@@ -185,8 +186,7 @@ internal sealed partial class DesktopWindow : Window
         expanded.Clear();
         Box("ScopeBox").ItemsSource = scopes;
         RowList.ItemsSource = null;
-        foreach (var (button, label) in new[] { ("ProjectsTab", "Projects"), ("ChatsTab", "Chats"), ("AllTab", "All") })
-            Button(button).Content = Localization.Text(label) + " 0";
+        UpdateTabCounts();
         foreach (string label in new[] { "Pending", "ReadCheck", "PlanCheck" }) Label(label).Text = "";
         this.FindControl<ItemsControl>("Changes")!.ItemsSource = null;
     }
@@ -334,10 +334,17 @@ internal sealed partial class DesktopWindow : Window
         }
         RowList.ItemsSource = rows;
         RowList.SelectedItem = rows.FirstOrDefault(row => row.Entry.Key == selected);
-        Button("ProjectsTab").Content = Localization.Text("Projects") + " " + workspace.Groups.Count;
-        Button("ChatsTab").Content = Localization.Text("Chats") + " " + workspace.ChatCount;
-        Button("AllTab").Content = Localization.Text("All") + " " + (workspace.Groups.Count + workspace.ChatCount);
+        UpdateTabCounts();
         RenderChecks();
+    }
+
+    private void UpdateTabCounts()
+    {
+        int projects = workspace?.Groups.Count ?? 0;
+        int chats = workspace?.ChatCount ?? 0;
+        Button("ProjectsTab").Content = Localization.Text("Projects") + " " + projects;
+        Button("ChatsTab").Content = Localization.Text("Chats") + " " + chats;
+        Button("AllTab").Content = Localization.Text("All") + " " + (projects + chats);
     }
 
     private SidebarDisplayRow Display(TreeEntry entry)
@@ -491,7 +498,7 @@ internal sealed partial class DesktopWindow : Window
             text = NativeBridge.LocalSystemPrompt();
             error = false;
         }
-        Label("StatusText").Text = text;
+        Label("StatusText").Text = Localization.Text(Localization.SourceText(text));
         Label("StatusText").Foreground = new SolidColorBrush(Color.Parse(error ? "#A02923" : "#006C4D"));
     }
 
