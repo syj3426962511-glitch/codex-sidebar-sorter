@@ -255,7 +255,14 @@ internal sealed partial class DesktopWindow
             DesktopSmokeTests.Require(history?.IsLoaded == true && history.Chats.Select(row => row.Id).SequenceEqual(expected),
                 "Refresh must use the server page size and load every active history page.");
             report["pagedHistoryChatsRead"] = history!.Chats.Count;
-            SaveScreenshot(Path.Combine(output, "desktop-paged-history.png"));
+            TextBox search = this.FindControl<TextBox>("Search")!;
+            search.Text = history.Row.Title;
+            try
+            {
+                await Task.Delay(200);
+                SaveScreenshot(Path.Combine(output, "desktop-paged-history.png"));
+            }
+            finally { search.Text = ""; }
         }
         finally { server.IncludePagedHistory = false; }
     }

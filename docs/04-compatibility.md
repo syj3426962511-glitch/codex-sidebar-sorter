@@ -15,7 +15,7 @@ The compatibility matrix records the exact combination of companion version, ope
 
 The bridge can apply ordering to eligible projects, chats in loaded Codex projects, pinned chats and supported custom sections. Independent alphabetical Recents, pinned project placement, and ChatGPT project-chat ordering require corresponding client capabilities. When the client reports project ownership or loading issues, open that project in Codex and refresh the companion.
 
-The history reader uses a read-only SQLite connection and recognizes six tested historical schema shapes. These are isolated schema fixtures. Use the table above for authenticated client builds.
+The local history reader uses a read-only SQLite connection and recognizes six tested historical schema shapes. Remote and ChatGPT history use the client's default page size and continue through every available page of active chats. See the validation record for the 125-chat pagination check.
 
 ## What happens after a client update
 

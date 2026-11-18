@@ -6,7 +6,7 @@ Sort supported Codex projects and chats by name, natural number, update time, or
 
 ## Install
 
-Choose [Windows x64](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.3-preview/CodexSidebarSorter-1.4.3-Windows-Setup.exe) or [Ubuntu Linux x64](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.3-preview/CodexSidebarSorter-1.4.3-Linux-x64-Setup.run). Start a compatible, signed-in Codex Desktop client and select **Refresh** in the companion. See the [release page](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.3-preview) for the Mac installation previews and exact test results.
+Choose [Windows x64](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.4-preview/CodexSidebarSorter-1.4.4-Windows-Setup.exe) or [Ubuntu Linux x64](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.4-preview/CodexSidebarSorter-1.4.4-Linux-x64-Setup.run). Start a compatible, signed-in Codex Desktop client and select **Refresh** in the companion. See the [release page](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.4-preview) for the Mac installation previews and exact test results.
 
 ## What the purchase includes
 
@@ -26,11 +26,11 @@ Sort the chats in Research Plan by natural number so Task 2 appears before Task 
 
 ## Compatibility note
 
-Windows x64 and Ubuntu Linux x64 with a compatible, signed-in Codex Desktop on the same machine. The 1.4.3 Windows lifecycle check used Codex 26.1111.9265.0. The signed-in Linux ordering test used companion 1.4.2 on Ubuntu 26.04.1 x64 with Codex 26.1111.21308.
+Windows x64 and Ubuntu Linux x64 with a compatible, signed-in Codex Desktop on the same machine. The Windows installer upgrade and the three-platform history checks passed for 1.4.4. The earlier signed-out Windows lifecycle check used Codex 26.1111.9265.0. The signed-in Linux ordering test used companion 1.4.2 on Ubuntu 26.04.1 x64 with Codex 26.1111.21308.
 
 ## Known limitations
 
-Intel Mac and Apple Silicon packages are installation previews. Signed-in 1.4.3 ordering, replacement between distinct Codex client builds, and notarized Mac distribution remain open.
+Intel Mac and Apple Silicon packages are installation previews. Signed-in 1.4.4 ordering, replacement between distinct Codex client builds, and notarized Mac distribution remain open.
 
 ## System requirements
 
@@ -40,4 +40,4 @@ If the form supports multiple systems, select Windows x64 and Linux x64. Mac pac
 
 ## Requirement note
 
-Install Codex Sidebar Sorter 1.4.3 on Windows x64 or compatible Ubuntu Linux x64, then open a compatible signed-in Codex Desktop on the same machine. The companion includes its runtime.
+Install Codex Sidebar Sorter 1.4.4 on Windows x64 or compatible Ubuntu Linux x64, then open a compatible signed-in Codex Desktop on the same machine. The companion includes its runtime.

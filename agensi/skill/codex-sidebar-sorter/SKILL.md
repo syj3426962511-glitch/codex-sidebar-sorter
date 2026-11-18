@@ -3,13 +3,13 @@ name: codex-sidebar-sorter
 description: Guide installation and sorting with the Codex Sidebar Sorter desktop preview on a compatible Windows or Ubuntu Linux system.
 version: "1.4.4"
 summary: "Sort supported Codex projects and chats by name, natural number, update time, or manual order. The desktop preview runs on Windows x64 and tested Ubuntu Linux x64, with English as the default and twelve selectable languages."
-docs_url: https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.3-preview
+docs_url: https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.4-preview
 tags: [codex, sidebar, sorting, windows, linux]
 ---
 
 # Codex Sidebar Sorter
 
-Use this skill with desktop companion **1.4.3**. Check the operating system, processor architecture, and exact Codex client version. Use the installer links and the verification details in [Platform compatibility](references/compatibility.md). Intel and Apple Silicon Mac packages are installation previews.
+Use this skill with desktop companion **1.4.4**. Check the operating system, processor architecture, and exact Codex client version. Use the installer links and the verification details in [Platform compatibility](references/compatibility.md). Intel and Apple Silicon Mac packages are installation previews.
 
 ## Use the companion
 
@@ -30,4 +30,4 @@ Sort the chats in Research Plan by natural number so Task 2 appears before Task 
 
 Use the user's authorized desktop controls when available. Otherwise, explain the steps. Preserve the user's language and other preferences. When troubleshooting, record the operating system, Codex build, companion version, and visible status.
 
-[Installers and release notes](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.3-preview)
+[Installers and release notes](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.4-preview)

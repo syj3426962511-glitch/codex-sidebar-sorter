@@ -1,5 +1,13 @@
 # Validation record
 
+## Codex Sidebar Sorter 1.4.4
+
+Windows, Linux and macOS each passed 30 core checks. The desktop tests loaded 360 local chats and every one of 125 fictional history records returned in five pages. The fixture rejected any explicit page size in that test. Windows also passed a running upgrade from the published 1.4.3 installer. The Linux x64 and both macOS installers passed isolated installation and lifecycle tests.
+
+This release fixes the chat-list error when a client advertises an optional integer page size. The companion uses the client's page size for the sidebar snapshot and reads history to the final available page.
+
+[Core](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44227799420) · [Desktop pagination](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44227798568) · [Windows upgrade](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44227798707) · [Unix installation](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44227798502)
+
 ## Codex Sidebar Sorter 1.4.3
 
 | Check | Verified result |

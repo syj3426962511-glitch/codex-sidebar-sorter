@@ -4,7 +4,7 @@ Codex Sidebar Sorter is an independent desktop companion for organizing projects
 
 ![Codex Sidebar Sorter showing English sample data](docs/assets/sidebar-sorter-english.png)
 
-[Download 1.4.3](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.3-preview) · [Installation and user guide](docs/07-delivery.md) · [Compatibility and validation](docs/04-compatibility.md) · [Agensi](https://www.agensi.io/skills/codex-sidebar-sorter)
+[Download 1.4.4](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.4-preview) · [Installation and user guide](docs/07-delivery.md) · [Compatibility and validation](docs/04-compatibility.md) · [Agensi](https://www.agensi.io/skills/codex-sidebar-sorter)
 
 ## Start here
 
@@ -24,7 +24,7 @@ The companion includes its runtime and keeps its own preferences. Closing its wi
 | Recently updated and oldest update first | Use the latest known update time for each item. Missing times sort last |
 | Manual order | Drag rows within the same group or use the movement buttons |
 
-The scope picker includes supported projects, project chats, pinned chats and custom sections. Search and the project and chat tabs help you review large lists. Archived records and attached child sessions are outside the active chat count. Some chats can be displayed with limited context when the installed client exposes partial data.
+The scope picker includes supported projects, project chats, pinned chats and custom sections. The companion reads all available pages of active history and uses the client's page size. Search and the project and chat tabs help you review large lists. Archived records and attached child sessions are outside the active chat count. Some chats can be displayed with limited context when the installed client exposes partial data.
 
 The optional interface languages are English, Simplified Chinese, Traditional Chinese, Japanese, Korean, French, German, Spanish, Portuguese, Italian, Russian, and Arabic. Arabic uses a right-to-left layout. **System language** follows your operating system after you select it.
 
