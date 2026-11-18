@@ -10,6 +10,27 @@ namespace SidebarSorter;
 
 internal static class InstalledDesktopAcceptance
 {
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern IntPtr FindWindow(string? className, string windowName);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern IntPtr FindWindowEx(IntPtr parent, IntPtr after, string className, string? windowName);
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(IntPtr window, out uint processId);
+
+    [DllImport("user32.dll", EntryPoint = "PostMessageW")]
+    private static extern bool PostMessage(IntPtr window, uint message, UIntPtr argument, IntPtr details);
+
+    [DllImport("user32.dll")]
+    private static extern bool IsWindowVisible(IntPtr window);
+
+    [DllImport("user32.dll")]
+    private static extern bool IsIconic(IntPtr window);
+
+    [DllImport("user32.dll")]
+    private static extern bool ShowWindowAsync(IntPtr window, int command);
+
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern IntPtr OpenProcess(uint access, bool inheritHandle, int processId);
 
@@ -93,6 +114,7 @@ internal static class InstalledDesktopAcceptance
             report["idleCpuMilliseconds"] = (worker.TotalProcessorTime - cpu).TotalMilliseconds;
             report["idleWorkingSetBytes"] = worker.WorkingSet64;
             report["idleSortingWrites"] = 0;
+            await VerifyTrayAsync(server.Root, workerId, report);
             await RunAsync(program, "--exit");
             settingsStore.Save(new ToolSettings { Language = "en", AutomaticNameSorting = false, ProjectSortMode = 2, ChatSortMode = 5 });
             await RunAsync(program, "--capture", Path.Combine(output, "03-manual-preferences.png"));
@@ -158,13 +180,74 @@ internal static class InstalledDesktopAcceptance
 
     private static async Task<JsonObject> ReadStatusAsync(string dataRoot)
     {
-        string identity = "sst-" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(Path.GetFullPath(dataRoot).ToUpperInvariant())))[..12];
-        await using var pipe = new NamedPipeClientStream(".", identity + "-bg", PipeDirection.InOut, PipeOptions.Asynchronous);
-        await pipe.ConnectAsync(10000);
-        using var writer = new StreamWriter(pipe, leaveOpen:true) { AutoFlush = true };
-        await writer.WriteLineAsync("status");
-        using var reader = new StreamReader(pipe, leaveOpen:true);
+        await using var pipe = await ConnectWorkerAsync(dataRoot, "status");
+        using var reader = new StreamReader(pipe, leaveOpen: true);
         return JsonNode.Parse((await reader.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(20)))!)!.AsObject();
+    }
+
+    private static async Task<NamedPipeClientStream> ConnectWorkerAsync(string dataRoot, string command)
+    {
+        string identity = "sst-" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(Path.GetFullPath(dataRoot).ToUpperInvariant())))[..12];
+        var pipe = new NamedPipeClientStream(".", identity + "-bg", PipeDirection.InOut, PipeOptions.Asynchronous);
+        try
+        {
+            await pipe.ConnectAsync(10000);
+            using var writer = new StreamWriter(pipe, leaveOpen: true) { AutoFlush = true };
+            await writer.WriteLineAsync(command);
+            return pipe;
+        }
+        catch { pipe.Dispose(); throw; }
+    }
+
+    private static async Task VerifyTrayAsync(string dataRoot, int workerId, JsonObject report)
+    {
+        const uint mouseDown = 0x0201, mouseUp = 0x0202, doubleClick = 0x0203;
+        const uint shellSelect = 0x0400, keyboardSelect = 0x0401, close = 0x0010;
+        var tray = FindWindowEx(new IntPtr(-3), IntPtr.Zero, "IndependentSidebarSorterTray", null);
+        GetWindowThreadProcessId(tray, out uint trayOwner);
+        Require(trayOwner == workerId, "Find the installed worker's notification window.");
+        IntPtr window = IntPtr.Zero;
+        uint windowOwner = 0;
+        async Task CheckActivation(string result, params uint[] events)
+        {
+            var timer = Stopwatch.StartNew();
+            foreach (uint notification in events)
+                Require(PostMessage(tray, 0x8001, UIntPtr.Zero, new IntPtr(0x10000 | notification)), "Send the Windows tray notification.");
+            bool Activated()
+            {
+                var found = FindWindow(null, "Codex Sidebar Sorter");
+                if (found == IntPtr.Zero || !IsWindowVisible(found) || IsIconic(found)) return false;
+                if (window != IntPtr.Zero) Require(found == window, "Repeated tray activation uses the existing window.");
+                window = found;
+                return true;
+            }
+            await WaitAsync(Activated, "Tray activation did not show the window while the worker lease was held: " + result, 6000);
+            report[result] = timer.ElapsedMilliseconds;
+        }
+
+        await using (var lease = await ConnectWorkerAsync(dataRoot, "lease"))
+        {
+            using var response = new StreamReader(lease, leaveOpen: true);
+            Require(await response.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(10)) == "ok", "Hold the worker lease for this regression.");
+            await CheckActivation("traySingleClickMs", mouseDown, mouseUp);
+            GetWindowThreadProcessId(window, out windowOwner);
+            await Task.Delay(200);
+            Require(PostMessage(window, close, UIntPtr.Zero, IntPtr.Zero), "Close the visible window while refresh is waiting.");
+            await WaitAsync(() => !IsWindowVisible(window), "Closing hides the window immediately.", 2000);
+            await CheckActivation("trayDoubleClickWhileRefreshingMs", mouseDown, mouseUp, shellSelect, doubleClick, mouseUp, shellSelect);
+            await Task.Delay(200);
+            Require(ShowWindowAsync(window, 6), "Minimize the installed window.");
+            await WaitAsync(() => IsIconic(window), "The installed window is minimized.", 2000);
+            await CheckActivation("trayShellSelectRestoreMs", shellSelect);
+            await Task.Delay(200);
+            Require(ShowWindowAsync(window, 6), "Minimize the installed window again.");
+            await WaitAsync(() => IsIconic(window), "The installed window is minimized again.", 2000);
+            await CheckActivation("trayKeyboardRestoreMs", keyboardSelect);
+            Require(PostMessage(window, close, UIntPtr.Zero, IntPtr.Zero), "Hide the installed window after the activation checks.");
+        }
+        await WaitAsync(() => !IsRunning((int)windowOwner), "The hidden window process exits after the operation finishes.");
+        Require(IsRunning(workerId), "The lightweight tray worker remains after the window process exits.");
+        report["trayWindowReleasedAfterRefresh"] = true;
     }
 
     private static async Task RunAsync(string executable, params string[] arguments)
@@ -177,11 +260,14 @@ internal static class InstalledDesktopAcceptance
         Require(process.ExitCode == 0, Path.GetFileName(executable) + " " + string.Join(" ", arguments) + " returned " + process.ExitCode + " " + await errors);
     }
 
-    private static async Task WaitAsync(Func<bool> condition, string failure)
+    private static async Task WaitAsync(Func<bool> condition, string failure, int timeoutMs = 40000)
     {
-        DateTime deadline = DateTime.UtcNow.AddSeconds(40);
-        while (!condition() && DateTime.UtcNow < deadline) await Task.Delay(100);
-        Require(condition(), failure);
+        var elapsed = Stopwatch.StartNew();
+        while (!condition())
+        {
+            Require(elapsed.ElapsedMilliseconds < timeoutMs, failure);
+            await Task.Delay(50);
+        }
     }
 
     private static void Require(bool condition, string failure)
