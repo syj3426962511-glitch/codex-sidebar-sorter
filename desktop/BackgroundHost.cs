@@ -99,10 +99,10 @@ internal sealed class BackgroundHost : IDisposable
             {
                 ToolSettings current = settings.Load();
                 Localization.SetLanguage(current.Language);
-                if (current.AutomaticNameSorting) await AutomaticSorter.SynchronizeByNameAsync(new SorterService());
+                if (current.AutomaticNameSorting) await AutomaticSorter.SynchronizeByNameAsync(new SorterService(stopping.Token));
             }
             finally { gate.Release(); }
-        });
+        }, NativeBridge.FindEndpoints);
         automatic.Completed += error => lastError = error?.Message;
         trayCommand = command =>
         {
@@ -125,7 +125,7 @@ internal sealed class BackgroundHost : IDisposable
             ToolSettings current = host.settings.Load();
             Localization.SetLanguage(current.Language);
             string icon = Path.Combine(AppContext.BaseDirectory, OperatingSystem.IsWindows() ? "tray.ico" : "tray.png");
-            int result = NativeTray.Run(icon, Localization.Text("聊天排序工具"), Localization.Text("打开聊天排序"), Localization.Text("退出程序"), host.trayCommand);
+            int result = NativeTray.Run(icon, Localization.Text("Codex Sidebar Sorter"), Localization.Text("Open Sidebar Sorter"), Localization.Text("Exit"), host.trayCommand);
             host.stopping.Cancel();
             return result;
         }
@@ -184,7 +184,7 @@ internal sealed class BackgroundHost : IDisposable
                 if (command == "status")
                 {
                     var status = new BackgroundStatus(Environment.ProcessId, current.AutomaticNameSorting,
-                        lastError ?? Localization.Text(current.AutomaticNameSorting ? "自动保持名称升序" : "自动排序已暂停"), lastError != null);
+                        lastError ?? Localization.Text(current.AutomaticNameSorting ? "Keep names sorted A to Z" : "Automatic sorting is paused"), lastError != null);
                     await writer.WriteLineAsync(JsonSerializer.Serialize(status));
                     return;
                 }
@@ -192,7 +192,7 @@ internal sealed class BackgroundHost : IDisposable
                 await writer.WriteLineAsync("ok");
                 if (command == "settings")
                 {
-                    NativeTray.SetCaptions(Localization.Text("聊天排序工具"), Localization.Text("打开聊天排序"), Localization.Text("退出程序"));
+                    NativeTray.SetCaptions(Localization.Text("Codex Sidebar Sorter"), Localization.Text("Open Sidebar Sorter"), Localization.Text("Exit"));
                     automatic.Request();
                 }
                 if (command == "exit") Stop();

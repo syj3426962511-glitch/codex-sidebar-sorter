@@ -1,4 +1,4 @@
-"""Build self-contained Unix candidates on the corresponding disposable cloud host."""
+"""Build self-contained Unix installers on the corresponding disposable cloud host."""
 
 import io
 import os
@@ -50,7 +50,7 @@ with tarfile.open(fileobj=io.BytesIO(tracked)) as archive:
 (resources / ".sidebar-sorter-install").write_text("CodexSidebarSorter\n" + version + "\n")
 installer = stage / ("Install Codex Sidebar Sorter.command" if is_mac else "install.sh")
 shutil.copy2("packaging/install-unix.sh", installer)
-installer.chmod(0o777)
+installer.chmod(0o755)
 
 if is_mac:
     run("clang", "-O2", "-fobjc-arc", "-dynamiclib", "-framework", "Cocoa",
@@ -58,7 +58,7 @@ if is_mac:
     icons = work / "Sorter.iconset"
     icons.mkdir(exist_ok=True)
     for size in (16, 32, 128, 256, 512):
-        run("sips", "-z", str(size), str(size), "src/Assets/聊天排序-Logo-256.png",
+        run("sips", "-z", str(size), str(size), "src/Assets/sidebar-sorter-logo-256.png",
             "--out", str(icons / ("icon_" + str(size) + "x" + str(size) + ".png")))
     run("iconutil", "-c", "icns", str(icons), "-o", str(resources / "Sorter.icns"))
     info = {
@@ -71,7 +71,7 @@ if is_mac:
     }
     with (application / "Contents/Info.plist").open("wb") as stream:
         plistlib.dump(info, stream)
-    run("chmod", "-R", "a+rwX", str(application))
+    run("chmod", "-R", "a+rX,go-w", str(application))
     # Candidates use a local signature. Developer ID distribution is a separate release step.
     run("codesign", "--force", "--deep", "--sign", "-", str(application))
     run("codesign", "--verify", "--deep", "--strict", str(application))
@@ -99,13 +99,13 @@ else:
     launcher.write_text('#!/bin/sh\nset -eu\nroot=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)\n'
                         'export LD_LIBRARY_PATH="$root/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"\n'
                         'exec "$root/SidebarSorter" "$@"\n')
-    launcher.chmod(0o777)
-    run("chmod", "-R", "a+rwX", str(application))
+    launcher.chmod(0o755)
+    run("chmod", "-R", "a+rX,go-w", str(application))
     payload = work / "payload.tar.gz"
     with tarfile.open(payload, "w:gz") as archive:
         archive.add(application, arcname="payload")
         archive.add(installer, arcname="install.sh")
-    package = output / ("CodexSidebarSorter-" + version + "-Linux-x64-Candidate.run")
+    package = output / ("CodexSidebarSorter-" + version + "-Linux-x64-Setup.run")
     header = '''#!/bin/sh
 set -eu
 temporary=$(mktemp -d "${TMPDIR:-/tmp}/sidebar-sorter.XXXXXX")
@@ -120,5 +120,5 @@ __SORTER_PAYLOAD__
         stream.write(header.encode())
         with payload.open("rb") as data:
             shutil.copyfileobj(data, stream)
-    package.chmod(0o777)
-print("Candidate package created at " + str(package))
+    package.chmod(0o755)
+print("Installer created at " + str(package))

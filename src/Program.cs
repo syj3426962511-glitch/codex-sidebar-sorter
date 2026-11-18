@@ -20,7 +20,7 @@ internal static class Program
             if (arguments.Length == 2)
                 File.WriteAllText(arguments[1], new JsonObject { ["success"] = false, ["error"] = error.Message }.ToJsonString());
             else
-                MessageBox.Show(error.Message, Localization.Text("聊天排序工具"), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(error.Message, Localization.Text("Codex Sidebar Sorter"), MessageBoxButtons.OK, MessageBoxIcon.Information);
             return 1;
         }
         ApplicationConfiguration.Initialize();
@@ -47,7 +47,7 @@ internal static class Program
         }
         try
         {
-            var start = new ProcessStartInfo(Path.Combine(AppContext.BaseDirectory, "聊天排序后台.exe"))
+            var start = new ProcessStartInfo(Path.Combine(AppContext.BaseDirectory, "\u804a\u5929\u6392\u5e8f\u540e\u53f0.exe"))
             {
                 UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = AppContext.BaseDirectory
             };
@@ -56,7 +56,7 @@ internal static class Program
         }
         catch (Exception error)
         {
-            MessageBox.Show(Localization.Text("后台组件启动失败，请通过安装包更新工具。\n") + error.Message, Localization.Text("聊天排序工具"),
+            MessageBox.Show(Localization.Text("The background component could not start. Update the tool using its installer.\n") + error.Message, Localization.Text("Codex Sidebar Sorter"),
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
             return 1;
         }
@@ -85,7 +85,7 @@ internal static class Program
                 await service.RefreshAsync();
                 List<SortRow> actual = await service.GetRowsAsync(projects);
                 sortedVerified = actual.Select(row => row.Id).SequenceEqual(sorted.Select(row => row.Id));
-                if (!sortedVerified) throw new InvalidOperationException(Localization.Text("原生项目顺序与提交顺序存在差异。"));
+                if (!sortedVerified) throw new InvalidOperationException(Localization.Text("The saved project order differs from the requested order."));
             }
             finally
             {
@@ -93,14 +93,14 @@ internal static class Program
                 await service.RefreshAsync();
                 List<SortRow> restored = await service.GetRowsAsync(projects);
                 restoredVerified = restored.Select(row => row.Id).SequenceEqual(original.Select(row => row.Id));
-                if (!restoredVerified) throw new InvalidOperationException(Localization.Text("原项目顺序恢复核验失败。"));
+                if (!restoredVerified) throw new InvalidOperationException(Localization.Text("Restoring the original project order failed verification."));
                 if (originalSorting != null)
                 {
                     using NativeBridge bridge = await NativeBridge.ConnectAsync();
                     await bridge.CallAsync("update_sidebar_preferences", new JsonObject { ["sorting"] = originalSorting.DeepClone() });
                     await service.RefreshAsync();
                     preferencesRestored = JsonNode.DeepEquals(service.Snapshot["sidebarPreferences"]?["sorting"], originalSorting);
-                    if (!preferencesRestored) throw new InvalidOperationException(Localization.Text("原排序偏好恢复核验失败。"));
+                    if (!preferencesRestored) throw new InvalidOperationException(Localization.Text("Restoring the original sort preferences failed verification."));
                 }
             }
         }

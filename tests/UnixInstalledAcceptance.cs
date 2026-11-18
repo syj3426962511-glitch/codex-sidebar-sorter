@@ -15,13 +15,13 @@ internal static class UnixInstalledAcceptance
             throw new InvalidOperationException("Use a disposable Unix cloud host.");
         string installer = Path.GetFullPath(arguments[0]);
         string output = Path.GetFullPath(arguments[1]);
-        string prefix = Path.Combine(Path.GetTempPath(), "排序安装验收", OperatingSystem.IsMacOS() ? "Application With Spaces.app" : "Application With Spaces");
+        string prefix = Path.Combine(Path.GetTempPath(), "\u6392\u5e8f\u5b89\u88c5\u9a8c\u6536", OperatingSystem.IsMacOS() ? "Application With Spaces.app" : "Application With Spaces");
         string program = Path.Combine(prefix, OperatingSystem.IsMacOS() ? "Contents/MacOS/SidebarSorter" : "Start Sidebar Sorter");
         Directory.CreateDirectory(output);
         using var server = new FixtureNativeServer();
         Environment.SetEnvironmentVariable("CODEX_HOME", server.Root);
         var settings = new ToolSettingsStore();
-        settings.Save(new ToolSettings { Language = "zh-CN", AutomaticNameSorting = true });
+        settings.Save(new ToolSettings { AutomaticNameSorting = true });
         var report = new JsonObject
         {
             ["success"] = false,
@@ -37,7 +37,7 @@ internal static class UnixInstalledAcceptance
             Require(File.Exists(Path.Combine(Path.GetDirectoryName(program)!, OperatingSystem.IsMacOS() ? "libcoreclr.dylib" : "libcoreclr.so")), "Bundle the runtime.");
             Environment.SetEnvironmentVariable("DOTNET_ROOT", Path.Combine(Path.GetTempPath(), "absent-system-dotnet"));
             Environment.SetEnvironmentVariable("DOTNET_MULTILEVEL_LOOKUP", "0");
-            await RunAsync(program, "--capture", Path.Combine(output, "01-installed-chinese.png"));
+            await RunAsync(program, "--capture", Path.Combine(output, "01-installed-english.png"));
             await WaitAsync(() => server.IsSortedByName() && server.AreSectionsSortedByName(), "Sort projects, chats and sections through the installed executable.");
             report["bundledRuntimeAndSource"] = true;
             report["customUnicodeInstallPath"] = true;
@@ -59,7 +59,7 @@ internal static class UnixInstalledAcceptance
             report["idleSortingWrites"] = 0;
             await RunAsync(program, "--exit");
             settings.Save(new ToolSettings { Language = "en", AutomaticNameSorting = false, ProjectSortMode = 2, ChatSortMode = 5 });
-            await RunAsync(program, "--capture", Path.Combine(output, "02-installed-english.png"));
+            await RunAsync(program, "--capture", Path.Combine(output, "02-manual-preferences.png"));
             int previousWorker = (await ReadStatusAsync(server.Root))["ProcessId"]!.GetValue<int>();
             await RunAsync("bash", installer, "--prefix", prefix, "--no-launch");
             Require(!IsRunning(previousWorker), "Finish the previous worker before replacing its files.");

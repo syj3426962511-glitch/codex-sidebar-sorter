@@ -8,10 +8,10 @@ internal sealed record SortScope(string Kind, string Id, string Label, string Ho
 {
     public override string ToString() => Kind switch
     {
-        "projects" => Localization.Text("项目列表"),
-        "project" => Localization.Text("项目内聊天 · ") + Label,
-        "section" when Id == "pinned" => Localization.Text("置顶聊天"),
-        _ => Localization.Text("分区 · ") + Label
+        "projects" => Localization.Text("Project list"),
+        "project" => Localization.Text("Project chats \u00b7 ") + Label,
+        "section" when Id == "pinned" => Localization.Text("Pinned chats"),
+        _ => Localization.Text("Section \u00b7 ") + Label
     };
 }
 
@@ -20,7 +20,7 @@ internal sealed record CatalogChat(SortRow Row, string? ProjectId);
 internal sealed record CatalogResult(List<CatalogChat> Chats, Dictionary<string, string> Problems);
 internal sealed record ProjectChatPlan(SortScope Scope, List<SortRow> Rows);
 
-internal sealed class SorterService
+internal sealed class SorterService(CancellationToken cancellationToken = default)
 {
     public JsonObject Snapshot { get; private set; } = new();
     public List<JsonObject> Projects { get; private set; } = [];
@@ -29,14 +29,9 @@ internal sealed class SorterService
 
     public async Task<List<SortScope>> RefreshAsync()
     {
-        using var bridge = await NativeBridge.ConnectAsync();
-        Snapshot = await bridge.CallAsync("list_threads", new JsonObject { ["limit"] = 50 });
-        JsonObject result = await bridge.CallAsync("list_projects", new JsonObject());
-        Projects = result["projects"]!.AsArray().Select(item => item!.AsObject()).ToList();
-        histories.Clear();
-        historyMetadata.Clear();
-        LocalHistoryReadOnly = false;
-        var scopes = new List<SortScope> { new("projects", "threads", Localization.Text("项目列表")), new("section", "pinned", Localization.Text("置顶聊天")) };
+        using var bridge = await NativeBridge.ConnectAsync(cancellationToken);
+        await ReadSnapshotAsync(bridge);
+        var scopes = new List<SortScope> { new("projects", "threads", Localization.Text("Project list")), new("section", "pinned", Localization.Text("Pinned chats")) };
         foreach (JsonNode? section in Snapshot["sections"]!.AsArray())
         {
             string id = section!["sectionId"]!.GetValue<string>();
@@ -50,6 +45,22 @@ internal sealed class SorterService
                 project["label"]!.GetValue<string>(), project["hostId"]?.GetValue<string>() ?? "local"));
         }
         return scopes;
+    }
+
+    private async Task ReadSnapshotAsync(NativeBridge bridge)
+    {
+        JsonObject snapshot = await bridge.CallAsync("list_threads", new JsonObject { ["limit"] = 50 });
+        JsonObject result = await bridge.CallAsync("list_projects", new JsonObject());
+        if (snapshot["sections"] is not JsonArray || snapshot["threads"] is not JsonArray
+            || snapshot["pinnedThreads"] is not JsonArray || result["projects"] is not JsonArray projectList)
+            throw new InvalidDataException(Localization.Text("The sorting result from Codex could not be read."));
+
+        List<JsonObject> projects = projectList.Select(item => item!.AsObject()).ToList();
+        Snapshot = snapshot;
+        Projects = projects;
+        histories.Clear();
+        historyMetadata.Clear();
+        LocalHistoryReadOnly = false;
     }
 
     public async Task<List<SortRow>> GetRowsAsync(SortScope scope)
@@ -67,18 +78,19 @@ internal sealed class SorterService
         string[] keys = GetSectionKeys(scope.Id).Where(key => key.Contains(":thread:", StringComparison.Ordinal)).ToArray();
         var rows = new List<SortRow>();
         var available = Snapshot["pinnedThreads"]!.AsArray().Concat(Snapshot["threads"]!.AsArray())
-            .Select(item => item!.AsObject()).GroupBy(item => item["id"]!.GetValue<string>())
-            .ToDictionary(group => group.Key, group => ReadRow(group.First()));
+            .Select(item => ReadRow(item!.AsObject())).GroupBy(RowKey)
+            .ToDictionary(group => group.Key, group => group.First());
         foreach (string key in keys)
         {
             string[] parts = key.Split(':');
             string id = parts[^1];
-            if (!available.TryGetValue(id, out SortRow? row))
+            string source = parts[0];
+            string host = parts.Length >= 4 ? parts[^2] : "local";
+            string identity = source + ":" + host + ":" + id;
+            if (!available.TryGetValue(identity, out SortRow? row))
             {
-                string source = parts[0];
-                string host = parts.Length >= 4 ? parts[^2] : "local";
-                foreach (SortRow historyRow in await GetHistoryAsync(source, host)) available[historyRow.Id] = historyRow;
-                if (!available.TryGetValue(id, out row)) throw new InvalidDataException(Localization.Text("部分聊天暂时不可读取，请刷新列表。"));
+                foreach (SortRow historyRow in await GetHistoryAsync(source, host)) available.TryAdd(RowKey(historyRow), historyRow);
+                if (!available.TryGetValue(identity, out row)) throw new InvalidDataException(Localization.Text("Some chats are temporarily unavailable. Refresh the list."));
             }
             rows.Add(row);
         }
@@ -114,7 +126,7 @@ internal sealed class SorterService
         foreach (JsonNode? item in Snapshot["pinnedThreads"]!.AsArray().Concat(Snapshot["threads"]!.AsArray()))
             sources.Add((item!["kind"]?.GetValue<string>() ?? "codex", item["hostId"]?.GetValue<string>() ?? "local"));
 
-        var chats = new List<CatalogChat>();
+        var chats = new Dictionary<string, CatalogChat>(StringComparer.Ordinal);
         var problems = new Dictionary<string, string>();
         foreach ((string source, string host) in sources.Distinct())
         {
@@ -122,74 +134,57 @@ internal sealed class SorterService
             try
             {
                 await GetHistoryAsync(source, host);
-                chats.AddRange(historyMetadata[key].Select(item => new CatalogChat(ReadRow(item), item["projectId"]?.GetValue<string>())));
+                foreach (JsonObject item in historyMetadata[key])
+                {
+                    SortRow row = ReadRow(item, source, host);
+                    chats.TryAdd(RowKey(row), new CatalogChat(row, item["projectId"]?.GetValue<string>()));
+                }
             }
-            catch (Exception error) when (error is IOException or InvalidOperationException or OperationCanceledException)
+            catch (Exception error) when (error is IOException or InvalidDataException or InvalidOperationException or OperationCanceledException)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 problems[key] = error.Message;
             }
         }
         foreach (JsonNode? item in Snapshot["pinnedThreads"]!.AsArray())
         {
             SortRow row = ReadRow(item!.AsObject()) with { IsPinned = true };
-            int existing = chats.FindIndex(chat => RowKey(chat.Row) == RowKey(row));
-            if (existing >= 0) chats[existing] = chats[existing] with { Row = row };
-            else chats.Add(new CatalogChat(row, item["projectId"]?.GetValue<string>()));
+            string key = RowKey(row);
+            if (chats.TryGetValue(key, out CatalogChat? existing))
+                chats[key] = existing with { Row = row with { UpdatedAt = row.UpdatedAt ?? existing.Row.UpdatedAt } };
+            else chats.Add(key, new CatalogChat(row, item["projectId"]?.GetValue<string>()));
         }
         foreach (JsonNode? item in Snapshot["threads"]!.AsArray())
         {
             SortRow row = ReadRow(item!.AsObject());
-            if (chats.All(chat => RowKey(chat.Row) != RowKey(row)))
-                chats.Add(new CatalogChat(row, item["projectId"]?.GetValue<string>()));
+            chats.TryAdd(RowKey(row), new CatalogChat(row, item["projectId"]?.GetValue<string>()));
         }
-        return new CatalogResult(chats.DistinctBy(chat => RowKey(chat.Row)).ToList(), problems);
+        return new CatalogResult(chats.Values.ToList(), problems);
     }
 
     public async Task ApplyWorkspaceAsync(List<SortRow> projectRows, bool applyProjects,
         List<ProjectChatPlan> chatPlans, bool recentMode, Action<int, int>? progress = null, bool applyChatMode = false)
     {
         if (chatPlans.Any(plan => plan.Scope.Source != "codex"))
-            throw new InvalidOperationException(Localization.Text("当前批量重排范围支持 Codex 项目内对话。"));
+            throw new InvalidOperationException(Localization.Text("Batch sorting supports chats within Codex projects."));
+        using var bridge = await NativeBridge.ConnectAsync(cancellationToken);
+        await ReadSnapshotAsync(bridge);
+        if (applyProjects)
+            RequireSameIds(projectRows, await GetRowsAsync(new("projects", "threads", "")));
         if (!recentMode)
-        {
-            foreach (var source in chatPlans.Select(plan => (plan.Scope.Source, plan.Scope.HostId)).Distinct())
-            {
-                string key = source.Source + ":" + source.HostId;
-                histories.Remove(key);
-                await GetHistoryAsync(source.Source, source.HostId);
-                var memberships = historyMetadata[key].ToDictionary(item => item["id"]!.GetValue<string>(), item => item["projectId"]?.GetValue<string>());
-                foreach (ProjectChatPlan plan in chatPlans.Where(plan => plan.Scope.Source == source.Source && plan.Scope.HostId == source.HostId))
-                    if (plan.Rows.Any(row => !memberships.TryGetValue(row.Id, out string? currentProject) || currentProject != plan.Scope.Id))
-                        throw new InvalidOperationException(Localization.Text("对话归属已变化，请刷新列表后重新应用。"));
-            }
-        }
-        using var bridge = await NativeBridge.ConnectAsync();
+            foreach (ProjectChatPlan plan in chatPlans)
+                RequireSameIds(plan.Rows, (await GetRowsAsync(plan.Scope)).Where(row => !row.IsPinned));
+
         string mode = recentMode ? "updated_at" : "manual";
         bool modeChanged = (applyChatMode || chatPlans.Count > 0)
             && Snapshot["sidebarPreferences"]?["sorting"]?["chats"]?.GetValue<string>() != mode;
-        var requiredTools = new List<string>();
-        if (applyProjects && projectRows.Count > 0) requiredTools.Add("reorder_sidebar_projects");
-        if (modeChanged) requiredTools.Add("update_sidebar_preferences");
-        if (!recentMode && chatPlans.Any(plan => plan.Rows.Count > 0)) requiredTools.Add("move_thread_to_project");
-        bridge.RequireTools(requiredTools.ToArray());
-        int total = (applyProjects && projectRows.Count > 0 ? 1 : 0) + (modeChanged ? 1 : 0)
-            + (recentMode ? 0 : chatPlans.Sum(plan => plan.Rows.Count));
-        int completed = 0;
-        if (applyProjects && projectRows.Count > 0)
-        {
-            await bridge.CallAsync("reorder_sidebar_projects", new JsonObject { ["projectIds"] = StringArray(projectRows.Select(row => row.Id)) });
-            progress?.Invoke(++completed, total);
-        }
-        if (modeChanged)
-        {
-            await bridge.CallAsync("update_sidebar_preferences", new JsonObject { ["sorting"] = new JsonObject { ["chats"] = mode } });
-            Snapshot["sidebarPreferences"]!["sorting"]!["chats"] = mode;
-            Snapshot["sidebarPreferences"]!["sorting"]!["projects"] = mode;
-            progress?.Invoke(++completed, total);
-        }
-        if (recentMode) return;
-        foreach (ProjectChatPlan plan in chatPlans)
-            await MoveProjectRowsAsync(bridge, plan.Scope, plan.Rows, () => progress?.Invoke(++completed, total));
+        var operations = new List<WriteOperation>();
+        if (applyProjects && projectRows.Count > 0) operations.Add(ReorderProjects(projectRows));
+        if (modeChanged) operations.Add(SetSortMode("chats", mode));
+        if (!recentMode)
+            foreach (ProjectChatPlan plan in chatPlans) operations.AddRange(ProjectMoves(plan.Scope, plan.Rows));
+        await SubmitAsync(bridge, operations, progress);
+        if (modeChanged) RecordMode("chats", mode);
     }
 
     private async Task<List<SortRow>> GetHistoryAsync(string source, string host, string? projectId = null)
@@ -200,24 +195,29 @@ internal sealed class SorterService
             var metadata = new List<JsonObject>();
             if (source == "codex" && host == "local")
             {
-                metadata = await Task.Run(() => LocalHistoryReader.Read(NativeBridge.DataRoot, Snapshot));
+                metadata = await Task.Run(() => LocalHistoryReader.Read(NativeBridge.DataRoot, Snapshot), cancellationToken);
                 LocalHistoryReadOnly = true;
             }
             else
             {
-                using var bridge = await NativeBridge.ConnectAsync();
+                using var bridge = await NativeBridge.ConnectAsync(cancellationToken);
                 string? cursor = null;
+                var visited = new HashSet<string>(StringComparer.Ordinal);
                 do
                 {
                     var arguments = new JsonObject { ["mode"] = "history", ["source"] = source, ["limit"] = 50 };
                     if (source == "codex") arguments["hostId"] = host;
                     if (cursor != null) arguments["cursor"] = cursor;
                     JsonObject page = await bridge.CallAsync("list_threads", arguments);
-                    metadata.AddRange(page["threads"]!.AsArray().Select(item => item!.AsObject()));
+                    if (page["threads"] is not JsonArray threads)
+                        throw new InvalidDataException(Localization.Text("The sorting result from Codex could not be read."));
+                    metadata.AddRange(threads.Select(item => item!.AsObject()));
                     cursor = page["nextCursor"]?.GetValue<string>();
+                    if (cursor != null && !visited.Add(cursor))
+                        throw new InvalidDataException(Localization.Text("The sorting result from Codex could not be read."));
                 } while (cursor != null);
             }
-            rows = metadata.Select(ReadRow).ToList();
+            rows = metadata.Select(item => ReadRow(item, source, host)).ToList();
             histories[cacheKey] = rows;
             historyMetadata[cacheKey] = metadata;
         }
@@ -229,69 +229,89 @@ internal sealed class SorterService
 
     public async Task ApplyAsync(SortScope scope, List<SortRow> rows, bool recentMode)
     {
-        if (scope.Kind == "project" && !recentMode)
-        {
-            histories.Remove(scope.Source + ":" + scope.HostId);
-            HashSet<string> currentIds = (await GetHistoryAsync(scope.Source, scope.HostId, scope.Id))
-                .Select(row => row.Id).ToHashSet();
-            if (rows.Any(row => !currentIds.Contains(row.Id)))
-                throw new InvalidOperationException(Localization.Text("聊天归属已经变化，请刷新列表后重新应用。"));
-        }
-        using var bridge = await NativeBridge.ConnectAsync();
+        using var bridge = await NativeBridge.ConnectAsync(cancellationToken);
+        await ReadSnapshotAsync(bridge);
+        List<SortRow> currentRows = await GetRowsAsync(scope);
+        if (!recentMode || scope.Kind == "projects" || scope.Kind == "section" && scope.Id != "pinned")
+            RequireSameIds(rows, scope.Kind == "project" ? currentRows.Where(row => !row.IsPinned) : currentRows);
         if (scope.Kind == "projects")
         {
             if (rows.Count == 0) return;
-            await bridge.CallAsync("reorder_sidebar_projects", new JsonObject { ["projectIds"] = StringArray(rows.Select(row => row.Id)) });
+            WriteOperation reorder = ReorderProjects(rows);
+            await bridge.CallAsync(reorder.Tool, reorder.Arguments);
             return;
         }
         if (scope.Kind == "section" && scope.Id != "pinned")
         {
-            await bridge.CallAsync("reorder_section", new JsonObject
-            {
-                ["sectionId"] = scope.Id, ["threadIds"] = StringArray(rows.Select(row => row.Id))
-            });
+            WriteOperation reorder = ReorderSection(scope, rows);
+            await bridge.CallAsync(reorder.Tool, reorder.Arguments);
             return;
         }
         string preferenceKey = scope.Id == "pinned" ? "pinned" : "chats";
-        bridge.RequireTools("update_sidebar_preferences");
-        if (!recentMode && scope.Kind == "section") bridge.RequireTools("reorder_section");
-        if (!recentMode && scope.Kind == "project" && rows.Count > 0) bridge.RequireTools("move_thread_to_project");
-        await bridge.CallAsync("update_sidebar_preferences", new JsonObject
-        {
-            ["sorting"] = new JsonObject { [preferenceKey] = recentMode ? "updated_at" : "manual" }
-        });
-        Snapshot["sidebarPreferences"]!["sorting"]![preferenceKey] = recentMode ? "updated_at" : "manual";
-        if (preferenceKey == "chats") Snapshot["sidebarPreferences"]!["sorting"]!["projects"] = recentMode ? "updated_at" : "manual";
-        if (recentMode) return;
-        if (scope.Kind == "section")
-        {
-            await bridge.CallAsync("reorder_section", new JsonObject
-            {
-                ["sectionId"] = scope.Id, ["threadIds"] = StringArray(rows.Select(row => row.Id))
-            });
-            return;
-        }
-        await MoveProjectRowsAsync(bridge, scope, rows);
+        string mode = recentMode ? "updated_at" : "manual";
+        bool modeChanged = Snapshot["sidebarPreferences"]?["sorting"]?[preferenceKey]?.GetValue<string>() != mode;
+        var operations = new List<WriteOperation>();
+        if (modeChanged) operations.Add(SetSortMode(preferenceKey, mode));
+        if (!recentMode && scope.Kind == "section" && rows.Count > 0) operations.Add(ReorderSection(scope, rows));
+        if (!recentMode && scope.Kind == "project") operations.AddRange(ProjectMoves(scope, rows));
+        await SubmitAsync(bridge, operations);
+        if (modeChanged) RecordMode(preferenceKey, mode);
     }
 
-    private static async Task MoveProjectRowsAsync(NativeBridge bridge, SortScope scope, List<SortRow> rows, Action? progress = null)
+    private static void RequireSameIds(IEnumerable<SortRow> proposed, IEnumerable<SortRow> current)
+    {
+        var ids = proposed.Select(RowKey).ToArray();
+        var currentIds = current.Select(RowKey).ToHashSet(StringComparer.Ordinal);
+        if (ids.Length != currentIds.Count || ids.Distinct(StringComparer.Ordinal).Count() != ids.Length || !currentIds.SetEquals(ids))
+            throw new InvalidOperationException(Localization.Text("Chat membership changed. Refresh the list and apply again."));
+    }
+
+    private sealed record WriteOperation(string Tool, JsonObject Arguments, SortScope? Scope = null, SortRow? Row = null);
+
+    private static WriteOperation ReorderProjects(IEnumerable<SortRow> rows) =>
+        new("reorder_sidebar_projects", new JsonObject { ["projectIds"] = StringArray(rows.Select(row => row.Id)) });
+
+    private static WriteOperation ReorderSection(SortScope scope, IEnumerable<SortRow> rows) =>
+        new("reorder_section", new JsonObject { ["sectionId"] = scope.Id, ["threadIds"] = StringArray(rows.Select(row => row.Id)) });
+
+    private static WriteOperation SetSortMode(string key, string mode) =>
+        new("update_sidebar_preferences", new JsonObject { ["sorting"] = new JsonObject { [key] = mode } });
+
+    private void RecordMode(string key, string mode)
+    {
+        if (Snapshot["sidebarPreferences"]?["sorting"] is not JsonObject sorting) return;
+        sorting[key] = mode;
+        if (key == "chats") sorting["projects"] = mode;
+    }
+
+    private static IEnumerable<WriteOperation> ProjectMoves(SortScope scope, List<SortRow> rows)
     {
         string? before = null;
         foreach (SortRow row in rows.AsEnumerable().Reverse())
         {
             var arguments = new JsonObject { ["threadId"] = row.Id, ["projectId"] = scope.Id, ["hostId"] = scope.HostId };
             if (before != null) arguments["beforeThreadId"] = before;
-            try { await bridge.CallAsync("move_thread_to_project", arguments); }
-            catch (InvalidOperationException error) when (error.Message == "The task is not available in the sidebar.")
-            {
-                throw new InvalidOperationException(Localization.Text("请在 Codex 展开“") + scope.Label + Localization.Text("”后刷新重试。待同步条目“") + row.Title + "”。", error);
-            }
-            catch (InvalidOperationException error) when (error.Message == "The task's source project could not be safely determined.")
-            {
-                throw new InvalidOperationException(Localization.Text("请在 Codex 侧栏确认“") + scope.Label + Localization.Text("”的对话归属后刷新重试。待同步条目“") + row.Title + "”。", error);
-            }
+            yield return new WriteOperation("move_thread_to_project", arguments, scope, row);
             before = row.Id;
-            progress?.Invoke();
+        }
+    }
+
+    private static async Task SubmitAsync(NativeBridge bridge, List<WriteOperation> operations, Action<int, int>? progress = null)
+    {
+        foreach (WriteOperation operation in operations) bridge.RequireArguments(operation.Tool, operation.Arguments);
+        int completed = 0;
+        foreach (WriteOperation operation in operations)
+        {
+            try { await bridge.CallAsync(operation.Tool, operation.Arguments); }
+            catch (InvalidOperationException error) when (operation.Row != null && error.Message == "The task is not available in the sidebar.")
+            {
+                throw new InvalidOperationException(Localization.Text("Expand the Codex project \u201c") + operation.Scope!.Label + Localization.Text("\u201d, then refresh and try again. Pending chat \u201c") + operation.Row.Title + "”.", error);
+            }
+            catch (InvalidOperationException error) when (operation.Row != null && error.Message == "The task's source project could not be safely determined.")
+            {
+                throw new InvalidOperationException(Localization.Text("Check chat membership in the Codex project \u201c") + operation.Scope!.Label + Localization.Text("\u201d, then refresh and try again. Pending chat \u201c (membership)") + operation.Row.Title + "”.", error);
+            }
+            progress?.Invoke(++completed, operations.Count);
         }
     }
 
@@ -302,19 +322,31 @@ internal sealed class SorterService
         return section?["itemKeys"]?.AsArray().Select(item => item!.GetValue<string>()).ToArray() ?? [];
     }
 
-    private static SortRow ReadRow(JsonObject item) => new(item["id"]!.GetValue<string>(), item["title"]?.GetValue<string>() ?? Localization.Text("未命名聊天"),
-        ReadTime(item["updatedAt"]), item["kind"]?.GetValue<string>() ?? "codex", item["hostId"]?.GetValue<string>() ?? "local",
+    private static SortRow ReadRow(JsonObject item, string source = "codex", string host = "local") => new(item["id"]!.GetValue<string>(), item["title"]?.GetValue<string>() ?? Localization.Text("Untitled chat (history)"),
+        ReadTime(item["updatedAt"]), item["kind"]?.GetValue<string>() ?? source, item["hostId"]?.GetValue<string>() ?? host,
         item["status"]?.GetValue<string>() ?? "unknown", item["isPinned"]?.GetValue<bool>() ?? false);
 
     public static string RowKey(SortRow row) => row.Source + ":" + row.HostId + ":" + row.Id;
 
-    private static long? ReadTime(JsonNode? value)
+    internal static long? ReadTime(JsonNode? value)
     {
-        if (value == null) return null;
-        double timestamp;
-        if (value is JsonValue scalar && scalar.TryGetValue<long>(out long whole)) timestamp = whole;
-        else timestamp = value.GetValue<double>();
-        return checked((long)(timestamp < 1_000_000_000_000 ? timestamp * 1000 : timestamp));
+        if (value is not JsonValue scalar) return null;
+        if (scalar.TryGetValue(out string? text))
+        {
+            if (!double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out double numeric))
+                return DateTimeOffset.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var date)
+                    ? date.ToUnixTimeMilliseconds() : null;
+            return NormalizeTime(numeric);
+        }
+        if (scalar.TryGetValue(out long whole)) return NormalizeTime(whole);
+        return scalar.TryGetValue(out double timestamp) ? NormalizeTime(timestamp) : null;
+    }
+
+    private static long? NormalizeTime(double timestamp)
+    {
+        double milliseconds = Math.Abs(timestamp) < 100_000_000_000 ? timestamp * 1000 : timestamp;
+        return double.IsFinite(milliseconds) && milliseconds is >= -62_135_596_800_000 and <= 253_402_300_799_999
+            ? (long)milliseconds : null;
     }
 
     public static JsonArray StringArray(IEnumerable<string> values) => new(values.Select(value => JsonValue.Create(value)).ToArray<JsonNode?>());

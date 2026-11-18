@@ -45,7 +45,7 @@ jobs:
         run: |
           dotnet publish src/SidebarSorter.csproj --configuration Release --output artifacts/windows
           if ($LASTEXITCODE -ne 0) { throw 'Application build failed.' }
-          & ./src/Background/构建后台.ps1 -OutputDirectory "$PWD/artifacts/windows" -BuildDirectory "$env:RUNNER_TEMP/sidebar-sorter-native"
+          & ./src/Background/build-legacy-tray.ps1 -OutputDirectory "$PWD/artifacts/windows" -BuildDirectory "$env:RUNNER_TEMP/sidebar-sorter-native"
       - name: Install the cloud-only installer compiler
         shell: pwsh
         run: choco install innosetup --yes --no-progress

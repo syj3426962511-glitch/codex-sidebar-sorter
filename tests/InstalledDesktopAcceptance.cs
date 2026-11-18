@@ -25,14 +25,14 @@ internal static class InstalledDesktopAcceptance
             throw new InvalidOperationException("Use a disposable cloud Windows installation.");
         string installer = Path.GetFullPath(arguments[0]);
         string output = Path.GetFullPath(arguments[1]);
-        string directory = Path.Combine(Path.GetTempPath(), "排序安装验收", "Application With Spaces");
+        string directory = Path.Combine(Path.GetTempPath(), "\u6392\u5e8f\u5b89\u88c5\u9a8c\u6536", "Application With Spaces");
         string program = Path.Combine(directory, "SidebarSorter.exe");
         Directory.CreateDirectory(output);
         using var server = new FixtureNativeServer();
         Environment.SetEnvironmentVariable("CODEX_HOME", server.Root);
         var settingsStore = new ToolSettingsStore();
         Directory.CreateDirectory(Path.GetDirectoryName(settingsStore.PathName)!);
-        File.WriteAllText(settingsStore.PathName, "{\"language\":\"zh-CN\",\"projectSortMode\":2,\"chatSortMode\":5}");
+        File.WriteAllText(settingsStore.PathName, "{\"language\":\"en\",\"projectSortMode\":2,\"chatSortMode\":5}");
         var report = new JsonObject
         {
             ["success"] = false,
@@ -41,21 +41,25 @@ internal static class InstalledDesktopAcceptance
         };
         try
         {
+            int? previousVersionWorker = null;
             if (arguments.Length == 3)
             {
                 await RunAsync(Path.GetFullPath(arguments[2]), "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/SP-", "/TASKS=", "/DIR=" + directory);
-                string legacyBackground = Path.Combine(directory, "聊天排序后台.exe");
-                await RunAsync(legacyBackground, "--background");
-                await WaitAsync(() => IsProgramRunning(legacyBackground), "Run the preceding background before the upgrade.");
+                report["previousVersion"] = FileVersionInfo.GetVersionInfo(program).ProductVersion;
+                await RunAsync(program, "--capture", Path.Combine(output, "01-previous-version.png"));
+                previousVersionWorker = (await ReadStatusAsync(server.Root))["ProcessId"]!.GetValue<int>();
+                Require(IsRunning(previousVersionWorker.Value), "Run the preceding background before the upgrade.");
             }
             await RunAsync(installer, "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/SP-", "/TASKS=", "/DIR=" + directory);
-            if (arguments.Length == 3)
+            if (previousVersionWorker is int previousVersionWorkerId)
             {
-                Require(!IsProgramRunning(Path.Combine(directory, "聊天排序后台.exe")), "Stop the preceding native background before replacement.");
-                Require(!File.Exists(Path.Combine(directory, "聊天排序后台.exe")), "Remove the preceding native background files.");
-                report["legacyRunningUpgradePassed"] = true;
+                Require(!IsRunning(previousVersionWorkerId), "Stop the preceding version's background before replacement.");
+                report["publishedVersionRunningUpgradePassed"] = true;
             }
-            Require(FileVersionInfo.GetVersionInfo(program).ProductVersion?.StartsWith("1.4.2") == true, "Install the current desktop version.");
+            string expectedVersion = Path.GetFileName(installer).Split('-')[1];
+            string? installedVersion = FileVersionInfo.GetVersionInfo(program).ProductVersion;
+            Require(installedVersion == expectedVersion || installedVersion?.StartsWith(expectedVersion + "+", StringComparison.Ordinal) == true, "Install the current desktop version.");
+            report["installedVersion"] = installedVersion;
             Require(File.Exists(Path.Combine(directory, "coreclr.dll")), "Install the bundled runtime.");
             Require(File.Exists(Path.Combine(directory, "Source", "desktop", "SidebarSorter.Desktop.csproj")), "Install the complete current source tree.");
             Require(File.Exists(Path.Combine(directory, "Source", "src", "NativeBridge.cs")), "Include shared source dependencies.");
@@ -65,7 +69,7 @@ internal static class InstalledDesktopAcceptance
             report["bundledRuntimeAndSource"] = true;
             Environment.SetEnvironmentVariable("DOTNET_ROOT", Path.Combine(Path.GetTempPath(), "no-system-dotnet"));
             Environment.SetEnvironmentVariable("DOTNET_MULTILEVEL_LOOKUP", "0");
-            await RunAsync(program, "--capture", Path.Combine(output, "01-installed-chinese.png"));
+            await RunAsync(program, "--capture", Path.Combine(output, "02-installed-english.png"));
             await WaitAsync(server.IsSortedByName, "The installed background must adopt automatic ascending name order.");
             await WaitAsync(server.AreSectionsSortedByName, "Sort pinned and custom sections through the installed background.");
             report["normalEntryPointAutomaticSorting"] = true;
@@ -91,7 +95,7 @@ internal static class InstalledDesktopAcceptance
             report["idleSortingWrites"] = 0;
             await RunAsync(program, "--exit");
             settingsStore.Save(new ToolSettings { Language = "en", AutomaticNameSorting = false, ProjectSortMode = 2, ChatSortMode = 5 });
-            await RunAsync(program, "--capture", Path.Combine(output, "02-installed-english.png"));
+            await RunAsync(program, "--capture", Path.Combine(output, "03-manual-preferences.png"));
             int previousWorker = (await ReadStatusAsync(server.Root))["ProcessId"]!.GetValue<int>();
             await RunAsync(installer, "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/SP-", "/TASKS=", "/DIR=" + directory);
             Require(!IsRunning(previousWorker), "Finish the old background before replacing its files.");

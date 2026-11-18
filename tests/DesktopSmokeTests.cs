@@ -159,7 +159,6 @@ internal sealed partial class DesktopWindow
         DesktopSmokeTests.Require(workspace?.Groups.Count == 30 && workspace.ChatCount == 360, "Load all standalone chats and exclude attached children.");
         DesktopSmokeTests.Require(ProjectMode == 0 && ChatMode == 0 && app.Settings.AutomaticNameSorting, "The initial settings must automatically sort both layers by name.");
         await Task.Delay(500);
-        SaveScreenshot(Path.Combine(output, "desktop-chinese.png"));
         Box("LanguageBox").SelectedIndex = 2;
         DesktopSmokeTests.Require(!Localization.IsChinese && Button("ApplyButton").Content?.ToString() == "Apply to sidebar", "The English switch updates captions immediately.");
         await Task.Delay(200);
@@ -175,11 +174,10 @@ internal sealed partial class DesktopWindow
         {
             Box("LanguageBox").SelectedItem = choice;
             DesktopSmokeTests.Require(app.Settings.Language == choice.Code && app.SettingsStore.Load().Language == choice.Code, "Language selection is persisted.");
-            DesktopSmokeTests.Require(Button("ApplyButton").Content?.ToString() == Localization.Text("应用到侧栏"), "Captions update in " + choice.Code);
+            DesktopSmokeTests.Require(Button("ApplyButton").Content?.ToString() == Localization.Text("Apply to sidebar"), "Captions update in " + choice.Code);
             DesktopSmokeTests.Require(FlowDirection == (choice.Code == "ar" ? Avalonia.Media.FlowDirection.RightToLeft : Avalonia.Media.FlowDirection.LeftToRight), "Text direction follows the selected language.");
             DesktopSmokeTests.Require(ProjectMode == 0 && ChatMode == 0 && app.Settings.AutomaticNameSorting, "Language changes retain automatic name sorting.");
             await Task.Delay(100);
-            SaveScreenshot(Path.Combine(output, "desktop-language-" + choice.Code + ".png"));
             languages.Add(choice.Code);
         }
         report["languagesRendered"] = languages;
@@ -200,7 +198,7 @@ internal sealed partial class DesktopWindow
             List<SortScope> scopes = await service.RefreshAsync();
             SortScope projectScope = scopes.First(scope => scope.Kind == "project");
             List<SortRow> projectRows = await service.GetRowsAsync(scopes[0]);
-            List<SortRow> chatRows = await service.GetRowsAsync(projectScope);
+            List<SortRow> chatRows = (await service.GetRowsAsync(projectScope)).Where(row => !row.IsPinned).ToList();
             bool rejected = false;
             try { await service.ApplyWorkspaceAsync(projectRows, true, [new(projectScope, chatRows)], false); }
             catch (InvalidOperationException error) when (error.Message.Contains("move_thread_to_project", StringComparison.Ordinal)) { rejected = true; }
@@ -215,7 +213,7 @@ internal sealed partial class DesktopWindow
         DesktopSmokeTests.Require(ProjectMode == 6, "Manual movement selects manual mode.");
         Restore();
         report["manualMoveAndRestore"] = true;
-        Box("LanguageBox").SelectedIndex = 1;
+        Box("LanguageBox").SelectedIndex = 2;
         Check("AutomaticBox").IsChecked = true;
         await DesktopSmokeTests.WaitForAsync(server.IsSortedByName, "Re-enabling automatic sorting restores ascending names.");
         await Task.Delay(1000);

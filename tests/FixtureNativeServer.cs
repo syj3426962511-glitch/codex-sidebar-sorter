@@ -33,8 +33,8 @@ internal sealed class FixtureNativeServer : IDisposable
         var assignments = new JsonObject();
         var backendIds = new JsonObject();
         var orders = new JsonObject();
-        string[] names = ["Zulu", "Project 10", "项目-20", "Alpha", "Project 2", "项目-3"];
-        string[] chatNames = ["Zulu 20", "Alpha 10", "Alpha 2", "beta", "ALPHA", "同名", "同名", "科研-20", "科研-3", "数据-2005", "数据-2003", "A long chat title for cloud acceptance"];
+        string[] names = ["Zulu", "Project 10", "Project-20", "Alpha", "Project 2", "Project-3"];
+        string[] chatNames = ["Zulu 20", "Alpha 10", "Alpha 2", "beta", "ALPHA", "Same name", "Same name", "Research-20", "Research-3", "Data-2005", "Data-2003", "A long chat title for cloud acceptance"];
         var sql = new StringBuilder("CREATE TABLE threads(id TEXT,name TEXT,title TEXT,updated_at_ms INTEGER,updated_at INTEGER,project_id TEXT,archived INTEGER,source TEXT,agent_path TEXT,attached_thread_parent_id TEXT);");
         for (int projectIndex = 0; projectIndex < 30; projectIndex++)
         {

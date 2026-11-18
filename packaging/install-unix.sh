@@ -49,11 +49,15 @@ if [ -e "$prefix" ]; then
         printf 'The selected directory belongs to another application.\n' >&2
         exit 2
     fi
-    "$prefix/$executable" --exit
+    if [ ! -x "$prefix/$executable" ]; then
+        printf 'The installed companion executable is missing. Choose an empty directory.\n' >&2
+        exit 2
+    fi
 fi
 
 if [ "$uninstall" = true ]; then
     [ -f "$prefix/$marker" ] || { printf 'No installed companion was found.\n' >&2; exit 2; }
+    "$prefix/$executable" --exit
     rm -rf -- "$prefix"
     desktop="${XDG_DATA_HOME:-$HOME/.local/share}/applications/codex-sidebar-sorter.desktop"
     if [ -f "$desktop" ] && grep -Fqx "X-SidebarSorter-Directory=$prefix" "$desktop"; then
@@ -73,7 +77,11 @@ if [ "$(uname -s)" = Darwin ]; then
 else
     cp -a -- "$source" "$staging/new"
 fi
-if [ -e "$prefix" ]; then mv -- "$prefix" "$staging/previous"; fi
+[ -x "$staging/new/$executable" ] || { printf 'The installer executable is missing.\n' >&2; exit 2; }
+if [ -e "$prefix" ]; then
+    "$prefix/$executable" --exit
+    mv -- "$prefix" "$staging/previous"
+fi
 if ! mv -- "$staging/new" "$prefix"; then
     if [ -d "$staging/previous" ] && ! mv -- "$staging/previous" "$prefix"; then
         trap - EXIT HUP INT TERM
@@ -95,7 +103,7 @@ Terminal=false
 Categories=Utility;
 X-SidebarSorter-Directory=$prefix
 EOF
-    chmod a+rw "$desktop_dir/codex-sidebar-sorter.desktop"
+    chmod 644 "$desktop_dir/codex-sidebar-sorter.desktop"
 fi
 printf 'Installed Codex Sidebar Sorter in %s\n' "$prefix"
 if [ "$launch" = true ]; then

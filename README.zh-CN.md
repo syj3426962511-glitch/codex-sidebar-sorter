@@ -8,7 +8,7 @@ Windows 与 Linux x64 的 1.4.2 安装包已公开，均自带运行环境、图
 
 Intel Mac 安装候选已公开，工具安装及生命周期检查通过，正式客户端排序与生产辅助功能接入继续待完成。Apple 芯片 Mac 安装检查受到云端 ARM64 主机分配失败影响。[Mac 安装候选](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-unix-candidate)
 
-[统一交付包](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.2-preview/CodexSidebarSorter-1.4.2-Delivery.zip) · [使用说明](docs/07-统一交付说明.md) · [English guide](README.md)
+[统一交付包](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.2-preview/CodexSidebarSorter-1.4.2-Delivery.zip) · [使用说明](docs/07-delivery.md) · [English guide](README.md)
 
 未来版本适配方案包含能力协商、独立适配器、签名更新和云端回归。历史字段探测及操作名预检已实现，完整参数协商、签名适配更新和新构建自动检测继续待开发。[未来版本适配方案](docs/05-未来版本适配方案.md)
 

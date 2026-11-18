@@ -1,4 +1,6 @@
-#define ProductVersion "1.4.2"
+#ifndef ProductVersion
+  #error "Pass the version from desktop/SidebarSorter.Desktop.csproj as /DProductVersion."
+#endif
 
 [Setup]
 AppId={{57DA4787-4BE0-43CB-9BFC-FE83679E370F}
@@ -6,13 +8,14 @@ AppName=Codex Sidebar Sorter
 AppVersion={#ProductVersion}
 AppPublisher=syj3426962511-glitch
 AppPublisherURL=https://github.com/syj3426962511-glitch/codex-sidebar-sorter
-SetupIconFile=..\src\Assets\聊天排序.ico
-WizardSmallImageFile=..\src\Assets\聊天排序-Logo-256.png
+SetupIconFile=..\src\Assets\sidebar-sorter.ico
+WizardSmallImageFile=..\src\Assets\sidebar-sorter-logo-256.png
 DefaultDirName={autopf}\CodexSidebarSorter
 DefaultGroupName=Codex Sidebar Sorter
 DisableProgramGroupPage=yes
 DisableDirPage=no
 DisableWelcomePage=yes
+LanguageDetectionMethod=none
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
@@ -23,7 +26,7 @@ SolidCompression=yes
 WizardStyle=modern
 UninstallDisplayIcon={app}\SidebarSorter.exe
 CloseApplications=yes
-CloseApplicationsFilter=SidebarSorter.exe,聊天排序工具.exe,聊天排序后台.exe
+CloseApplicationsFilter=SidebarSorter.exe
 RestartApplications=no
 
 [Languages]
@@ -87,7 +90,7 @@ arabic.OpenApplication=فتح أداة ترتيب المحادثات
 arabic.ExitBeforeUpdate=أعد المحاولة بعد اكتمال الترتيب.
 
 [Dirs]
-Name: "{app}"; Permissions: everyone-full
+Name: "{app}"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:DesktopShortcut}"; Flags: checkedonce
@@ -143,7 +146,9 @@ begin
   for Attempt := 1 to 240 do
   begin
     Found := False;
-    Processes := Services.ExecQuery('SELECT ExecutablePath FROM Win32_Process WHERE Name=''聊天排序工具.exe'' OR Name=''聊天排序后台.exe''');
+    Processes := Services.ExecQuery('SELECT ExecutablePath FROM Win32_Process WHERE Name=''' +
+      #$804A#$5929#$6392#$5E8F#$5DE5#$5177 + '.exe'' OR Name=''' +
+      #$804A#$5929#$6392#$5E8F#$540E#$53F0 + '.exe''');
     for Index := 0 to Processes.Count - 1 do
     begin
       PreviousProcess := Processes.ItemIndex(Index);
@@ -164,13 +169,25 @@ function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   PreviousUninstaller: String;
   PreviousBackground: String;
+  PreviousDirectory: String;
   ExitCode: Integer;
 begin
   Result := '';
   PreviousUninstaller := PreviousUninstallerPath();
   if PreviousUninstaller = '' then
     Exit;
-  PreviousBackground := AddBackslash(ExtractFilePath(PreviousUninstaller)) + '聊天排序后台.exe';
+  PreviousDirectory := AddBackslash(ExtractFilePath(PreviousUninstaller));
+  PreviousBackground := PreviousDirectory + 'SidebarSorter.exe';
+  if FileExists(PreviousBackground) and
+      (CompareText(PreviousDirectory, AddBackslash(ExpandConstant('{app}'))) = 0) then
+  begin
+    if not Exec(PreviousBackground, '--exit', PreviousDirectory, SW_HIDE, ewWaitUntilTerminated, ExitCode) then
+      Result := CustomMessage('ExitBeforeUpdate')
+    else if ExitCode <> 0 then
+      Result := CustomMessage('ExitBeforeUpdate');
+    Exit;
+  end;
+  PreviousBackground := PreviousDirectory + #$804A#$5929#$6392#$5E8F#$540E#$53F0 + '.exe';
   if FileExists(PreviousBackground) then
   begin
     if not Exec(PreviousBackground, '--exit', '', SW_HIDE, ewWaitUntilTerminated, ExitCode) then

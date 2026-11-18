@@ -31,8 +31,8 @@ internal static class CoreTests
         string temporary = Path.Combine(Path.GetTempPath(), "sidebar-sorter-tests-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(temporary);
         Localization.SetLanguage("en");
-        await CheckAction("name-ascending", () => AssertOrder([new("s", "上海"), new("b", "北京"), new("a", "苹果")], 0, ["b", "a", "s"]));
-        await CheckAction("name-descending", () => AssertOrder([new("s", "上海"), new("b", "北京"), new("a", "苹果")], 1, ["s", "a", "b"]));
+        await CheckAction("name-ascending", () => AssertOrder([new("s", "\u4e0a\u6d77"), new("b", "\u5317\u4eac"), new("a", "\u82f9\u679c")], 0, ["b", "a", "s"]));
+        await CheckAction("name-descending", () => AssertOrder([new("s", "\u4e0a\u6d77"), new("b", "\u5317\u4eac"), new("a", "\u82f9\u679c")], 1, ["s", "a", "b"]));
         await CheckAction("natural-ascending", () => AssertOrder([new("10", "Item 10"), new("2", "Item 2"), new("1", "Item 1")], 2, ["1", "2", "10"]));
         await CheckAction("natural-descending", () => AssertOrder([new("10", "Item 10"), new("2", "Item 2"), new("1", "Item 1")], 3, ["10", "2", "1"]));
         await CheckAction("newest-first-missing-last", () => AssertOrder([new("missing", "Missing"), new("old", "Old", 1), new("new", "New", 2)], 4, ["new", "old", "missing"]));
@@ -43,6 +43,7 @@ internal static class CoreTests
         {
             ToolSettings settings = new ToolSettingsStore(Path.Combine(temporary, "new-settings")).Load();
             Require(settings.ProjectSortMode == 0 && settings.ChatSortMode == 0, "Both default modes must be name ascending.");
+            Require(settings.Language == "en", "New installations start in English.");
         });
         await CheckAction("language-switch-does-not-change-sort-rule", () =>
         {
@@ -57,11 +58,11 @@ internal static class CoreTests
         await CheckAction("live-language-dictionary", () =>
         {
             Localization.SetLanguage("en");
-            Require(Localization.Text("名称升序") == "Name A to Z", "English mode.");
+            Require(Localization.Text("Name A to Z") == "Name A to Z", "English mode.");
             Localization.SetLanguage("zh-CN");
-            Require(Localization.Text("名称升序") == "名称升序", "Chinese mode.");
+            Require(Localization.Text("Name A to Z") == "\u540d\u79f0\u5347\u5e8f", "Simplified Chinese remains selectable.");
             Localization.SetLanguage("en");
-            Require(Localization.SourceText("Refresh") == "刷新", "Reverse lookup for existing captions.");
+            Require(Localization.SourceText("Refresh") == "Refresh", "Reverse lookup for existing captions.");
         });
         await CheckAction("all-explicit-ui-messages-have-english", () =>
         {
@@ -128,7 +129,32 @@ internal static class CoreTests
             bridge.RequireTools("reorder_sidebar_projects");
         });
         await Check("native-pipe-framing-and-split-response", VerifyPipeAsync);
+        await CheckAction("changed-native-argument-contract-is-rejected", () =>
+        {
+            using var stream = new MemoryStream();
+            using var bridge = new NativeBridge(stream, "fixture-caller");
+            bridge.ReadToolCatalog(JsonNode.Parse("""
+                {"tools":[{"namespace":"codex_app","name":"reorder_sidebar_projects","inputSchema":
+                {"type":"object","properties":{"projectIds":{"type":"array","items":{"type":"string"}}},
+                "required":["projectIds"],"additionalProperties":false}}]}
+                """)!.AsObject());
+            bridge.RequireArguments("reorder_sidebar_projects", new JsonObject { ["projectIds"] = SorterService.StringArray(["one"]) });
+            bool rejected = false;
+            try { bridge.RequireArguments("reorder_sidebar_projects", new JsonObject { ["projectIds"] = new JsonArray(7) }); }
+            catch (InvalidOperationException) { rejected = true; }
+            Require(rejected && stream.Length == 0, "A changed argument contract must be detected before sending a request.");
+        });
+        await CheckAction("timestamp-variants-and-invalid-values", () =>
+        {
+            const long expected = 1_790_000_000_000;
+            Require(SorterService.ReadTime(JsonValue.Create(expected)) == expected, "Millisecond timestamps.");
+            Require(SorterService.ReadTime(JsonValue.Create(expected / 1000)) == expected, "Legacy timestamps in seconds.");
+            Require(SorterService.ReadTime(JsonValue.Create(DateTimeOffset.FromUnixTimeMilliseconds(expected).ToString("O"))) == expected, "ISO timestamps.");
+            Require(SorterService.ReadTime(JsonValue.Create("unknown")) == null && SorterService.ReadTime(JsonValue.Create(long.MaxValue)) == null,
+                "Invalid timestamps sort as missing.");
+        });
         await Check("automatic-watch-coalesces-writes-and-idles", () => VerifyAutomaticWatchAsync(Path.Combine(temporary, "automatic")));
+        await Check("automatic-detects-returning-client-without-history-write", () => VerifyAutomaticReconnectAsync(Path.Combine(temporary, "reconnect")));
         await Check("automatic-stop-waits-for-current-operation", () => VerifyAutomaticStopAsync(Path.Combine(temporary, "automatic-stop")));
         Directory.CreateDirectory(Path.GetDirectoryName(report)!);
         string json = JsonSerializer.Serialize(new
@@ -174,6 +200,22 @@ internal static class CoreTests
         Require(!stopping.IsCompleted, "Stopping waits for the current native transaction.");
         finish.SetResult();
         await stopping.WaitAsync(TimeSpan.FromSeconds(5));
+    }
+
+    private static async Task VerifyAutomaticReconnectAsync(string root)
+    {
+        int calls = 0;
+        int connected = 0;
+        await using var watcher = new AutomaticSorter(root, () =>
+        {
+            Interlocked.Increment(ref calls);
+            return Task.CompletedTask;
+        }, () => Volatile.Read(ref connected) == 1 ? ["reopened-client"] : [], TimeSpan.FromMilliseconds(50));
+        await WaitForAsync(() => Volatile.Read(ref calls) == 1);
+        Volatile.Write(ref connected, 1);
+        await WaitForAsync(() => Volatile.Read(ref calls) == 2);
+        await Task.Delay(200);
+        Require(calls == 2, "An unchanged endpoint should not trigger repeated sorting.");
     }
 
     private static async Task WaitForAsync(Func<bool> condition)

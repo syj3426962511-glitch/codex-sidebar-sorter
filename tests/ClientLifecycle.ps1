@@ -9,8 +9,8 @@ if ($env:GITHUB_ACTIONS -ne 'true') { throw 'Use a disposable cloud Windows runn
 $OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 $installDirectory = Join-Path $env:RUNNER_TEMP 'Independent Sidebar Sorter'
-$program = Join-Path $installDirectory '聊天排序工具.exe'
-$background = Join-Path $installDirectory '聊天排序后台.exe'
+$program = Join-Path $installDirectory 'SidebarSorter.exe'
+$background = $program
 if ($ProgramDirectory) {
     $installDirectory = [IO.Path]::GetFullPath($ProgramDirectory)
     $program = Join-Path $installDirectory 'SidebarSorter.exe'
@@ -159,12 +159,7 @@ try {
     if (!(Get-Process -Id $originalClientId -ErrorAction SilentlyContinue)) { throw 'Installing the sorter closed Codex.' }
     $launch = Start-Process -FilePath $program -ArgumentList '--background' -WindowStyle Hidden -PassThru
     Start-Sleep -Seconds 2
-    if ($ProgramDirectory) { $backend = Get-StandaloneBackground }
-    else {
-        $backend = Wait-Condition {
-            Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq $background } | Select-Object -Last 1
-        } 'The independent background did not start.'
-    }
+    $backend = Get-StandaloneBackground
     if ($backend.ExecutablePath -ne $background) { throw 'The responding worker has an unexpected program path.' }
     $report.backgroundProcessId = $backend.ProcessId
     if ($InstallerPath) { $report.installPreservesOpenClient = $true }

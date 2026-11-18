@@ -9,12 +9,12 @@ internal static class Localization
     private static readonly Dictionary<string, Dictionary<string, string>> Catalogs = ReadCatalogs();
     public static IReadOnlyList<LanguageChoice> Choices { get; } = new LanguageChoice[]
     {
-        new("system", ""), new("zh-CN", "简体中文"), new("en", "English"), new("zh-TW", "繁體中文"),
-        new("ja", "日本語"), new("ko", "한국어"), new("fr", "Français"), new("de", "Deutsch"),
+        new("system", ""), new("zh-CN", "\u7b80\u4f53\u4e2d\u6587"), new("en", "English"), new("zh-TW", "\u7e41\u9ad4\u4e2d\u6587"),
+        new("ja", "\u65e5\u672c\u8a9e"), new("ko", "한국어"), new("fr", "Français"), new("de", "Deutsch"),
         new("es", "Español"), new("pt", "Português"), new("it", "Italiano"), new("ru", "Русский"),
         new("ar", "العربية")
     };
-    public static string Language { get; private set; } = "system";
+    public static string Language { get; private set; } = "en";
     public static string CurrentLanguage => Language == "system" ? ResolveCulture(CultureInfo.CurrentUICulture.Name) : Language;
     public static bool IsChinese => CurrentLanguage.StartsWith("zh", StringComparison.Ordinal);
     public static bool IsRightToLeft => CurrentLanguage == "ar";
@@ -24,7 +24,7 @@ internal static class Localization
         Language = NormalizeLanguage(language);
     }
 
-    public static string NormalizeLanguage(string language) => Choices.Any(choice => choice.Code == language) ? language : "system";
+    public static string NormalizeLanguage(string language) => Choices.Any(choice => choice.Code == language) ? language : "en";
 
     internal static string ResolveCulture(string culture)
     {
@@ -38,7 +38,7 @@ internal static class Localization
     public static string Text(string source)
     {
         string language = CurrentLanguage;
-        return language == "zh-CN" ? source : Catalogs[language].GetValueOrDefault(source, English.GetValueOrDefault(source, source));
+        return Catalogs[language].GetValueOrDefault(source, English.GetValueOrDefault(source, source));
     }
 
     public static string SourceText(string text)
@@ -50,7 +50,7 @@ internal static class Localization
     }
 
     public static bool HasEnglish(string source) => English.ContainsKey(source);
-    internal static bool HasTranslation(string language, string source) => language == "zh-CN" || Catalogs[language].ContainsKey(source);
+    internal static bool HasTranslation(string language, string source) => Catalogs[language].ContainsKey(source);
 
     private static Dictionary<string, string> ReadCatalog(string resource)
     {
@@ -71,5 +71,5 @@ internal static class Localization
 
 internal sealed record LanguageChoice(string Code, string Name)
 {
-    public override string ToString() => Code == "system" ? Localization.Text("跟随系统") : Name;
+    public override string ToString() => Code == "system" ? Localization.Text("System language") : Name;
 }

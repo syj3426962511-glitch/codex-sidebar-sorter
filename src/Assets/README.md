@@ -1,6 +1,6 @@
 # 聊天排序工具 Logo
 
-使用内置 imagegen 生成，采用蓝色圆角方块、白色对话列表与向下排序箭头。原稿为 `聊天排序-Logo.png`，界面资源为 `聊天排序-Logo-256.png`，Windows 多尺寸图标为 `聊天排序.ico`。
+使用内置 imagegen 生成，采用蓝色圆角方块、白色对话列表与向下排序箭头。原稿为 `sidebar-sorter-logo.png`，界面资源为 `sidebar-sorter-logo-256.png`，Windows 多尺寸图标为 `sidebar-sorter.ico`。
 
 ICO 包含 16、20、24、32、48、64、128、256 像素八种尺寸。缩放与 ICO 封装使用 Windows 图形库完成，保留生成图的透明通道。
 

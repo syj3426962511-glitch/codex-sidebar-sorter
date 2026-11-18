@@ -39,7 +39,7 @@ internal sealed partial class MainForm
         try { await action(); }
         catch (Exception error)
         {
-            status.Text = error is OperationCanceledException ? Localization.Text("连接超时，请刷新后重试。") : error.Message;
+            status.Text = error is OperationCanceledException ? Localization.Text("The connection timed out. Refresh and try again.") : error.Message;
             status.ForeColor = Color.FromArgb(160, 41, 35);
         }
         finally
@@ -63,7 +63,7 @@ internal sealed partial class MainForm
 
     private async Task RefreshDataAsync()
     {
-        status.Text = Localization.Text("正在读取项目与对话");
+        status.Text = Localization.Text("Reading projects and chats");
         List<SortScope> scopes = await service.RefreshAsync();
         CatalogResult catalog = await service.ReadCatalogAsync();
         List<SortRow> projectRows = await service.GetRowsAsync(scopes[0]);
@@ -87,7 +87,7 @@ internal sealed partial class MainForm
             if (first != null) expandedProjects.Add("project:" + first.Scope.Id);
         }
         await LoadScopeAsync();
-        status.Text = catalog.Problems.Count == 0 ? Localization.Text("已连接") : Localization.Text("部分来源待读取");
+        status.Text = catalog.Problems.Count == 0 ? Localization.Text("Connected") : Localization.Text("Some sources are pending");
         status.ForeColor = catalog.Problems.Count == 0 ? Color.FromArgb(0, 108, 77) : Color.FromArgb(150, 85, 0);
     }
 
@@ -123,7 +123,7 @@ internal sealed partial class MainForm
         if (CurrentScope?.Kind == "section") SorterService.Sort(sectionRows, chatOrder.SelectedIndex);
         else if (GlobalScope) workspace?.SortChats(chatOrder.SelectedIndex);
         else foreach (ProjectGroup group in ActiveGroups()) WorkspacePreview.SortGroupChats(group, chatOrder.SelectedIndex);
-        status.Text = Localization.Text("预览已更新");
+        status.Text = Localization.Text("Preview updated");
         status.ForeColor = UiStyle.Text;
         RenderPreview();
     }
@@ -224,10 +224,10 @@ internal sealed partial class MainForm
             }
             if (GlobalScope && currentTab != 0 && workspace.LooseChats.Count > 0)
             {
-                var loose = workspace.LooseChats.Where(row => Matches(row.Title, query) || Matches(Localization.Text("未分组对话"), query)).ToList();
+                var loose = workspace.LooseChats.Where(row => Matches(row.Title, query) || Matches(Localization.Text("Ungrouped chats"), query)).ToList();
                 if (loose.Count > 0)
                 {
-                    var row = new SortRow("loose", Localization.Text("未分组对话"), loose.Max(item => item.UpdatedAt));
+                    var row = new SortRow("loose", Localization.Text("Ungrouped chats"), loose.Max(item => item.UpdatedAt));
                     var root = MakeNode(new TreeEntry(null, row, true, 0, 0, true, workspace.LooseChats.Count));
                     foreach (SortRow chat in loose)
                         root.Nodes.Add(MakeNode(new TreeEntry(null, chat, false, workspace.LooseChats.IndexOf(chat) + 1, 0, true)));
@@ -240,16 +240,16 @@ internal sealed partial class MainForm
         tree.SelectedNode = selected ?? tree.Nodes.Cast<TreeNode>().FirstOrDefault(node => node.IsExpanded) ?? tree.Nodes.Cast<TreeNode>().FirstOrDefault();
         tree.EndUpdate();
         rendering = false;
-        projectsTab.Text = Localization.Text("项目 ") + workspace.Groups.Count;
+        projectsTab.Text = Localization.Text("Projects ") + workspace.Groups.Count;
         bool complete = workspace.Problems.Count == 0;
-        chatsTab.Text = complete ? Localization.Text("对话 ") + workspace.ChatCount : Localization.Text("对话 …");
-        allTab.Text = complete ? Localization.Text("全部 ") + (workspace.Groups.Count + workspace.ChatCount) : Localization.Text("全部 …");
+        chatsTab.Text = complete ? Localization.Text("Chats ") + workspace.ChatCount : Localization.Text("Chats \u2026");
+        allTab.Text = complete ? Localization.Text("All ") + (workspace.Groups.Count + workspace.ChatCount) : Localization.Text("All \u2026");
         projectsTab.Selected = currentTab == 0; chatsTab.Selected = currentTab == 1; allTab.Selected = currentTab == 2;
-        listTitle.Text = GlobalScope ? (currentTab == 0 ? Localization.Text("项目与项目内对话") : currentTab == 1 ? Localization.Text("对话") : Localization.Text("全部条目")) : CurrentScope.Label;
-        summary.Text = complete ? workspace.Groups.Count + Localization.Text(" 个项目 · ") + workspace.ChatCount + Localization.Text(" 条对话")
-            : workspace.Groups.Count + Localization.Text(" 个项目 · 对话待读取");
-        grouping.Text = grouped ? Localization.Text("分组  按项目") : Localization.Text("分组  平铺");
-        quickSort.Text = Localization.Text("排序  ") + SortModes[(GlobalScope && currentTab != 1 ? projectOrder : chatOrder).SelectedIndex];
+        listTitle.Text = GlobalScope ? (currentTab == 0 ? Localization.Text("Projects and their chats") : currentTab == 1 ? Localization.Text("Chats") : Localization.Text("All items")) : CurrentScope.Label;
+        summary.Text = complete ? workspace.Groups.Count + Localization.Text(" projects \u00b7 ") + workspace.ChatCount + Localization.Text(" chats")
+            : workspace.Groups.Count + Localization.Text(" projects \u00b7 chats pending");
+        grouping.Text = grouped ? Localization.Text("Group by project") : Localization.Text("Flat list");
+        quickSort.Text = Localization.Text("Sort  ") + SortModes[(GlobalScope && currentTab != 1 ? projectOrder : chatOrder).SelectedIndex];
         ShowSelection();
         RenderChecks();
         if (!busy) SetControlsEnabled(true);
@@ -261,7 +261,7 @@ internal sealed partial class MainForm
     private static TreeNode MakeNode(TreeEntry entry) => new(entry.Row.Title)
     {
         Tag = entry, Name = entry.Key,
-        ToolTipText = entry.Row.Title + Localization.Text("\n最近更新 ") + FullTime(entry.Row.UpdatedAt)
+        ToolTipText = entry.Row.Title + Localization.Text("\nLast updated ") + FullTime(entry.Row.UpdatedAt)
     };
 
     private static IEnumerable<TreeNode> Walk(TreeNodeCollection nodes)
@@ -283,7 +283,7 @@ internal sealed partial class MainForm
             {
                 SortRow row = sectionRows[index];
                 int before = originalSectionRows.FindIndex(item => SorterService.RowKey(item) == SorterService.RowKey(row)) + 1;
-                if (before != index + 1) changes.Add(new PreviewChange(row.Title, before, index + 1, Localization.Text("对话")));
+                if (before != index + 1) changes.Add(new PreviewChange(row.Title, before, index + 1, Localization.Text("Chats")));
             }
             return changes;
         }
@@ -294,21 +294,21 @@ internal sealed partial class MainForm
     {
         if (workspace == null) return;
         List<PreviewChange> changes = CurrentChanges();
-        pending.Text = changes.Count == 0 ? ChatSortModeChanged ? Localization.Text("排序模式待提交") : Localization.Text("暂无顺序变更") : changes.Count + Localization.Text(" 处变更待提交");
-        changeTitle.Text = Localization.Text("本次变更  ") + changes.Count;
+        pending.Text = changes.Count == 0 ? ChatSortModeChanged ? Localization.Text("Sort mode pending") : Localization.Text("No order changes") : changes.Count + Localization.Text(" pending changes");
+        changeTitle.Text = Localization.Text("Changes  ") + changes.Count;
         changesList.BeginUpdate();
         changesList.Items.Clear();
         changesList.Items.AddRange(changes.Cast<object>().ToArray());
         changesList.EndUpdate();
         readCheck.Text = workspace.Problems.Count == 0
-            ? Localization.Text("已读取 ") + workspace.Groups.Count + Localization.Text(" 项目 / ") + workspace.ChatCount + Localization.Text(" 对话")
-            : workspace.Problems.Count + Localization.Text(" 个来源待读取");
+            ? Localization.Text("Read ") + workspace.Groups.Count + Localization.Text(" projects / ") + workspace.ChatCount + Localization.Text(" chats (count)")
+            : workspace.Problems.Count + Localization.Text(" sources pending");
         readCheck.ForeColor = workspace.Problems.Count == 0 ? Color.FromArgb(0, 108, 77) : Color.FromArgb(160, 86, 0);
         int plannedChats = ChangedChatGroups().Sum(group => group.Chats.Count(row => !row.IsPinned));
-        planCheck.Text = changes.Count == 0 && !ChatSortModeChanged ? Localization.Text("提交范围  无需提交")
-            : changes.Count == 0 ? Localization.Text("提交范围  对话排序模式")
-            : CurrentScope?.Kind == "section" ? Localization.Text("提交范围  ") + sectionRows.Count + Localization.Text(" 条分区对话")
-            : ApplyChats || CurrentScope?.Kind == "project" ? Localization.Text("提交范围  ") + plannedChats + Localization.Text(" 条项目内对话") : Localization.Text("提交范围  项目列表顺序");
+        planCheck.Text = changes.Count == 0 && !ChatSortModeChanged ? Localization.Text("Scope  No changes needed")
+            : changes.Count == 0 ? Localization.Text("Scope  Chat sort mode")
+            : CurrentScope?.Kind == "section" ? Localization.Text("Scope  ") + sectionRows.Count + Localization.Text(" section chats")
+            : ApplyChats || CurrentScope?.Kind == "project" ? Localization.Text("Scope  ") + plannedChats + Localization.Text(" project chats") : Localization.Text("Scope  Project list order");
         planCheck.ForeColor = UiStyle.Text;
         sharedMode.Visible = ApplyChats || CurrentScope?.Kind == "project";
         ResizeSettings();
@@ -317,11 +317,11 @@ internal sealed partial class MainForm
     private void ShowSelection()
     {
         selectionInfo.Text = tree.SelectedNode?.Tag is TreeEntry entry
-            ? entry.IsProject ? Localization.Text("已选 1 个项目") : Localization.Text("已选 1 条对话")
+            ? entry.IsProject ? Localization.Text("1 project selected") : Localization.Text("1 chat selected")
             : "";
     }
 
-    private static string FullTime(long? value) => value == null ? Localization.Text("暂无记录") : DateTimeOffset.FromUnixTimeMilliseconds(value.Value).ToLocalTime().ToString("yyyy-MM-dd HH:mm");
+    private static string FullTime(long? value) => value == null ? Localization.Text("No record") : DateTimeOffset.FromUnixTimeMilliseconds(value.Value).ToLocalTime().ToString("yyyy-MM-dd HH:mm");
 
     private void DrawChange(object? sender, DrawItemEventArgs eventArgs)
     {
@@ -394,7 +394,7 @@ internal sealed partial class MainForm
             if (GlobalScope) applyChatOrder.Checked = true;
         }
         updating = false;
-        status.Text = Localization.Text("预览已更新");
+        status.Text = Localization.Text("Preview updated");
         status.ForeColor = UiStyle.Text;
         RenderPreview(source.Key);
         tree.SelectedNode?.EnsureVisible();
@@ -413,7 +413,7 @@ internal sealed partial class MainForm
         chatRuleChanged = false;
         manualChatGroups.Clear();
         RenderPreview();
-        status.Text = Localization.Text("预览已还原");
+        status.Text = Localization.Text("Preview reset");
         status.ForeColor = UiStyle.Text;
     }
 
@@ -422,13 +422,13 @@ internal sealed partial class MainForm
         if (workspace == null || CurrentScope == null) return;
         if (CurrentChanges().Count == 0 && !ChatSortModeChanged)
         {
-            status.Text = Localization.Text("当前顺序已是目标顺序");
+            status.Text = Localization.Text("The requested order is already applied");
             status.ForeColor = Color.FromArgb(0, 108, 77);
             return;
         }
-        status.Text = Localization.Text("正在应用排序");
+        status.Text = Localization.Text("Applying sort order");
         List<ProjectGroup> chatGroups = ChangedChatGroups().ToList();
-        if (chatGroups.Any(group => !group.IsLoaded)) throw new InvalidOperationException(Localization.Text("对话列表仍有来源待读取，请刷新后应用对话排序。"));
+        if (chatGroups.Any(group => !group.IsLoaded)) throw new InvalidOperationException(Localization.Text("Some chat sources are still pending. Refresh before applying chat sorting."));
         if (GlobalScope)
         {
             List<SortRow> projects = workspace.Groups.Where(group => group.CanReorder).Select(group => group.Row).ToList();
@@ -438,12 +438,12 @@ internal sealed partial class MainForm
             try
             {
                 await service.ApplyWorkspaceAsync(projects, projectsChanged, plans, chatOrder.SelectedIndex == 4,
-                    (completed, total) => { submitted = completed; status.Text = Localization.Text("正在提交 ") + completed + " / " + total; },
+                    (completed, total) => { submitted = completed; status.Text = Localization.Text("Applying ") + completed + " / " + total; },
                     applyChatMode: ApplyChats);
             }
             catch (Exception error) when (submitted > 0)
             {
-                throw new InvalidOperationException(Localization.Text("已提交 ") + submitted + Localization.Text(" 项，请刷新实际顺序。") + error.Message, error);
+                throw new InvalidOperationException(Localization.Text("Applied ") + submitted + Localization.Text(" operations. Refresh to read the saved order. ") + error.Message, error);
             }
             workspace.Accept(projectsChanged, chatGroups);
         }
@@ -457,7 +457,7 @@ internal sealed partial class MainForm
         chatRuleChanged = false;
         manualChatGroups.Clear();
         RenderPreview();
-        status.Text = Localization.Text("已应用到客户端侧栏");
+        status.Text = Localization.Text("Applied to the Codex sidebar");
         status.ForeColor = Color.FromArgb(0, 108, 77);
     }
 }

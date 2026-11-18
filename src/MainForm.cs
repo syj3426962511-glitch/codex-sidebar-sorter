@@ -5,38 +5,38 @@ namespace SidebarSorter;
 internal sealed partial class MainForm : Form
 {
     private static readonly string[] SortModeKeys =
-        ["名称升序", "名称降序", "数字自然升序", "数字自然降序", "最近更新优先", "最早更新优先", "手动顺序"];
+        ["Name A to Z", "Name Z to A", "Natural numeric order", "Reverse natural order", "Recently updated first", "Oldest update first", "Manual order"];
     private static string[] SortModes => SortModeKeys.Select(Localization.Text).ToArray();
     private readonly SorterService service = new();
     private readonly ComboBox scope = new() { DropDownStyle = ComboBoxStyle.DropDownList, DropDownWidth = 740 };
     private readonly ComboBox projectOrder = new() { DropDownStyle = ComboBoxStyle.DropDownList };
     private readonly ComboBox chatOrder = new() { DropDownStyle = ComboBoxStyle.DropDownList };
-    private readonly CheckBox applyChatOrder = new() { Text = Localization.Text("同时应用项目内对话排序"), AutoSize = false };
+    private readonly CheckBox applyChatOrder = new() { Text = Localization.Text("Also sort chats in each project"), AutoSize = false };
     private readonly ConversationTree tree = new() { Dock = DockStyle.Fill };
     private readonly ViewTab projectsTab = new();
     private readonly ViewTab chatsTab = new();
     private readonly ViewTab allTab = new();
     private readonly TextBox search = new() { BorderStyle = BorderStyle.FixedSingle };
-    private readonly Button refresh = new() { Text = Localization.Text("刷新") };
+    private readonly Button refresh = new() { Text = Localization.Text("Refresh") };
     private readonly Button quickSort = new();
-    private readonly Button grouping = new() { Text = Localization.Text("分组  按项目") };
-    private readonly Button up = new() { Text = Localization.Text("↑ 上移") };
-    private readonly Button down = new() { Text = Localization.Text("↓ 下移") };
-    private readonly Button top = new() { Text = Localization.Text("移至顶部") };
-    private readonly Button bottom = new() { Text = Localization.Text("移至底部") };
-    private readonly Button restore = new() { Text = Localization.Text("还原预览") };
-    private readonly Button cancel = new() { Text = Localization.Text("收起") };
-    private readonly Button apply = new() { Text = Localization.Text("应用到侧栏") };
+    private readonly Button grouping = new() { Text = Localization.Text("Group by project") };
+    private readonly Button up = new() { Text = Localization.Text("\u2191 Move up") };
+    private readonly Button down = new() { Text = Localization.Text("\u2193 Move down") };
+    private readonly Button top = new() { Text = Localization.Text("To top") };
+    private readonly Button bottom = new() { Text = Localization.Text("To bottom") };
+    private readonly Button restore = new() { Text = Localization.Text("Reset preview") };
+    private readonly Button cancel = new() { Text = Localization.Text("Hide") };
+    private readonly Button apply = new() { Text = Localization.Text("Apply to sidebar") };
     private readonly MixedLabel summary = new();
     private readonly MixedLabel listTitle = new();
     private readonly MixedLabel pending = new();
     private readonly MixedLabel changeTitle = new();
     private readonly MixedLabel readCheck = new();
     private readonly MixedLabel planCheck = new();
-    private readonly MixedLabel status = new() { Text = Localization.Text("正在连接客户端") };
+    private readonly MixedLabel status = new() { Text = Localization.Text("Connecting to Codex") };
     private readonly MixedLabel selectionInfo = new();
     private readonly ListBox changesList = new() { BorderStyle = BorderStyle.None, DrawMode = DrawMode.OwnerDrawFixed, ItemHeight = 27 };
-    private readonly Label sharedMode = new() { Text = Localization.Text("项目内对话与最近聊天共用排序模式"), Height = 64 };
+    private readonly Label sharedMode = new() { Text = Localization.Text("Project chats and Recents share the saved sort mode"), Height = 64 };
     private readonly FlowLayoutPanel settingsFlow = new() { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = true, BackColor = Color.White };
     private readonly HashSet<string> expandedProjects = new();
     private readonly HashSet<string> manualChatGroups = new();
@@ -66,7 +66,7 @@ internal sealed partial class MainForm : Form
         this.returnToBackground = returnToBackground;
         AutoScaleDimensions = new SizeF(96, 96);
         AutoScaleMode = AutoScaleMode.Dpi;
-        Text = Localization.Text("聊天排序工具");
+        Text = Localization.Text("Codex Sidebar Sorter");
         Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
         Rectangle workingArea = Screen.FromControl(this).WorkingArea;
         MinimumSize = new Size(Math.Min(1120, workingArea.Width), Math.Min(780, workingArea.Height));
@@ -91,7 +91,7 @@ internal sealed partial class MainForm : Form
             Image = new Bitmap(logoImage), SizeMode = PictureBoxSizeMode.Zoom,
             Size = new Size(38, 38), Margin = new Padding(0, 3, 12, 0)
         });
-        heading.Controls.Add(new Label { Text = Localization.Text("聊天排序"), AutoSize = true, Font = new Font("SimSun", 17, FontStyle.Bold), Margin = new Padding(0, 5, 18, 0) });
+        heading.Controls.Add(new Label { Text = Localization.Text("Sidebar Sorter"), AutoSize = true, Font = new Font("SimSun", 17, FontStyle.Bold), Margin = new Padding(0, 5, 18, 0) });
         heading.Controls.Add(new Label { Text = Application.ProductVersion.Split('+')[0], AutoSize = true, Font = UiStyle.English, Margin = new Padding(0, 11, 0, 0) });
         AddLanguageControls(heading);
         layout.Controls.Add(heading, 0, 0);
@@ -104,7 +104,7 @@ internal sealed partial class MainForm : Form
         var tabs = new FlowLayoutPanel { Dock = DockStyle.Fill, Margin = Padding.Empty };
         tabs.Controls.AddRange([projectsTab, chatsTab, allTab]);
         navigation.Controls.Add(tabs, 0, 0);
-        navigation.Controls.Add(new MixedLabel { Text = Localization.Text("搜索"), Dock = DockStyle.Top, Height = 38, Margin = new Padding(0, 3, 0, 0) }, 1, 0);
+        navigation.Controls.Add(new MixedLabel { Text = Localization.Text("Search"), Dock = DockStyle.Top, Height = 38, Margin = new Padding(0, 3, 0, 0) }, 1, 0);
         search.Dock = DockStyle.Top;
         search.Margin = new Padding(0, 6, 12, 0);
         navigation.Controls.Add(search, 2, 0);
@@ -124,7 +124,7 @@ internal sealed partial class MainForm : Form
         grouping.Dock = DockStyle.Top; grouping.Height = 39;
         toolbar.Controls.Add(quickSort, 0, 0);
         toolbar.Controls.Add(grouping, 1, 0);
-        toolbar.Controls.Add(new MixedLabel { Text = Localization.Text("范围"), Dock = DockStyle.Top, Height = 39 }, 2, 0);
+        toolbar.Controls.Add(new MixedLabel { Text = Localization.Text("Scope"), Dock = DockStyle.Top, Height = 39 }, 2, 0);
         ConfigureCombo(scope);
         scope.Dock = DockStyle.Top;
         toolbar.Controls.Add(scope, 3, 0);
@@ -149,9 +149,9 @@ internal sealed partial class MainForm : Form
         columns.Paint += (_, eventArgs) =>
         {
             (int count, int time) = tree.Columns();
-            UiStyle.DrawText(eventArgs.Graphics, Localization.Text("名称"), new Rectangle(80, 0, count - 90, 32), UiStyle.Text, true);
-            UiStyle.DrawText(eventArgs.Graphics, tree.FlatView ? Localization.Text("所属项目") : Localization.Text("对话 / 状态"), new Rectangle(count + 8, 0, time - count - 14, 32), UiStyle.Text);
-            UiStyle.DrawText(eventArgs.Graphics, Localization.Text("最近更新"), new Rectangle(time + 8, 0, 160, 32), UiStyle.Text);
+            UiStyle.DrawText(eventArgs.Graphics, Localization.Text("Name"), new Rectangle(80, 0, count - 90, 32), UiStyle.Text, true);
+            UiStyle.DrawText(eventArgs.Graphics, tree.FlatView ? Localization.Text("Project") : Localization.Text("Chats / status"), new Rectangle(count + 8, 0, time - count - 14, 32), UiStyle.Text);
+            UiStyle.DrawText(eventArgs.Graphics, Localization.Text("Last updated"), new Rectangle(time + 8, 0, 160, 32), UiStyle.Text);
         };
         tree.Resize += (_, _) => columns.Invalidate();
         listLayout.Controls.Add(columns, 0, 1);
@@ -171,22 +171,22 @@ internal sealed partial class MainForm : Form
         body.Controls.Add(listCard, 0, 0);
 
         var settingsCard = new CardPanel { Dock = DockStyle.Fill, Margin = Padding.Empty, Padding = new Padding(20, 16, 20, 16) };
-        AddSetting(new Label { Text = Localization.Text("排序与变更"), Font = new Font("SimSun", 16, FontStyle.Bold) }, 38);
+        AddSetting(new Label { Text = Localization.Text("Sorting and changes"), Font = new Font("SimSun", 16, FontStyle.Bold) }, 38);
         pending.ForeColor = UiStyle.Accent;
         AddSetting(pending, 28);
-        AddSetting(new Label { Text = Localization.Text("第一层 · 项目") }, 26);
+        AddSetting(new Label { Text = Localization.Text("Projects (section)") }, 26);
         ConfigureCombo(projectOrder);
         AddSetting(projectOrder, 40);
-        AddSetting(new Label { Text = Localization.Text("第二层 · 项目内对话") }, 26);
+        AddSetting(new Label { Text = Localization.Text("Chats within each project") }, 26);
         ConfigureCombo(chatOrder);
         AddSetting(chatOrder, 40);
         AddSetting(applyChatOrder, 34);
         AddSetting(sharedMode, 64);
-        AddSetting(new Label { Text = Localization.Text("可用排序"), Font = UiStyle.ChineseBold }, 28, 9);
-        AddSetting(new Label { Text = Localization.Text("名称 · 数字自然\n更新时间 · 手动") }, 60);
+        AddSetting(new Label { Text = Localization.Text("Sort options"), Font = UiStyle.ChineseBold }, 28, 9);
+        AddSetting(new Label { Text = Localization.Text("Name and natural numbers\nUpdate time and manual order") }, 60);
         AddSetting(changeTitle, 28, 8);
         AddSetting(changesList, 94);
-        AddSetting(new Label { Text = Localization.Text("提交前检查"), Font = UiStyle.ChineseBold }, 28, 8);
+        AddSetting(new Label { Text = Localization.Text("Before applying"), Font = UiStyle.ChineseBold }, 28, 8);
         AddSetting(readCheck, 28);
         AddSetting(planCheck, 48);
         settingsFlow.Resize += (_, _) => ResizeSettings();
@@ -216,7 +216,7 @@ internal sealed partial class MainForm : Form
         chatOrder.Items.AddRange(SortModes);
         projectOrder.SelectedIndex = settings.ProjectSortMode;
         chatOrder.SelectedIndex = settings.ChatSortMode;
-        projectsTab.Text = Localization.Text("项目"); chatsTab.Text = Localization.Text("对话"); allTab.Text = Localization.Text("全部");
+        projectsTab.Text = Localization.Text("Projects"); chatsTab.Text = Localization.Text("Chats"); allTab.Text = Localization.Text("All");
         projectsTab.Selected = true;
 
         refresh.Click += async (_, _) => await RunAsync(RefreshDataAsync);
@@ -228,7 +228,7 @@ internal sealed partial class MainForm : Form
         {
             if (updating) return;
             workspace?.SortProjects(projectOrder.SelectedIndex);
-            status.Text = Localization.Text("预览已更新");
+            status.Text = Localization.Text("Preview updated");
             status.ForeColor = UiStyle.Text;
             RenderPreview();
         };

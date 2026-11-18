@@ -27,7 +27,7 @@ internal static class IndependentLaunch
         if (arguments.Length == 1 && arguments[0] == "--exit") return null;
         if (!IsInJob()) return null;
         if (relaunched)
-            throw new InvalidOperationException(Localization.Text("独立启动尚未就绪，请从桌面快捷方式或资源管理器打开工具。"));
+            throw new InvalidOperationException(Localization.Text("Independent startup is pending. Open the tool from its desktop shortcut or File Explorer."));
 
         DateTime launchedAt = DateTime.UtcNow;
         int processId = LaunchThroughWindows(arguments);
@@ -36,7 +36,7 @@ internal static class IndependentLaunch
         try
         {
             using Process child = Process.GetProcessById(processId);
-            if (!child.WaitForExit(120000)) throw new TimeoutException(Localization.Text("工具核验仍在独立进程中执行。"));
+            if (!child.WaitForExit(120000)) throw new TimeoutException(Localization.Text("Verification is still running in the independent process."));
             return ReadDiagnosticResult(arguments, launchedAt);
         }
         catch (ArgumentException)
@@ -55,10 +55,10 @@ internal static class IndependentLaunch
 
     private static int LaunchThroughWindows(string[] arguments)
     {
-        string executable = Environment.ProcessPath ?? throw new InvalidOperationException(Localization.Text("程序入口路径不可读取。"));
+        string executable = Environment.ProcessPath ?? throw new InvalidOperationException(Localization.Text("The application entry path could not be read."));
         string commandLine = string.Join(" ", new[] { executable }.Concat(arguments).Append(RelaunchArgument).Select(QuoteArgument));
         Type locatorType = Type.GetTypeFromProgID("WbemScripting.SWbemLocator")
-            ?? throw new InvalidOperationException(Localization.Text("Windows 独立启动服务不可用，请从桌面快捷方式打开工具。"));
+            ?? throw new InvalidOperationException(Localization.Text("Windows independent startup is unavailable. Open the desktop shortcut."));
         dynamic locator = Activator.CreateInstance(locatorType)!;
         dynamic services = locator.ConnectServer(".", "root\\cimv2");
         dynamic processClass = services.Get("Win32_Process");
@@ -76,7 +76,7 @@ internal static class IndependentLaunch
         parameters.Properties_.Item("ProcessStartupInformation").Value = startup;
         dynamic result = processClass.ExecMethod_("Create", parameters);
         uint code = Convert.ToUInt32(result.Properties_.Item("ReturnValue").Value);
-        if (code != 0) throw new InvalidOperationException(Localization.Text("Windows 独立启动失败，状态码 ") + code);
+        if (code != 0) throw new InvalidOperationException(Localization.Text("Windows independent startup failed. Status ") + code);
         return Convert.ToInt32(result.Properties_.Item("ProcessId").Value);
     }
 

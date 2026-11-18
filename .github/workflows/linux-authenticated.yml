@@ -5,6 +5,7 @@ permissions:
   contents: read
 jobs:
   linux:
+    if: github.event.repository.private == true && vars.SORTER_ISOLATED_TEST_ACCOUNT == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:

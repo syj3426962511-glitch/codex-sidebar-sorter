@@ -28,7 +28,7 @@ internal static class LocalHistoryReader
             FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
         {
             try { state = JsonNode.Parse(input)!.AsObject(); }
-            catch (JsonException error) { throw new InvalidDataException(Localization.Text("本地对话归属索引读取失败，请刷新重试。"), error); }
+            catch (JsonException error) { throw new InvalidDataException(Localization.Text("The local project index could not be read. Refresh and try again."), error); }
         }
 
         string databasePath = Directory.GetFiles(dataRoot, "state_*.sqlite")
@@ -36,7 +36,7 @@ internal static class LocalHistoryReader
             .Where(item => item.Match.Success)
             .OrderByDescending(item => int.Parse(item.Match.Groups[1].Value))
             .Select(item => item.Path).FirstOrDefault()
-            ?? throw new IOException(Localization.Text("本地历史索引尚未就绪，请打开客户端后刷新。"));
+            ?? throw new IOException(Localization.Text("The local history index is pending. Open Codex and refresh."));
 
         var legacyByBackend = new Dictionary<string, string>();
         if (state["app-server-project-id-by-legacy-project-id-by-host"] is JsonObject mappings)
@@ -61,7 +61,8 @@ internal static class LocalHistoryReader
             .Where(item => item?["kind"]?.GetValue<string>() == "codex" && (item["hostId"]?.GetValue<string>() ?? "local") == "local")
             .Select(item => item!.AsObject()).GroupBy(item => item["id"]!.GetValue<string>())
             .ToDictionary(group => group.Key, group => group.First());
-        var pinned = sidebar["pinnedThreads"]!.AsArray().Where(item => item?["kind"]?.GetValue<string>() == "codex")
+        var pinned = sidebar["pinnedThreads"]!.AsArray().Where(item => item?["kind"]?.GetValue<string>() == "codex"
+            && (item["hostId"]?.GetValue<string>() ?? "local") == "local")
             .Select(item => item!["id"]!.GetValue<string>()).ToHashSet();
         foreach (JsonObject row in metadata)
         {
@@ -75,7 +76,7 @@ internal static class LocalHistoryReader
         }
         bool manual = sidebar["sidebarPreferences"]?["sorting"]?["chats"]?.GetValue<string>() == "manual";
         return metadata.OrderBy(row => manual ? positions.GetValueOrDefault(row["id"]!.GetValue<string>(), int.MaxValue) : 0)
-            .ThenByDescending(row => row["updatedAt"]!.GetValue<long>()).ToList();
+            .ThenByDescending(row => row["updatedAt"]?.GetValue<long>()).ToList();
     }
 
     private static List<JsonObject> ReadDatabase(string path, Dictionary<string, string> legacyByBackend,
@@ -86,14 +87,16 @@ internal static class LocalHistoryReader
         try
         {
             int opened = sqlite3_open_v2(path, out database, OpenReadOnly | OpenFullMutex, IntPtr.Zero);
-            if (opened != 0) throw new IOException(Localization.Text("历史索引只读打开失败，SQLite 状态码 ") + opened);
-            if (sqlite3_db_readonly(database, "main") != 1) throw new InvalidOperationException(Localization.Text("历史索引未以只读方式打开。"));
+            if (opened != 0) throw new IOException(Localization.Text("Opening history read-only failed. SQLite status ") + opened);
+            if (sqlite3_db_readonly(database, "main") != 1) throw new InvalidOperationException(Localization.Text("The history connection requires read-only mode."));
             sqlite3_busy_timeout(database, 1500);
             bool HasColumn(string column) => sqlite3_table_column_metadata(database, "main", "threads", column,
                 out _, out _, out _, out _, out _) == 0;
-            string title = HasColumn("name") ? "COALESCE(NULLIF(name,''),title)" : "title";
+            string legacyTitle = HasColumn("title") ? "NULLIF(title,'')" : "NULL";
+            string title = HasColumn("name") ? "COALESCE(NULLIF(name,'')," + legacyTitle + ")" : legacyTitle;
             // Match the upstream timestamp migration, which also handles early millisecond values.
-            string legacyUpdated = "CASE WHEN updated_at < 1577836800000 THEN updated_at*1000 ELSE updated_at END";
+            string legacyUpdated = HasColumn("updated_at")
+                ? "CASE WHEN updated_at < 1577836800000 THEN updated_at*1000 ELSE updated_at END" : "NULL";
             string updated = HasColumn("updated_at_ms") ? "COALESCE(updated_at_ms," + legacyUpdated + ")" : legacyUpdated;
             string projectColumn = HasColumn("project_id") ? "project_id" : "NULL";
             string query = "SELECT id," + title + "," + updated + "," + projectColumn
@@ -103,8 +106,8 @@ internal static class LocalHistoryReader
             if (HasColumn("attached_thread_parent_id"))
                 query += " AND (attached_thread_parent_id IS NULL OR attached_thread_parent_id='')";
             if (sqlite3_prepare_v2(database, query, -1, out statement, IntPtr.Zero) != 0)
-                throw new InvalidDataException(Localization.Text("当前历史索引字段需要适配。") + Marshal.PtrToStringUTF8(sqlite3_errmsg(database)));
-            if (sqlite3_stmt_readonly(statement) != 1) throw new InvalidOperationException(Localization.Text("历史索引查询需要只读语句。"));
+                throw new InvalidDataException(Localization.Text("This version of the history schema needs an updated adapter. ") + Marshal.PtrToStringUTF8(sqlite3_errmsg(database)));
+            if (sqlite3_stmt_readonly(statement) != 1) throw new InvalidOperationException(Localization.Text("The history query requires a read-only statement."));
 
             var rows = new List<JsonObject>();
             int step;
@@ -118,12 +121,13 @@ internal static class LocalHistoryReader
                     project = assignment["projectId"]?.GetValue<string>();
                 rows.Add(new JsonObject
                 {
-                    ["id"] = id, ["title"] = ReadText(statement, 1) ?? Localization.Text("未命名对话"),
-                    ["updatedAt"] = sqlite3_column_int64(statement, 2), ["projectId"] = project,
+                    ["id"] = id, ["title"] = ReadText(statement, 1) ?? Localization.Text("Untitled chat"),
+                    ["updatedAt"] = sqlite3_column_type(statement, 2) == 5 ? null : sqlite3_column_int64(statement, 2),
+                    ["projectId"] = project,
                     ["kind"] = "codex", ["hostId"] = "local", ["status"] = "notLoaded"
                 });
             }
-            if (step != QueryComplete) throw new IOException(Localization.Text("历史索引读取失败，SQLite 状态码 ") + step);
+            if (step != QueryComplete) throw new IOException(Localization.Text("Reading history failed. SQLite status ") + step);
             return rows;
         }
         finally
@@ -160,6 +164,8 @@ internal static class LocalHistoryReader
     private static extern IntPtr sqlite3_column_text(IntPtr statement, int column);
     [DllImport("winsqlite3.dll", CallingConvention = CallingConvention.Cdecl)]
     private static extern long sqlite3_column_int64(IntPtr statement, int column);
+    [DllImport("winsqlite3.dll", CallingConvention = CallingConvention.Cdecl)]
+    private static extern int sqlite3_column_type(IntPtr statement, int column);
     [DllImport("winsqlite3.dll", CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr sqlite3_errmsg(IntPtr database);
     [DllImport("winsqlite3.dll", CallingConvention = CallingConvention.Cdecl)]

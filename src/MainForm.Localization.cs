@@ -20,7 +20,7 @@ internal sealed partial class MainForm
     {
         heading.Controls.Add(new Label
         {
-            Text = Localization.Text("语言"), AutoSize = true,
+            Text = Localization.Text("Language"), AutoSize = true,
             Margin = new Padding(28, 11, 8, 0)
         });
         language.Margin = new Padding(0, 6, 0, 0);

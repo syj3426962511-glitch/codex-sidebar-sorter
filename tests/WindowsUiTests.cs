@@ -49,7 +49,7 @@ internal sealed partial class MainForm
         RequireUi(workspace!.Groups.Count == 30 && workspace.ChatCount == 360, "Complete project/chat counts with attached records excluded.");
         RequireUi(projectOrder.SelectedIndex == 0 && chatOrder.SelectedIndex == 0 && applyChatOrder.Checked, "Both layers default to ascending names.");
         report["bothLayersDefaultNameAscending"] = true;
-        RequireUi(Localization.IsChinese && refresh.Text == "刷新", "Initial Chinese UI.");
+        RequireUi(Localization.IsChinese && refresh.Text == "Refresh", "Initial Chinese UI.");
         SaveCloudUi(Path.Combine(output, "ui-chinese-before-apply.png"));
         string[] titles = workspace.Groups.SelectMany(group => group.Chats).Select(row => row.Title).ToArray();
         language.SelectedIndex = 2;

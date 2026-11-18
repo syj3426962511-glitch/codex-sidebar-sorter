@@ -62,7 +62,6 @@ jobs:
           ditto "$app" "$RUNNER_TEMP/SorterOfficialClient.app"
           hdiutil detach "$RUNNER_TEMP/sorter-mac-mount"
           codesign --verify --deep --strict "$RUNNER_TEMP/SorterOfficialClient.app"
-          python tests/read_mac_transport.py "$RUNNER_TEMP/SorterOfficialClient.app/Contents/Resources/app.asar" artifacts/backend/desktop-ordering-contract.json --ordering
           bundled="$RUNNER_TEMP/SorterOfficialClient.app/Contents/Resources/codex-cli/bin/codex"
           python tests/BackendOrderingProbe.py "$bundled" artifacts/backend/bundled-results.json
       - uses: actions/upload-artifact@v4

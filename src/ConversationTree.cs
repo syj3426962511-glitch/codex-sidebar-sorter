@@ -74,17 +74,17 @@ internal sealed class ConversationTree : TreeView
         int badgeWidth = changed ? 65 : 0;
         UiStyle.DrawText(graphics, entry.Row.Title, new Rectangle(nameLeft, top, Math.Max(40, count - nameLeft - 14 - badgeWidth), height), UiStyle.Text, entry.IsProject);
         if (changed)
-            UiStyle.DrawText(graphics, Localization.Text("原 ") + entry.OriginalPosition, new Rectangle(count - 74, top, 68, height), UiStyle.Accent);
+            UiStyle.DrawText(graphics, Localization.Text("Was ") + entry.OriginalPosition, new Rectangle(count - 74, top, 68, height), UiStyle.Accent);
 
         string detail = "";
         if (entry.IsProject)
-            detail = entry.Group?.IsLoaded == false ? Localization.Text("待读取") : (entry.Group?.Chats.Count ?? entry.ChildCount ?? 0) + Localization.Text(" 个对话");
+            detail = entry.Group?.IsLoaded == false ? Localization.Text("Pending") : (entry.Group?.Chats.Count ?? entry.ChildCount ?? 0) + Localization.Text(" chats (count)");
         else if (FlatView)
-            detail = entry.Group?.Row.Title ?? (entry.IsLoose ? Localization.Text("未分组") : "");
+            detail = entry.Group?.Row.Title ?? (entry.IsLoose ? Localization.Text("Ungrouped") : "");
         else if (entry.Row.IsPinned)
-            detail = Localization.Text("已置顶");
+            detail = Localization.Text("Pinned");
         else if (entry.Row.Status is "active" or "systemError")
-            detail = entry.Row.Status == "active" ? Localization.Text("运行中") : Localization.Text("异常");
+            detail = entry.Row.Status == "active" ? Localization.Text("Running") : Localization.Text("Error");
         UiStyle.DrawText(graphics, detail, new Rectangle(count + 8, top, time - count - 14, height), UiStyle.Text);
         UiStyle.DrawText(graphics, FormatTime(entry.Row.UpdatedAt), new Rectangle(time + 8, top, ClientSize.Width - time - 12, height), UiStyle.Text);
     }
@@ -105,10 +105,10 @@ internal sealed class ConversationTree : TreeView
         if (value == null) return "";
         DateTimeOffset time = DateTimeOffset.FromUnixTimeMilliseconds(value.Value).ToLocalTime();
         TimeSpan elapsed = DateTimeOffset.Now - time;
-        if (elapsed.TotalMinutes < 1) return Localization.Text("刚刚");
-        if (elapsed.TotalHours < 1) return (int)elapsed.TotalMinutes + Localization.Text(" 分钟前");
-        if (elapsed.TotalDays < 1) return (int)elapsed.TotalHours + Localization.Text(" 小时前");
-        if (elapsed.TotalDays < 7) return (int)elapsed.TotalDays + Localization.Text(" 天前");
+        if (elapsed.TotalMinutes < 1) return Localization.Text("Just now");
+        if (elapsed.TotalHours < 1) return (int)elapsed.TotalMinutes + Localization.Text(" min ago");
+        if (elapsed.TotalDays < 1) return (int)elapsed.TotalHours + Localization.Text(" h ago");
+        if (elapsed.TotalDays < 7) return (int)elapsed.TotalDays + Localization.Text(" d ago");
         return time.ToString("yyyy-MM-dd");
     }
 }

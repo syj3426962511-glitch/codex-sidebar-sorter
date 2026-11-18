@@ -96,7 +96,7 @@ internal sealed class WorkspacePreview
                 ProjectGroup group = Groups[index];
                 int before = OriginalProjectPosition(group);
                 if (group.CanReorder && before != index + 1)
-                    changes.Add(new PreviewChange(group.Row.Title, before, index + 1, Localization.Text("项目")));
+                    changes.Add(new PreviewChange(group.Row.Title, before, index + 1, Localization.Text("Projects")));
             }
         }
         foreach (ProjectGroup group in chatGroups)
@@ -105,7 +105,7 @@ internal sealed class WorkspacePreview
             {
                 SortRow row = group.Chats[index];
                 int before = OriginalChatPosition(group, row);
-                if (before != index + 1) changes.Add(new PreviewChange(row.Title, before, index + 1, Localization.Text("对话")));
+                if (before != index + 1) changes.Add(new PreviewChange(row.Title, before, index + 1, Localization.Text("Chats")));
             }
         }
         return changes;

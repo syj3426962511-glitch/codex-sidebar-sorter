@@ -11,26 +11,30 @@ internal sealed class AutomaticSorter : IAsyncDisposable
         FullMode = BoundedChannelFullMode.DropWrite, SingleReader = true
     });
     private readonly CancellationTokenSource stopping = new();
-    private readonly FileSystemWatcher parentWatcher;
+    private readonly FileSystemWatcher? parentWatcher;
     private readonly object watcherLock = new();
     private FileSystemWatcher? historyWatcher;
     private readonly Task worker;
+    private readonly Task endpointMonitor;
     public event Action<Exception?>? Completed;
 
-    public AutomaticSorter(string dataRoot, Func<Task> synchronize)
+    public AutomaticSorter(string dataRoot, Func<Task> synchronize, Func<string[]>? findEndpoints = null, TimeSpan? endpointInterval = null)
     {
-        this.dataRoot = Path.GetFullPath(dataRoot).TrimEnd(Path.DirectorySeparatorChar);
+        this.dataRoot = Path.TrimEndingDirectorySeparator(Path.GetFullPath(dataRoot));
         this.synchronize = synchronize;
-        string parent = Path.GetDirectoryName(this.dataRoot)!;
-        parentWatcher = new FileSystemWatcher(parent, Path.GetFileName(this.dataRoot))
+        string? parent = Path.GetDirectoryName(this.dataRoot);
+        if (Directory.Exists(parent))
         {
-            NotifyFilter = NotifyFilters.DirectoryName, EnableRaisingEvents = true
-        };
-        parentWatcher.Created += (_, _) => { WatchHistory(); Request(); };
-        parentWatcher.Renamed += (_, _) => { WatchHistory(); Request(); };
-        parentWatcher.Deleted += (_, _) => WatchHistory();
+            parentWatcher = new FileSystemWatcher(parent!, Path.GetFileName(this.dataRoot)) { NotifyFilter = NotifyFilters.DirectoryName };
+            parentWatcher.Created += (_, _) => { WatchHistory(); Request(); };
+            parentWatcher.Renamed += (_, _) => { WatchHistory(); Request(); };
+            parentWatcher.Deleted += (_, _) => WatchHistory();
+            parentWatcher.EnableRaisingEvents = true;
+        }
         WatchHistory();
         worker = RunAsync();
+        endpointMonitor = findEndpoints == null ? Task.CompletedTask
+            : WatchEndpointsAsync(findEndpoints, endpointInterval ?? TimeSpan.FromSeconds(15));
         Request();
     }
 
@@ -63,6 +67,32 @@ internal sealed class AutomaticSorter : IAsyncDisposable
             || name.StartsWith("state_", StringComparison.Ordinal) && name.Contains(".sqlite", StringComparison.Ordinal)) Request();
     }
 
+    private async Task WatchEndpointsAsync(Func<string[]> findEndpoints, TimeSpan interval)
+    {
+        using var timer = new PeriodicTimer(interval);
+        HashSet<string>? previous = null;
+        try
+        {
+            while (await timer.WaitForNextTickAsync(stopping.Token))
+            {
+                string[] endpoints;
+                try { endpoints = findEndpoints(); }
+                catch (Exception error) when (error is IOException or UnauthorizedAccessException) { continue; }
+                if (previous == null)
+                {
+                    previous = endpoints.ToHashSet(StringComparer.Ordinal);
+                    continue;
+                }
+                if (previous.SetEquals(endpoints)) continue;
+                previous = endpoints.ToHashSet(StringComparer.Ordinal);
+                if (previous.Count == 0) continue;
+                WatchHistory();
+                Request();
+            }
+        }
+        catch (OperationCanceledException) when (stopping.IsCancellationRequested) { }
+    }
+
     private async Task RunAsync()
     {
         int connectionFailures = 0;
@@ -93,20 +123,22 @@ internal sealed class AutomaticSorter : IAsyncDisposable
         List<SortScope> scopes = await service.RefreshAsync();
         List<SortRow> projects = await service.GetRowsAsync(scopes[0]);
         CatalogResult catalog = await service.ReadCatalogAsync();
-        if (catalog.Problems.Count > 0) throw new IOException(string.Join("\n", catalog.Problems.Values));
+        if (catalog.Problems.TryGetValue("codex:local", out string? historyProblem))
+            throw new IOException(historyProblem);
         WorkspacePreview preview = WorkspacePreview.Create(service.Projects, projects, catalog);
         preview.SortProjects(0);
         preview.SortChats(0);
         List<ProjectGroup> changedGroups = preview.Groups.Where(group => group.IsLoaded && group.Scope.Source == "codex"
             && !group.Chats.Select(SorterService.RowKey).SequenceEqual(group.OriginalChats.Select(SorterService.RowKey))).ToList();
         bool projectsChanged = preview.Changes(true, []).Count > 0;
-        bool modeChanged = service.Snapshot["sidebarPreferences"]?["sorting"]?["chats"]?.GetValue<string>() != "manual";
+        bool modeChanged = preview.Groups.Any(group => group.IsLoaded && group.Scope.Source == "codex" && group.Chats.Any(row => !row.IsPinned))
+            && service.Snapshot["sidebarPreferences"]?["sorting"]?["chats"]?.GetValue<string>() != "manual";
         int writes = 0;
         if (projectsChanged || changedGroups.Count > 0 || modeChanged)
         {
             var plans = changedGroups.Select(group => new ProjectChatPlan(group.Scope, group.Chats.Where(row => !row.IsPinned).ToList())).ToList();
             await service.ApplyWorkspaceAsync(preview.Groups.Where(group => group.CanReorder).Select(group => group.Row).ToList(),
-                projectsChanged, plans, false, applyChatMode: true);
+                projectsChanged, plans, false, applyChatMode: modeChanged);
             writes += (projectsChanged ? 1 : 0) + plans.Sum(plan => plan.Rows.Count) + (modeChanged ? 1 : 0);
         }
         foreach (SortScope scope in scopes.Where(scope => scope.Kind == "section"))
@@ -115,7 +147,8 @@ internal sealed class AutomaticSorter : IAsyncDisposable
             List<string> previous = rows.Select(SorterService.RowKey).ToList();
             SorterService.Sort(rows, 0);
             bool orderChanged = !rows.Select(SorterService.RowKey).SequenceEqual(previous);
-            bool pinnedModeChanged = scope.Id == "pinned" && service.Snapshot["sidebarPreferences"]?["sorting"]?["pinned"]?.GetValue<string>() != "manual";
+            bool pinnedModeChanged = rows.Count > 0 && scope.Id == "pinned"
+                && service.Snapshot["sidebarPreferences"]?["sorting"]?["pinned"]?.GetValue<string>() != "manual";
             if (!orderChanged && !pinnedModeChanged) continue;
             await service.ApplyAsync(scope, rows, false);
             writes++;
@@ -126,9 +159,9 @@ internal sealed class AutomaticSorter : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         stopping.Cancel();
-        parentWatcher.Dispose();
+        parentWatcher?.Dispose();
         lock (watcherLock) { historyWatcher?.Dispose(); historyWatcher = null; }
-        await worker;
+        await Task.WhenAll(worker, endpointMonitor);
         stopping.Dispose();
     }
 }

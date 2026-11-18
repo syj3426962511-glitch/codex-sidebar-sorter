@@ -16,7 +16,7 @@ internal sealed record SidebarDisplayRow(TreeEntry Entry, string Marker, string 
 
 internal sealed partial class DesktopWindow : Window
 {
-    private static readonly string[] ModeKeys = ["名称升序", "名称降序", "数字自然升序", "数字自然降序", "最近更新优先", "最早更新优先", "手动顺序"];
+    private static readonly string[] ModeKeys = ["Name A to Z", "Name Z to A", "Natural numeric order", "Reverse natural order", "Recently updated first", "Oldest update first", "Manual order"];
     private readonly DesktopApp app;
     private readonly SorterService service = new();
     private readonly HashSet<string> expanded = new();
@@ -24,6 +24,8 @@ internal sealed partial class DesktopWindow : Window
     private List<SortScope> scopes = [];
     private List<SortRow> sectionRows = [];
     private List<SortRow> originalSectionRows = [];
+    private SortScope? loadedScope;
+    private bool needsRefresh = true;
     private bool updating;
     private bool busy;
     private static readonly DataFormat<SidebarDisplayRow> RowFormat = DataFormat.CreateInProcessFormat<SidebarDisplayRow>("sidebar-sorter-row");
@@ -44,6 +46,7 @@ internal sealed partial class DesktopWindow : Window
     {
         this.app = app;
         AvaloniaXamlLoader.Load(this);
+        Label("VersionText").Text = typeof(DesktopWindow).Assembly.GetName().Version?.ToString(3);
         DragDrop.SetAllowDrop(RowList, true);
         DragDrop.AddDragOverHandler(RowList, (_, args) =>
         {
@@ -67,7 +70,10 @@ internal sealed partial class DesktopWindow : Window
             SetCaptions();
             Render();
         };
-        Box("ScopeBox").SelectionChanged += async (_, _) => { if (!updating) await RunAsync(LoadScopeAsync); };
+        Box("ScopeBox").SelectionChanged += async (_, _) =>
+        {
+            if (!updating && !needsRefresh) await RunAsync(LoadScopeAsync);
+        };
         Box("ProjectModeBox").SelectionChanged += (_, _) => { if (!updating) ChangeModes(); };
         Box("ChatModeBox").SelectionChanged += (_, _) => { if (!updating) ChangeModes(); };
         Check("AutomaticBox").IsCheckedChanged += (_, _) =>
@@ -83,7 +89,7 @@ internal sealed partial class DesktopWindow : Window
                 updating = false;
                 SortPreview();
             }
-            SetStatus(Localization.Text(enabled ? "自动保持名称升序" : "自动排序已暂停"));
+            SetStatus(Localization.Text(enabled ? "Keep names sorted A to Z" : "Automatic sorting is paused"));
         };
         Check("ApplyChatsBox").IsCheckedChanged += (_, _) => { if (!updating) RenderChecks(); };
         this.FindControl<TextBox>("Search")!.TextChanged += (_, _) => Render();
@@ -97,7 +103,7 @@ internal sealed partial class DesktopWindow : Window
         Button("BottomButton").Click += (_, _) => MoveSelected(1, true);
         Button("HideButton").Click += (_, _) => Close();
         Button("RestoreButton").Click += (_, _) => Restore();
-        Button("ApplyButton").Click += async (_, _) => await RunAsync(ApplyAsync);
+        Button("ApplyButton").Click += async (_, _) => await RunAsync(ApplyAsync, refreshOnError: true);
         Opened += async (_, _) =>
         {
             await RefreshAsync();
@@ -116,23 +122,23 @@ internal sealed partial class DesktopWindow : Window
         updating = true;
         string status = Localization.SourceText(Label("StatusText").Text ?? "");
         FlowDirection = Localization.IsRightToLeft ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
-        Title = Localization.Text("聊天排序工具");
+        Title = Localization.Text("Codex Sidebar Sorter");
         foreach (var (name, text) in new (string, string)[]
         {
-            ("Heading","聊天排序"),("LanguageLabel","语言"),("ScopeLabel","范围"),("ListTitle","项目与项目内对话"),
-            ("NameColumn","名称"),("DetailColumn","对话 / 状态"),("TimeColumn","最近更新"),("SortHeading","排序与变更"),
-            ("ProjectModeLabel","第一层 · 项目"),("ChatModeLabel","第二层 · 项目内对话"),
-            ("SharedModeLabel","项目内对话与最近聊天共用排序模式"),("CheckHeading","提交前检查")
+            ("Heading","Sidebar Sorter"),("LanguageLabel","Language"),("ScopeLabel","Scope"),("ListTitle","Projects and their chats"),
+            ("NameColumn","Name"),("DetailColumn","Chats / status"),("TimeColumn","Last updated"),("SortHeading","Sorting and changes"),
+            ("ProjectModeLabel","Projects (section)"),("ChatModeLabel","Chats within each project"),
+            ("SharedModeLabel","Project chats and Recents share the saved sort mode"),("CheckHeading","Before applying")
         }) Label(name).Text = Localization.Text(text);
         foreach (var (name, text) in new (string, string)[]
         {
-            ("RefreshButton","刷新"),("UpButton","↑ 上移"),("DownButton","↓ 下移"),("TopButton","移至顶部"),
-            ("BottomButton","移至底部"),("RestoreButton","还原预览"),("HideButton","收起"),("ApplyButton","应用到侧栏")
+            ("RefreshButton","Refresh"),("UpButton","\u2191 Move up"),("DownButton","\u2193 Move down"),("TopButton","To top"),
+            ("BottomButton","To bottom"),("RestoreButton","Reset preview"),("HideButton","Hide"),("ApplyButton","Apply to sidebar")
         }) Button(name).Content = Localization.Text(text);
-        Check("AutomaticBox").Content = Localization.Text("自动保持名称升序");
+        Check("AutomaticBox").Content = Localization.Text("Keep names sorted A to Z");
         Check("AutomaticBox").IsChecked = app.Settings.AutomaticNameSorting;
-        Check("ApplyChatsBox").Content = Localization.Text("同时应用项目内对话排序");
-        this.FindControl<TextBox>("Search")!.PlaceholderText = Localization.Text("搜索");
+        Check("ApplyChatsBox").Content = Localization.Text("Also sort chats in each project");
+        this.FindControl<TextBox>("Search")!.PlaceholderText = Localization.Text("Search");
         int projectsMode = Box("ProjectModeBox").SelectedIndex;
         int chatsMode = Box("ChatModeBox").SelectedIndex;
         Box("ProjectModeBox").ItemsSource = ModeKeys.Select(Localization.Text).ToArray();
@@ -150,46 +156,85 @@ internal sealed partial class DesktopWindow : Window
 
     public Task RefreshAsync() => RunAsync(async () =>
     {
-        string? selected = Scope?.Id;
+        needsRefresh = true;
+        SortScope? selected = loadedScope;
         scopes = await service.RefreshAsync();
         List<SortRow> projects = await service.GetRowsAsync(scopes[0]);
         workspace = WorkspacePreview.Create(service.Projects, projects, await service.ReadCatalogAsync());
         updating = true;
         Box("ScopeBox").ItemsSource = scopes;
-        Box("ScopeBox").SelectedIndex = Math.Max(0, scopes.FindIndex(scope => scope.Id == selected));
+        Box("ScopeBox").SelectedIndex = Math.Max(0, scopes.FindIndex(scope =>
+            selected != null && scope.Id == selected.Id && scope.Kind == selected.Kind
+            && scope.HostId == selected.HostId && scope.Source == selected.Source));
         updating = false;
         await LoadScopeAsync();
+        needsRefresh = false;
         if (expanded.Count == 0 && workspace.Groups.FirstOrDefault(group => group.Chats.Count > 0) is ProjectGroup first)
         {
             expanded.Add(first.Scope.Id);
             Render();
         }
-        SetStatus(app.Status.Length > 0 ? app.Status : Localization.Text("已连接"));
+        if (workspace.Problems.Count > 0)
+            SetStatus(string.Join("\n", workspace.Problems.Values.Distinct()), true);
+        else
+            SetStatus(app.Status.Length > 0 ? app.Status : Localization.Text("Connected"));
     });
 
-    private async Task RunAsync(Func<Task> action)
+    private async Task RunAsync(Func<Task> action, bool refreshOnError = false)
     {
         if (busy || app.IsClosing) return;
         busy = true;
+        UpdateControls();
         await app.OperationGate.WaitAsync();
-        Button("ApplyButton").IsEnabled = false;
         try
         {
             await using var lease = await BackgroundClient.AcquireAsync();
             await action();
         }
-        catch (Exception error) { SetStatus(error.Message, true); }
-        finally { app.OperationGate.Release(); busy = false; Button("ApplyButton").IsEnabled = true; }
+        catch (Exception error)
+        {
+            if (refreshOnError) needsRefresh = true;
+            SetStatus(error.Message, true);
+        }
+        finally
+        {
+            app.OperationGate.Release();
+            busy = false;
+            UpdateControls();
+        }
     }
 
     private async Task LoadScopeAsync()
     {
-        if (Scope?.Kind == "section")
+        SortScope? scope = Scope;
+        loadedScope = null;
+        sectionRows = [];
+        originalSectionRows = [];
+        if (scope?.Kind == "section")
         {
-            sectionRows = await service.GetRowsAsync(Scope);
+            Render();
+            sectionRows = await service.GetRowsAsync(scope);
             originalSectionRows = sectionRows.ToList();
         }
+        loadedScope = scope;
         SortPreview();
+    }
+
+    private void UpdateControls()
+    {
+        bool ready = !busy && !needsRefresh && loadedScope != null && Scope == loadedScope;
+        Box("ScopeBox").IsEnabled = !busy && !needsRefresh;
+        Box("LanguageBox").IsEnabled = !busy;
+        Box("ProjectModeBox").IsEnabled = ready && Scope?.Kind == "projects" && tab != 1;
+        Box("ChatModeBox").IsEnabled = ready;
+        Check("ApplyChatsBox").IsEnabled = ready;
+        Check("AutomaticBox").IsEnabled = !busy;
+        Button("RefreshButton").IsEnabled = !busy;
+        foreach (string name in new[] { "ProjectsTab", "ChatsTab", "AllTab" })
+            Button(name).IsEnabled = !busy;
+        foreach (string name in new[] { "UpButton", "DownButton", "TopButton", "BottomButton", "RestoreButton" })
+            Button(name).IsEnabled = ready;
+        Button("ApplyButton").IsEnabled = ready && (Scope?.Kind != "project" || Groups().Any(group => group.IsLoaded));
     }
 
     private void ChangeModes()
@@ -206,7 +251,7 @@ internal sealed partial class DesktopWindow : Window
         updating = true;
         Check("AutomaticBox").IsChecked = false;
         updating = false;
-        SetStatus(Localization.Text("自动排序已暂停"));
+        SetStatus(Localization.Text("Automatic sorting is paused"));
     }
 
     private void SortPreview()
@@ -220,7 +265,7 @@ internal sealed partial class DesktopWindow : Window
     private IEnumerable<ProjectGroup> Groups() => Scope?.Kind == "project"
         ? workspace?.Groups.Where(group => group.Scope.Id == Scope.Id) ?? [] : workspace?.Groups ?? [];
 
-    private List<ProjectGroup> ChangedGroups() => Groups().Where(group => group.Scope.Source == "codex"
+    private List<ProjectGroup> ChangedGroups() => Groups().Where(group => group.IsLoaded && group.Scope.Source == "codex"
         && !group.Chats.Select(SorterService.RowKey).SequenceEqual(group.OriginalChats.Select(SorterService.RowKey))).ToList();
 
     private void Render()
@@ -251,17 +296,17 @@ internal sealed partial class DesktopWindow : Window
         }
         RowList.ItemsSource = rows;
         RowList.SelectedItem = rows.FirstOrDefault(row => row.Entry.Key == selected);
-        Button("ProjectsTab").Content = Localization.Text("项目") + " " + workspace.Groups.Count;
-        Button("ChatsTab").Content = Localization.Text("对话") + " " + workspace.ChatCount;
-        Button("AllTab").Content = Localization.Text("全部") + " " + (workspace.Groups.Count + workspace.ChatCount);
+        Button("ProjectsTab").Content = Localization.Text("Projects") + " " + workspace.Groups.Count;
+        Button("ChatsTab").Content = Localization.Text("Chats") + " " + workspace.ChatCount;
+        Button("AllTab").Content = Localization.Text("All") + " " + (workspace.Groups.Count + workspace.ChatCount);
         RenderChecks();
     }
 
     private SidebarDisplayRow Display(TreeEntry entry)
     {
         string marker = entry.IsProject ? expanded.Contains(entry.Row.Id) ? "▼" : "▶" : entry.Position.ToString();
-        string detail = entry.IsProject ? entry.Group!.Chats.Count + Localization.Text(" 个对话")
-            : tab == 1 ? entry.Group?.Row.Title ?? Localization.Text("未分组") : entry.Row.IsPinned ? Localization.Text("已置顶") : "";
+        string detail = entry.IsProject ? entry.Group!.Chats.Count + Localization.Text(" chats (count)")
+            : tab == 1 ? entry.Group?.Row.Title ?? Localization.Text("Ungrouped") : entry.Row.IsPinned ? Localization.Text("Pinned") : "";
         string updated = entry.Row.UpdatedAt is long timestamp ? DateTimeOffset.FromUnixTimeMilliseconds(timestamp).LocalDateTime.ToString("yyyy-MM-dd") : "";
         return new(entry, marker, entry.Row.Title, detail, updated, new Thickness(!entry.IsProject && tab != 1 ? 20 : 0, 0, 8, 0));
     }
@@ -280,14 +325,16 @@ internal sealed partial class DesktopWindow : Window
         List<PreviewChange> changes = Scope?.Kind == "section"
             ? sectionRows.Select((row, index) => new PreviewChange(row.Title,
                 originalSectionRows.FindIndex(original => SorterService.RowKey(original) == SorterService.RowKey(row)) + 1,
-                index + 1, Localization.Text("对话"))).Where(change => change.Before != change.After).ToList()
+                index + 1, Localization.Text("Chats"))).Where(change => change.Before != change.After).ToList()
             : workspace.Changes(Scope?.Kind == "projects" && tab != 1, includeChats ? Groups() : []);
-        Label("Pending").Text = changes.Count + Localization.Text(" 处变更待提交");
-        Label("ReadCheck").Text = workspace.Groups.Count + Localization.Text(" 个项目") + " · " + workspace.ChatCount + Localization.Text(" 条对话");
+        Label("Pending").Text = changes.Count + Localization.Text(" pending changes");
+        Label("ReadCheck").Text = workspace.Groups.Count + Localization.Text(" projects") + " · " + workspace.ChatCount + Localization.Text(" chats");
+        if (workspace.Problems.Count > 0)
+            Label("ReadCheck").Text += " · " + Localization.Text("Some chats are temporarily unavailable. Refresh the list.");
         Label("PlanCheck").Text = Scope?.ToString() ?? "";
         this.FindControl<ItemsControl>("Changes")!.ItemsSource = changes.Select(change => change.Title + "  " + change.Before + " → " + change.After).ToList();
         Check("ApplyChatsBox").IsVisible = Scope?.Kind == "projects";
-        Box("ProjectModeBox").IsEnabled = Scope?.Kind == "projects" && tab != 1;
+        UpdateControls();
     }
 
     private void MoveSelected(int direction, bool edge)
@@ -303,9 +350,10 @@ internal sealed partial class DesktopWindow : Window
         MoveRow(source, source with { Row = movable[to] });
     }
 
-    private bool CanMove(TreeEntry source, TreeEntry target) => !busy && source.Key != target.Key
+    private bool CanMove(TreeEntry source, TreeEntry target) => !busy && !needsRefresh && Scope == loadedScope && source.Key != target.Key
         && (Scope?.Kind == "section" || source.IsProject && target.IsProject && source.Group?.CanReorder == true && target.Group?.CanReorder == true
-            || !source.IsProject && !target.IsProject && source.Group != null && source.Group == target.Group && !source.Row.IsPinned && !target.Row.IsPinned);
+            || !source.IsProject && !target.IsProject && source.Group != null && source.Group == target.Group
+            && source.Group.IsLoaded && source.Group.Scope.Source == "codex" && !source.Row.IsPinned && !target.Row.IsPinned);
 
     private void MoveRow(TreeEntry source, TreeEntry target)
     {
@@ -327,6 +375,7 @@ internal sealed partial class DesktopWindow : Window
         updating = true;
         Box(source.IsProject ? "ProjectModeBox" : "ChatModeBox").SelectedIndex = 6;
         updating = false;
+        app.SaveSettings(app.Settings with { ProjectSortMode = ProjectMode, ChatSortMode = ChatMode });
         Render();
     }
 
@@ -364,32 +413,37 @@ internal sealed partial class DesktopWindow : Window
         Box("ProjectModeBox").SelectedIndex = 6;
         Box("ChatModeBox").SelectedIndex = 6;
         updating = false;
+        app.SaveSettings(app.Settings with { ProjectSortMode = ProjectMode, ChatSortMode = ChatMode });
         Render();
     }
 
     private async Task ApplyAsync()
     {
-        if (workspace == null || Scope == null) return;
-        if (Scope.Kind == "projects")
+        SortScope? scope = loadedScope;
+        if (workspace == null || scope == null || scope != Scope || needsRefresh) return;
+        if (scope.Kind == "projects")
         {
             bool includeChats = Check("ApplyChatsBox").IsChecked == true || tab == 1;
             List<ProjectGroup> changed = includeChats ? ChangedGroups() : [];
             bool projectsChanged = tab != 1 && workspace.Changes(true, []).Count > 0;
-            bool modeChanged = includeChats && service.Snapshot["sidebarPreferences"]?["sorting"]?["chats"]?.GetValue<string>() != (ChatMode == 4 ? "updated_at" : "manual");
-            if (!projectsChanged && changed.Count == 0 && !modeChanged) { SetStatus(Localization.Text("当前顺序已是目标顺序")); return; }
+            bool modeChanged = includeChats && Groups().Any(group => group.IsLoaded && group.Scope.Source == "codex" && group.Chats.Count > 0)
+                && service.Snapshot["sidebarPreferences"]?["sorting"]?["chats"]?.GetValue<string>() != "manual";
+            if (!projectsChanged && changed.Count == 0 && !modeChanged) { SetStatus(Localization.Text("The requested order is already applied")); return; }
             await service.ApplyWorkspaceAsync(workspace.Groups.Where(group => group.CanReorder).Select(group => group.Row).ToList(), projectsChanged,
-                changed.Select(group => new ProjectChatPlan(group.Scope, group.Chats.Where(row => !row.IsPinned).ToList())).ToList(), ChatMode == 4, applyChatMode: includeChats);
+                changed.Select(group => new ProjectChatPlan(group.Scope, group.Chats.Where(row => !row.IsPinned).ToList())).ToList(), recentMode: false, applyChatMode: modeChanged);
             workspace.Accept(projectsChanged, changed);
         }
         else
         {
-            List<SortRow> rows = Scope.Kind == "section" ? sectionRows : Groups().Single().Chats.Where(row => !row.IsPinned).ToList();
-            await service.ApplyAsync(Scope, rows, ChatMode == 4);
-            if (Scope.Kind == "section") originalSectionRows = sectionRows.ToList();
+            if (scope.Kind == "project" && !Groups().Any(group => group.IsLoaded)) return;
+            List<SortRow> rows = scope.Kind == "section" ? sectionRows : Groups().Single().Chats.Where(row => !row.IsPinned).ToList();
+            if (rows.Count == 0) { SetStatus(Localization.Text("The requested order is already applied")); return; }
+            await service.ApplyAsync(scope, rows, recentMode: false);
+            if (scope.Kind == "section") originalSectionRows = sectionRows.ToList();
             else workspace.Accept(false, Groups());
         }
         Render();
-        SetStatus(Localization.Text("已应用到客户端侧栏"));
+        SetStatus(Localization.Text("Applied to the Codex sidebar"));
     }
 
     public void SetStatus(string text, bool error = false)
