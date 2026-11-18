@@ -17,8 +17,9 @@ internal sealed record SidebarDisplayRow(TreeEntry Entry, string Marker, string 
 internal sealed partial class DesktopWindow : Window
 {
     private static readonly string[] ModeKeys = ["Name A to Z", "Name Z to A", "Natural numeric order", "Reverse natural order", "Recently updated first", "Oldest update first", "Manual order"];
+    private static readonly ClientSystem?[] Systems = [null, ClientSystem.Windows, ClientSystem.MacOS, ClientSystem.Linux];
     private readonly DesktopApp app;
-    private readonly SorterService service = new();
+    private SorterService service = new();
     private readonly HashSet<string> expanded = new();
     private WorkspacePreview? workspace;
     private List<SortScope> scopes = [];
@@ -33,6 +34,9 @@ internal sealed partial class DesktopWindow : Window
     private SidebarDisplayRow? dragRow;
     private Point dragOrigin;
     private int tab;
+    private int systemIndex;
+    private ClientSystem SelectedSystem => Systems[systemIndex] ?? NativeBridge.CurrentSystem;
+    private bool CanUseSelectedSystem => SelectedSystem == NativeBridge.CurrentSystem;
     private SortScope? Scope => Box("ScopeBox").SelectedItem as SortScope;
     private ComboBox Box(string name) => this.FindControl<ComboBox>(name)!;
     private Button Button(string name) => this.FindControl<Button>(name)!;
@@ -63,6 +67,17 @@ internal sealed partial class DesktopWindow : Window
             args.Handled = true;
         });
         SetCaptions();
+        Box("SystemBox").SelectionChanged += async (_, _) =>
+        {
+            int index = Box("SystemBox").SelectedIndex;
+            if (updating || busy || index < 0 || index == systemIndex) return;
+            systemIndex = index;
+            service = new SorterService(system: SelectedSystem);
+            ClearWorkspace();
+            UpdateControls();
+            SetStatus("");
+            await RefreshAsync();
+        };
         Box("LanguageBox").SelectionChanged += (_, _) =>
         {
             if (updating || Box("LanguageBox").SelectedItem is not LanguageChoice choice) return;
@@ -125,7 +140,7 @@ internal sealed partial class DesktopWindow : Window
         Title = Localization.Text("Codex Sidebar Sorter");
         foreach (var (name, text) in new (string, string)[]
         {
-            ("Heading","Sidebar Sorter"),("LanguageLabel","Language"),("ScopeLabel","Scope"),("ListTitle","Projects and their chats"),
+            ("Heading","Sidebar Sorter"),("SystemLabel","System"),("LanguageLabel","Language"),("ScopeLabel","Scope"),("ListTitle","Projects and their chats"),
             ("NameColumn","Name"),("DetailColumn","Chats / status"),("TimeColumn","Last updated"),("SortHeading","Sorting and changes"),
             ("ProjectModeLabel","Projects (section)"),("ChatModeLabel","Chats within each project"),
             ("SharedModeLabel","Project chats and Recents share the saved sort mode"),("CheckHeading","Before applying")
@@ -145,13 +160,35 @@ internal sealed partial class DesktopWindow : Window
         Box("ChatModeBox").ItemsSource = ModeKeys.Select(Localization.Text).ToArray();
         Box("ProjectModeBox").SelectedIndex = projectsMode >= 0 ? projectsMode : app.Settings.ProjectSortMode;
         Box("ChatModeBox").SelectedIndex = chatsMode >= 0 ? chatsMode : app.Settings.ChatSortMode;
+        Box("SystemBox").ItemsSource = Systems.Select(system => system is ClientSystem explicitSystem
+            ? NativeBridge.SystemName(explicitSystem)
+            : string.Format(Localization.Text("Auto ({0})"), NativeBridge.SystemName(NativeBridge.CurrentSystem))).ToArray();
+        Box("SystemBox").SelectedIndex = systemIndex;
         Box("LanguageBox").ItemsSource = Localization.Choices;
         Box("LanguageBox").SelectedItem = Localization.Choices.First(choice => choice.Code == app.Settings.Language);
         SortScope? selectedScope = Scope;
         Box("ScopeBox").ItemsSource = scopes.ToArray();
         Box("ScopeBox").SelectedItem = selectedScope;
         Label("StatusText").Text = Localization.Text(status);
+        if (!CanUseSelectedSystem) SetStatus("");
         updating = false;
+    }
+
+    private void ClearWorkspace()
+    {
+        needsRefresh = true;
+        workspace = null;
+        loadedScope = null;
+        scopes = [];
+        sectionRows = [];
+        originalSectionRows = [];
+        expanded.Clear();
+        Box("ScopeBox").ItemsSource = scopes;
+        RowList.ItemsSource = null;
+        foreach (var (button, label) in new[] { ("ProjectsTab", "Projects"), ("ChatsTab", "Chats"), ("AllTab", "All") })
+            Button(button).Content = Localization.Text(label) + " 0";
+        foreach (string label in new[] { "Pending", "ReadCheck", "PlanCheck" }) Label(label).Text = "";
+        this.FindControl<ItemsControl>("Changes")!.ItemsSource = null;
     }
 
     public Task RefreshAsync() => RunAsync(async () =>
@@ -182,7 +219,7 @@ internal sealed partial class DesktopWindow : Window
 
     private async Task RunAsync(Func<Task> action, bool refreshOnError = false)
     {
-        if (busy || app.IsClosing) return;
+        if (busy || app.IsClosing || !CanUseSelectedSystem) return;
         busy = true;
         UpdateControls();
         await app.OperationGate.WaitAsync();
@@ -225,11 +262,12 @@ internal sealed partial class DesktopWindow : Window
         bool ready = !busy && !needsRefresh && loadedScope != null && Scope == loadedScope;
         Box("ScopeBox").IsEnabled = !busy && !needsRefresh;
         Box("LanguageBox").IsEnabled = !busy;
+        Box("SystemBox").IsEnabled = !busy;
         Box("ProjectModeBox").IsEnabled = ready && Scope?.Kind == "projects" && tab != 1;
         Box("ChatModeBox").IsEnabled = ready;
         Check("ApplyChatsBox").IsEnabled = ready;
-        Check("AutomaticBox").IsEnabled = !busy;
-        Button("RefreshButton").IsEnabled = !busy;
+        Check("AutomaticBox").IsEnabled = !busy && CanUseSelectedSystem;
+        Button("RefreshButton").IsEnabled = !busy && CanUseSelectedSystem;
         foreach (string name in new[] { "ProjectsTab", "ChatsTab", "AllTab" })
             Button(name).IsEnabled = !busy;
         foreach (string name in new[] { "UpButton", "DownButton", "TopButton", "BottomButton", "RestoreButton" })
@@ -448,6 +486,11 @@ internal sealed partial class DesktopWindow : Window
 
     public void SetStatus(string text, bool error = false)
     {
+        if (!CanUseSelectedSystem)
+        {
+            text = NativeBridge.LocalSystemPrompt();
+            error = false;
+        }
         Label("StatusText").Text = text;
         Label("StatusText").Foreground = new SolidColorBrush(Color.Parse(error ? "#A02923" : "#006C4D"));
     }

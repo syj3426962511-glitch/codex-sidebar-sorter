@@ -20,7 +20,7 @@ internal sealed record CatalogChat(SortRow Row, string? ProjectId);
 internal sealed record CatalogResult(List<CatalogChat> Chats, Dictionary<string, string> Problems);
 internal sealed record ProjectChatPlan(SortScope Scope, List<SortRow> Rows);
 
-internal sealed class SorterService(CancellationToken cancellationToken = default)
+internal sealed class SorterService(CancellationToken cancellationToken = default, ClientSystem? system = null)
 {
     public JsonObject Snapshot { get; private set; } = new();
     public List<JsonObject> Projects { get; private set; } = [];
@@ -29,7 +29,7 @@ internal sealed class SorterService(CancellationToken cancellationToken = defaul
 
     public async Task<List<SortScope>> RefreshAsync()
     {
-        using var bridge = await NativeBridge.ConnectAsync(cancellationToken);
+        using var bridge = await NativeBridge.ConnectAsync(cancellationToken, system);
         await ReadSnapshotAsync(bridge);
         var scopes = new List<SortScope> { new("projects", "threads", Localization.Text("Project list")), new("section", "pinned", Localization.Text("Pinned chats")) };
         foreach (JsonNode? section in Snapshot["sections"]!.AsArray())
@@ -167,7 +167,7 @@ internal sealed class SorterService(CancellationToken cancellationToken = defaul
     {
         if (chatPlans.Any(plan => plan.Scope.Source != "codex"))
             throw new InvalidOperationException(Localization.Text("Batch sorting supports chats within Codex projects."));
-        using var bridge = await NativeBridge.ConnectAsync(cancellationToken);
+        using var bridge = await NativeBridge.ConnectAsync(cancellationToken, system);
         await ReadSnapshotAsync(bridge);
         if (applyProjects)
             RequireSameIds(projectRows, await GetRowsAsync(new("projects", "threads", "")));
@@ -200,7 +200,7 @@ internal sealed class SorterService(CancellationToken cancellationToken = defaul
             }
             else
             {
-                using var bridge = await NativeBridge.ConnectAsync(cancellationToken);
+                using var bridge = await NativeBridge.ConnectAsync(cancellationToken, system);
                 string? cursor = null;
                 var visited = new HashSet<string>(StringComparer.Ordinal);
                 do
@@ -229,7 +229,7 @@ internal sealed class SorterService(CancellationToken cancellationToken = defaul
 
     public async Task ApplyAsync(SortScope scope, List<SortRow> rows, bool recentMode)
     {
-        using var bridge = await NativeBridge.ConnectAsync(cancellationToken);
+        using var bridge = await NativeBridge.ConnectAsync(cancellationToken, system);
         await ReadSnapshotAsync(bridge);
         List<SortRow> currentRows = await GetRowsAsync(scope);
         if (!recentMode || scope.Kind == "projects" || scope.Kind == "section" && scope.Id != "pinned")

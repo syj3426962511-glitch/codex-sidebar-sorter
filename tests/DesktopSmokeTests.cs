@@ -183,11 +183,37 @@ internal sealed partial class DesktopWindow
         report["languagesRendered"] = languages;
         Box("LanguageBox").SelectedIndex = 2;
 
+        ComboBox systemBox = Box("SystemBox");
+        DesktopSmokeTests.Require(systemBox.SelectedIndex == 0 &&
+            systemBox.SelectedItem?.ToString() == $"Auto ({NativeBridge.SystemName(NativeBridge.CurrentSystem)})",
+            "The desktop opens with the detected native system.");
+        var selectedSystems = new JsonArray();
+        for (int index = 1; index < Systems.Length; index++)
+        {
+            ClientSystem candidate = Systems[index]!.Value;
+            if (candidate == NativeBridge.CurrentSystem) continue;
+            systemBox.SelectedIndex = index;
+            DesktopSmokeTests.Require(SelectedSystem == candidate && workspace == null && RowList.Items.Count == 0
+                && !Button("ApplyButton").IsEnabled && !Button("RefreshButton").IsEnabled
+                && Label("StatusText").Text == NativeBridge.LocalSystemPrompt(), "Switching away clears the preview and disables native writes.");
+            selectedSystems.Add(new JsonObject { ["system"] = NativeBridge.SystemName(candidate), ["connected"] = false });
+        }
+        await Task.Delay(200);
+        SaveScreenshot(Path.Combine(output, "desktop-other-system.png"));
+        systemBox.SelectedIndex = Array.FindIndex(Systems, system => system == NativeBridge.CurrentSystem);
+        await DesktopSmokeTests.WaitForAsync(() => !busy && workspace?.ChatCount == 360, "The matching system reloads the native projects and chats.");
+        selectedSystems.Add(new JsonObject { ["system"] = NativeBridge.SystemName(SelectedSystem), ["connected"] = true });
+        report["selectedSystems"] = selectedSystems;
+        report["explicitSystemReconnected"] = true;
+        await Task.Delay(200);
+        SaveScreenshot(Path.Combine(output, "desktop-system-selected.png"));
+
         Box("ProjectModeBox").SelectedIndex = 1;
         Box("ChatModeBox").SelectedIndex = 1;
         DesktopSmokeTests.Require(!app.Settings.AutomaticNameSorting, "A custom rule pauses automatic name sorting.");
         await RunAsync(ApplyAsync);
         DesktopSmokeTests.Require(Label("StatusText").Text == "Applied to the Codex sidebar" && !server.IsSortedByName(), "The normal application handler applies the chosen descending order.");
+        report["selectedSystemSorted"] = true;
         int writes = server.WriteCount;
         await RunAsync(ApplyAsync);
         DesktopSmokeTests.Require(server.WriteCount == writes, "An unchanged application makes no native writes.");
@@ -245,6 +271,9 @@ internal sealed partial class DesktopWindow
         await RefreshAsync();
         SaveScreenshot(Path.Combine(output, "desktop-automatic-restored.png"));
         report["automaticSortingResumes"] = true;
+        systemBox.SelectedIndex = 0;
+        await DesktopSmokeTests.WaitForAsync(() => !busy && workspace != null, "Selecting automatic detection reconnects to the native system.");
+        report["returnedToAutomaticSystem"] = true;
 
         server.IncludePagedHistory = true;
         try

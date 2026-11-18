@@ -4,14 +4,16 @@
         x:Class="SidebarSorter.DesktopWindow" Width="1240" Height="860"
         MinWidth="980" MinHeight="680" Title="Codex Sidebar Sorter">
   <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" Margin="24" RowSpacing="16">
-    <Grid ColumnDefinitions="Auto,*,Auto,210" ColumnSpacing="14">
+    <Grid ColumnDefinitions="Auto,*,Auto,170,Auto,170" ColumnSpacing="14">
       <Image Source="avares://SidebarSorter/Assets/logo.png" Width="42" Height="42" />
       <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
         <TextBlock Name="Heading" Text="Sidebar Sorter" FontSize="26" FontWeight="Bold" />
         <TextBlock Name="VersionText" VerticalAlignment="Center" />
       </StackPanel>
-      <TextBlock Grid.Column="2" Name="LanguageLabel" Text="Language" VerticalAlignment="Center" />
-      <ComboBox Grid.Column="3" Name="LanguageBox" />
+      <TextBlock Grid.Column="2" Name="SystemLabel" Text="System" VerticalAlignment="Center" />
+      <ComboBox Grid.Column="3" Name="SystemBox" AutomationProperties.Name="{Binding Text, ElementName=SystemLabel}" />
+      <TextBlock Grid.Column="4" Name="LanguageLabel" Text="Language" VerticalAlignment="Center" />
+      <ComboBox Grid.Column="5" Name="LanguageBox" />
     </Grid>
     <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto,*,260,Auto" ColumnSpacing="10">
       <Button Name="ProjectsTab" />

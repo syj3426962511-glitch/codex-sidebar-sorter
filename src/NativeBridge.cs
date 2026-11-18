@@ -7,6 +7,8 @@ using System.Text.Json.Nodes;
 
 namespace SidebarSorter;
 
+internal enum ClientSystem { Windows, MacOS, Linux }
+
 internal sealed class NativeBridge : IDisposable
 {
     private const int MaximumFrameBytes = 8 * 1024 * 1024;
@@ -17,6 +19,16 @@ internal sealed class NativeBridge : IDisposable
     private int nextRequestId;
 
     public HashSet<string> Tools { get; } = new(StringComparer.Ordinal);
+
+    internal static ClientSystem CurrentSystem => OperatingSystem.IsWindows() ? ClientSystem.Windows
+        : OperatingSystem.IsMacOS() ? ClientSystem.MacOS
+        : OperatingSystem.IsLinux() ? ClientSystem.Linux
+        : throw new PlatformNotSupportedException();
+
+    internal static string SystemName(ClientSystem system) => system == ClientSystem.MacOS ? "macOS" : system.ToString();
+
+    internal static string LocalSystemPrompt() => string.Format(
+        Localization.Text("This computer runs {0}. Select {0} to connect to Codex."), SystemName(CurrentSystem));
 
     public static string DataRoot => Environment.GetEnvironmentVariable("CODEX_HOME")
         ?? Environment.GetEnvironmentVariable("CODEX_HOME", EnvironmentVariableTarget.User)
@@ -29,10 +41,12 @@ internal sealed class NativeBridge : IDisposable
         this.cancellationToken = cancellationToken;
     }
 
-    public static async Task<NativeBridge> ConnectAsync(CancellationToken cancellationToken = default)
+    public static async Task<NativeBridge> ConnectAsync(CancellationToken cancellationToken = default, ClientSystem? system = null)
     {
+        ClientSystem target = system ?? CurrentSystem;
+        if (target != CurrentSystem) throw new InvalidOperationException(LocalSystemPrompt());
         string caller = FindCallerThread();
-        string[] candidates = FindEndpoints();
+        string[] candidates = FindEndpoints(target);
         Exception? lastError = null;
         foreach (string candidate in candidates)
         {
@@ -41,7 +55,7 @@ internal sealed class NativeBridge : IDisposable
             {
                 using var connectionTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                 connectionTimeout.CancelAfter(800);
-                if (OperatingSystem.IsWindows())
+                if (target == ClientSystem.Windows)
                 {
                     var pipe = new NamedPipeClientStream(".", Path.GetFileName(candidate), PipeDirection.InOut, PipeOptions.Asynchronous);
                     stream = pipe;
@@ -75,10 +89,12 @@ internal sealed class NativeBridge : IDisposable
         throw new IOException(Localization.Text("Codex is not connected yet. Open Codex and click Refresh."), lastError);
     }
 
-    internal static string[] FindEndpoints()
+    internal static string[] FindEndpoints() => FindEndpoints(CurrentSystem);
+
+    private static string[] FindEndpoints(ClientSystem target)
     {
-        if (OperatingSystem.IsWindows()) return Directory.GetFiles(@"\\.\pipe\", "codex-app-tools-*");
-        string directory = OperatingSystem.IsMacOS() ? "/tmp/codex-app-tools" : "/tmp/codex-app-tools-" + geteuid();
+        if (target == ClientSystem.Windows) return Directory.GetFiles(@"\\.\pipe\", "codex-app-tools-*");
+        string directory = target == ClientSystem.MacOS ? "/tmp/codex-app-tools" : "/tmp/codex-app-tools-" + geteuid();
         return Directory.Exists(directory) ? Directory.GetFiles(directory, "*.sock") : [];
     }
 

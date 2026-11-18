@@ -39,6 +39,8 @@ Closing the window leaves the worker and tray active. On Windows, click the tray
 
 Select **Language** to switch from the default English interface. The installer, release notes, public screenshots, and examples use English by default.
 
+Use **System** to select the local Windows, macOS, or Linux connection. **Auto** follows the current computer. Changing the selection clears the current preview. Select the system shown in the status message to reconnect and sort on that computer.
+
 ## Updating and removal
 
 Install the new companion in the same destination to update it. Windows removes the companion through **Installed apps**. Linux reuses its installer with `--uninstall --prefix` and the installed directory. Mac candidates can be removed by quitting the companion and using their installer with `--uninstall --prefix` or removing the companion app bundle through Finder.
