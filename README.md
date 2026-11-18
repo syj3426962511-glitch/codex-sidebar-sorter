@@ -4,7 +4,7 @@ Codex Sidebar Sorter is an independent desktop companion for organizing projects
 
 ![Codex Sidebar Sorter showing English sample data](docs/assets/sidebar-sorter-english.png)
 
-[Download 1.4.3](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.3-preview) · [Installation and user guide](docs/07-delivery.md) · [Compatibility and validation](docs/04-compatibility.md) · [Agensi](https://www.agensi.io/skills/codex-sidebar-sorter-for-windows)
+[Download 1.4.3](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.3-preview) · [Installation and user guide](docs/07-delivery.md) · [Compatibility and validation](docs/04-compatibility.md) · [Agensi](https://www.agensi.io/skills/codex-sidebar-sorter)
 
 ## Start here
 

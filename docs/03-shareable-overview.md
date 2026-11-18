@@ -9,4 +9,4 @@ An independent desktop companion for sorting projects and chats in a compatible 
 
 Choose your package using the release and compatibility pages. If you want the optional agent guide, use the existing Agensi product page.
 
-[GitHub downloads](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases) · [User guide](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/blob/main/docs/07-delivery.md) · [Agensi](https://www.agensi.io/skills/codex-sidebar-sorter-for-windows)
+[GitHub downloads](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases) · [User guide](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/blob/main/docs/07-delivery.md) · [Agensi](https://www.agensi.io/skills/codex-sidebar-sorter)

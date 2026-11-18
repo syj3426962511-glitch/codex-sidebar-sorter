@@ -39,14 +39,24 @@
     "productivity"
   ],
   "docs_url": "https://github.com/syj3426962511-glitch/codex-sidebar-sorter",
-  "listing_url": "https://www.agensi.io/skills/codex-sidebar-sorter-for-windows",
+  "listing_url": "https://www.agensi.io/skills/codex-sidebar-sorter",
   "marketplace_edit_url": "https://www.agensi.io/dashboard/submit/7315b1b4-cae3-4871-b7d5-9a6d34189c0d",
-  "publication_status": "prepared",
+  "publication_status": "live",
   "last_confirmed_version": {
-    "name": "Codex Sidebar Sorter for Windows",
-    "version": "1.4.2",
-    "price_usd": 9.5
+    "name": "Codex Sidebar Sorter",
+    "slug": "codex-sidebar-sorter",
+    "version": "1.4.3",
+    "price_usd": 9.5,
+    "security_status": "approved"
   },
   "delivery_package": "CodexSidebarSorter-1.4.3-AgentSkill.zip",
-  "public_downloads": "https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases"
+  "public_downloads": "https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases",
+  "compatibility": "Windows x64 and Ubuntu Linux x64 previews require a compatible, signed-in Codex Desktop on the same machine. The 1.4.3 Windows client lifecycle check used official Codex 26.1111.9265.0. Signed-in seven-mode Linux ordering was verified with 1.4.2 on Ubuntu 26.04.1 x64 and Codex 26.1111.21308.",
+  "known_limitations": "Intel and Apple Silicon Mac packages are installation previews. Signed-in 1.4.3 client ordering, distinct client-version replacement, and signed consumer distribution on Mac are pending.",
+  "requirements": [
+    "Windows x64 or compatible Ubuntu Linux x64",
+    "Compatible Codex Desktop signed in on the same computer"
+  ],
+  "requirement_note": "Install Codex Sidebar Sorter 1.4.3 on Windows x64 or compatible Ubuntu Linux x64. Open a compatible signed-in Codex Desktop on the same computer. The installer bundles the companion runtime.",
+  "marketplace_notes": "Creator access to the approved 1.4.3 skill was verified. The title and long description are live on the new slug. Seller-page Summary, Compatibility and Requirements still show legacy Windows-only metadata at the time of this read-back."
 }
