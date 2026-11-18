@@ -245,5 +245,18 @@ internal sealed partial class DesktopWindow
         await RefreshAsync();
         SaveScreenshot(Path.Combine(output, "desktop-automatic-restored.png"));
         report["automaticSortingResumes"] = true;
+
+        server.IncludePagedHistory = true;
+        try
+        {
+            await RefreshAsync();
+            ProjectGroup? history = workspace?.Groups.SingleOrDefault(group => group.Scope.Id == FixtureNativeServer.HistoryProjectId);
+            IEnumerable<string> expected = Enumerable.Range(1, FixtureNativeServer.HistoryChatCount).Select(index => $"history-{index}");
+            DesktopSmokeTests.Require(history?.IsLoaded == true && history.Chats.Select(row => row.Id).SequenceEqual(expected),
+                "Refresh must use the server page size and load every active history page.");
+            report["pagedHistoryChatsRead"] = history!.Chats.Count;
+            SaveScreenshot(Path.Combine(output, "desktop-paged-history.png"));
+        }
+        finally { server.IncludePagedHistory = false; }
     }
 }

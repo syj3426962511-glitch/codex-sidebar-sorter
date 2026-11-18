@@ -29,7 +29,7 @@ internal static class NativeEndpointProbe
             if (arguments.Contains("--read-lists"))
             {
                 JsonObject projects = await bridge.CallAsync("list_projects", new JsonObject());
-                JsonObject threads = await bridge.CallAsync("list_threads", new JsonObject { ["limit"] = 50 });
+                JsonObject threads = await bridge.CallAsync("list_threads", new JsonObject());
                 report["nativeProjectListAccessible"] = projects["projects"] != null;
                 report["nativeThreadListAccessible"] = threads["threads"] != null;
             }

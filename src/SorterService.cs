@@ -49,7 +49,7 @@ internal sealed class SorterService(CancellationToken cancellationToken = defaul
 
     private async Task ReadSnapshotAsync(NativeBridge bridge)
     {
-        JsonObject snapshot = await bridge.CallAsync("list_threads", new JsonObject { ["limit"] = 50 });
+        JsonObject snapshot = await bridge.CallAsync("list_threads", new JsonObject());
         JsonObject result = await bridge.CallAsync("list_projects", new JsonObject());
         if (snapshot["sections"] is not JsonArray || snapshot["threads"] is not JsonArray
             || snapshot["pinnedThreads"] is not JsonArray || result["projects"] is not JsonArray projectList)
@@ -205,7 +205,7 @@ internal sealed class SorterService(CancellationToken cancellationToken = defaul
                 var visited = new HashSet<string>(StringComparer.Ordinal);
                 do
                 {
-                    var arguments = new JsonObject { ["mode"] = "history", ["source"] = source, ["limit"] = 50 };
+                    var arguments = new JsonObject { ["mode"] = "history", ["source"] = source };
                     if (source == "codex") arguments["hostId"] = host;
                     if (cursor != null) arguments["cursor"] = cursor;
                     JsonObject page = await bridge.CallAsync("list_threads", arguments);

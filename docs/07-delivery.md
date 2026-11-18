@@ -43,4 +43,6 @@ Select **Language** to switch from the default English interface. The installer,
 
 Install the new companion in the same destination to update it. Windows removes the companion through **Installed apps**. Linux reuses its installer with `--uninstall --prefix` and the installed directory. Mac candidates can be removed by quitting the companion and using their installer with `--uninstall --prefix` or removing the companion app bundle through Finder.
 
+If companion 1.4.3 showed `list_threads (input schema)`, update to 1.4.4 and select **Refresh**. The companion loads local active history and follows the client's pages for available remote and ChatGPT history, with no fixed total chat count.
+
 If sorting pauses because a client version changed, open the normal Codex Desktop and select **Refresh**. Include the client version, companion version, operating system, and visible status when you report a problem. Use the [compatibility matrix](04-compatibility.md) to find the latest checked builds.

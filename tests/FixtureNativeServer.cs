@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IO.Pipes;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
@@ -9,6 +10,8 @@ namespace SidebarSorter;
 
 internal sealed class FixtureNativeServer : IDisposable
 {
+    public const string HistoryProjectId = "fixture-paged-history";
+    public const int HistoryChatCount = 125;
     private readonly CancellationTokenSource stopping = new();
     private readonly List<Task> connections = [];
     private readonly object modelLock = new();
@@ -25,6 +28,7 @@ internal sealed class FixtureNativeServer : IDisposable
     private readonly Dictionary<string, List<string>> sectionOrders = new();
     public int WriteCount { get; private set; }
     public string? UnavailableTool { get; set; }
+    public bool IncludePagedHistory { get; set; }
 
     public FixtureNativeServer()
     {
@@ -153,7 +157,8 @@ internal sealed class FixtureNativeServer : IDisposable
                 var descriptor = new JsonObject { ["namespace"] = "codex_app", ["name"] = name };
                 if (name == "list_threads")
                     descriptor["inputSchema"] = JsonNode.Parse("""
-                        {"type":"object","properties":{"limit":{"type":"integer"}}}
+                        {"type":"object","properties":{"limit":{"type":"integer"},"mode":{"type":"string"},
+                        "source":{"type":"string"},"hostId":{"type":"string"},"cursor":{"type":"string"}},"additionalProperties":false}
                         """);
                 catalog.Add(descriptor);
             }
@@ -162,17 +167,32 @@ internal sealed class FixtureNativeServer : IDisposable
         JsonObject parameters = request["params"]!.AsObject();
         string tool = parameters["tool"]!.GetValue<string>();
         JsonObject args = parameters["arguments"]!.AsObject();
+        bool success = true;
         JsonObject value;
         switch (tool)
         {
             case "list_projects":
-                value = new JsonObject { ["projects"] = new JsonArray(Projects.Select(project => (JsonNode)new JsonObject
+                var projectList = new JsonArray(Projects.Select(project => (JsonNode)new JsonObject
                 {
                     ["projectId"] = project.Id, ["projectKind"] = "local", ["label"] = project.Name,
                     ["path"] = Path.Combine(Root, project.Id), ["hostId"] = "local"
-                }).ToArray()) };
+                }).ToArray());
+                if (IncludePagedHistory)
+                    projectList.Add(new JsonObject { ["projectId"] = HistoryProjectId, ["label"] = "Research notes", ["projectKind"] = "chatgpt" });
+                value = new JsonObject { ["projects"] = projectList };
                 break;
             case "list_threads":
+                if (IncludePagedHistory && args.ContainsKey("limit"))
+                {
+                    success = false;
+                    value = new JsonObject { ["error"] = "The companion must use the server page size." };
+                    break;
+                }
+                if (IncludePagedHistory && args["mode"]?.GetValue<string>() == "history")
+                {
+                    value = ReadHistoryPage(args);
+                    break;
+                }
                 value = new JsonObject
                 {
                     ["threads"] = new JsonArray(Chats.Values.SelectMany(rows => rows).Take(50).Select(row => (JsonNode)new JsonObject
@@ -231,7 +251,23 @@ internal sealed class FixtureNativeServer : IDisposable
             default:
                 throw new InvalidOperationException("Unsupported fixture tool " + tool);
         }
-        return new JsonObject { ["success"] = true, ["contentItems"] = new JsonArray(new JsonObject { ["type"] = "inputText", ["text"] = value.ToJsonString() }) };
+        return new JsonObject { ["success"] = success, ["contentItems"] = new JsonArray(new JsonObject { ["type"] = "inputText", ["text"] = value.ToJsonString() }) };
+    }
+
+    private static JsonObject ReadHistoryPage(JsonObject args)
+    {
+        Require(args["source"]?.GetValue<string>() == "chatgpt" && !args.ContainsKey("hostId"), "ChatGPT history source.");
+        int start = int.Parse(args["cursor"]?.GetValue<string>() ?? "0", CultureInfo.InvariantCulture);
+        int count = Math.Min(30, HistoryChatCount - start);
+        int end = start + count;
+        return new JsonObject
+        {
+            ["threads"] = new JsonArray(Enumerable.Range(start + 1, count).Select(index => (JsonNode)new JsonObject
+            {
+                ["id"] = $"history-{index}", ["title"] = $"Research note {index}", ["projectId"] = HistoryProjectId
+            }).ToArray()),
+            ["nextCursor"] = end < HistoryChatCount ? end.ToString(CultureInfo.InvariantCulture) : null
+        };
     }
 
     public bool IsSortedByName()
