@@ -58,6 +58,6 @@
     "Compatible Codex Desktop signed in on the same computer"
   ],
   "requirement_note": "Install Codex Sidebar Sorter 1.4.3 on Windows x64 or compatible Ubuntu Linux x64, then open a compatible signed-in Codex Desktop on the same machine. The companion includes its runtime.",
-  "marketplace_notes": "The 1.4.4 English skill and seller fields are prepared. The confirmed live listing state is tracked separately.",
+  "marketplace_notes": "Agensi published version 1.4.3 on the confirmed product. The 1.4.4 upload is ready. The new creator OAuth session expired before authorization and no replacement was submitted. Legacy Windows-only seller fields remain visible.",
   "desktop_version": "1.4.3"
 }
