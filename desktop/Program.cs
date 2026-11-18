@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Threading;
 using Microsoft.Win32.SafeHandles;
 using System.IO.Pipes;
 using System.Runtime.InteropServices;
@@ -54,14 +55,11 @@ internal static class DesktopProgram
             try
             {
                 string? response = SendAsync(name, "show").GetAwaiter().GetResult();
-                if (response == "closing")
-                {
-                    try { if (!mutex.WaitOne(TimeSpan.FromSeconds(60))) return 1; }
-                    catch (AbandonedMutexException) { }
-                }
-                else return 0;
+                if (response == "ok") return 0;
             }
-            catch (Exception error) when (error is IOException or TimeoutException) { return 1; }
+            catch (Exception error) when (error is IOException or TimeoutException) { }
+            try { if (!mutex.WaitOne(TimeSpan.FromSeconds(60))) return 1; }
+            catch (AbandonedMutexException) { }
         }
         ipcStopping = new CancellationTokenSource();
         Task listener = ListenAsync(name, ipcStopping.Token);
@@ -93,7 +91,7 @@ internal static class DesktopProgram
     private static async Task<string?> SendAsync(string name, string command)
     {
         using var stream = new NamedPipeClientStream(".", name, PipeDirection.InOut, PipeOptions.Asynchronous);
-        await stream.ConnectAsync(3000);
+        await stream.ConnectAsync(command == "show" ? 500 : 3000);
         if (command == "show" && OperatingSystem.IsWindows() && GetNamedPipeServerProcessId(stream.SafePipeHandle, out uint processId))
             IndependentLaunch.AllowSetForegroundWindow(processId);
         using var writer = new StreamWriter(stream, leaveOpen: true) { AutoFlush = true };
@@ -116,8 +114,19 @@ internal static class DesktopProgram
                     using var reader = new StreamReader(server, leaveOpen: true);
                     string? command = await reader.ReadLineAsync(cancellation);
                     DesktopApp app = await DesktopApp.Ready.Task.WaitAsync(cancellation);
-                    if (command == "show") Avalonia.Threading.Dispatcher.UIThread.Post(app.ShowWindow);
-                    if (command == "exit") Avalonia.Threading.Dispatcher.UIThread.Post(async () => await app.ExitAsync());
+                    if (command == "show")
+                    {
+                        bool shown = await Dispatcher.UIThread.InvokeAsync(() =>
+                        {
+                            if (app.IsClosing) return false;
+                            app.ShowWindow();
+                            return true;
+                        }, DispatcherPriority.Normal, cancellation);
+                        using var response = new StreamWriter(server, leaveOpen: true) { AutoFlush = true };
+                        await response.WriteLineAsync(shown ? "ok" : "closing");
+                        continue;
+                    }
+                    if (command == "exit") Dispatcher.UIThread.Post(async () => await app.ExitAsync());
                     using var writer = new StreamWriter(server, leaveOpen: true) { AutoFlush = true };
                     await writer.WriteLineAsync(app.IsClosing ? "closing" : "ok");
                 }

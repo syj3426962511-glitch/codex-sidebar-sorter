@@ -248,6 +248,11 @@ internal static class InstalledDesktopAcceptance
         await WaitAsync(() => !IsRunning((int)windowOwner), "The hidden window process exits after the operation finishes.");
         Require(IsRunning(workerId), "The lightweight tray worker remains after the window process exits.");
         report["trayWindowReleasedAfterRefresh"] = true;
+        window = IntPtr.Zero;
+        await CheckActivation("trayReopenAfterWindowExitMs", mouseDown, mouseUp);
+        GetWindowThreadProcessId(window, out windowOwner);
+        Require(PostMessage(window, close, UIntPtr.Zero, IntPtr.Zero), "Close the reopened window.");
+        await WaitAsync(() => !IsRunning((int)windowOwner), "The reopened window exits normally.");
     }
 
     private static async Task RunAsync(string executable, params string[] arguments)
