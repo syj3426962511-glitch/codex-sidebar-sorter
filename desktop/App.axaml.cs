@@ -38,7 +38,7 @@ internal sealed partial class DesktopApp : Application
                     if (exiting) return;
                     Status = status.Message;
                     window?.SetStatus(Status, status.Error);
-                    if (Settings.AutomaticNameSorting && window != null) await window.RefreshAsync();
+                    if (Settings.AutomaticNameSorting && window?.IsVisible == true) await window.RefreshAsync();
                 });
             });
             observer.Completed += error =>
@@ -56,9 +56,22 @@ internal sealed partial class DesktopApp : Application
         if (exiting) return;
         if (window == null)
         {
-            window = new DesktopWindow(this);
-            window.Closed += async (_, _) => { window = null; await ExitAsync(); };
+            var created = new DesktopWindow(this);
+            window = created;
+            created.Closing += (_, args) =>
+            {
+                if (exiting) return;
+                args.Cancel = true;
+                created.Hide();
+                Dispatcher.UIThread.Post(async () =>
+                {
+                    await OperationGate.WaitAsync();
+                    OperationGate.Release();
+                    if (!created.IsVisible) await ExitAsync();
+                });
+            };
         }
+        if (window.WindowState == WindowState.Minimized) window.WindowState = WindowState.Normal;
         window.Show();
         window.Activate();
     }

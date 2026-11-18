@@ -14,6 +14,10 @@ internal static class IndependentLaunch
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool IsProcessInJob(IntPtr process, IntPtr job, out bool result);
 
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static extern bool AllowSetForegroundWindow(uint processId);
+
     public static bool IsInJob()
     {
         using Process current = Process.GetCurrentProcess();
@@ -31,6 +35,7 @@ internal static class IndependentLaunch
 
         DateTime launchedAt = DateTime.UtcNow;
         int processId = LaunchThroughWindows(arguments);
+        if (arguments is ["--show"]) AllowSetForegroundWindow((uint)processId);
         if (arguments.Length <= 1) return 0;
 
         try

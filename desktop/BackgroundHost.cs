@@ -25,7 +25,9 @@ internal static class BackgroundClient
     {
         var start = new ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = false, CreateNoWindow = true };
         start.ArgumentList.Add(argument);
-        Process.Start(start)?.Dispose();
+        using Process? process = Process.Start(start);
+        if (OperatingSystem.IsWindows() && argument == "--show" && process != null)
+            IndependentLaunch.AllowSetForegroundWindow((uint)process.Id);
     }
 
     public static async Task EnsureRunningAsync()
@@ -60,7 +62,13 @@ internal static class BackgroundClient
 
     public static async Task<NamedPipeClientStream> AcquireAsync()
     {
-        var pipe = await ConnectAsync("lease", 3000);
+        NamedPipeClientStream pipe;
+        try { pipe = await ConnectAsync("lease", 300); }
+        catch (TimeoutException)
+        {
+            await EnsureRunningAsync();
+            pipe = await ConnectAsync("lease", 3000);
+        }
         try
         {
             using var reader = new StreamReader(pipe, leaveOpen: true);

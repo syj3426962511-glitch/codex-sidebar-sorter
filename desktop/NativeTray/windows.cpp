@@ -13,6 +13,8 @@ static std::mutex captions_mutex;
 static std::wstring title_text, open_text, exit_text;
 static constexpr UINT tray_message = WM_APP + 1;
 static constexpr UINT captions_message = WM_APP + 2;
+static bool version_four;
+static ULONGLONG last_open;
 
 static std::wstring wide(const char* text) {
     int count = MultiByteToWideChar(CP_UTF8, 0, text, -1, nullptr, 0);
@@ -24,8 +26,15 @@ static std::wstring wide(const char* text) {
 
 static LRESULT CALLBACK dispatch(HWND window, UINT message, WPARAM argument, LPARAM details) {
     if (message == tray_message) {
-        if (LOWORD(details) == WM_LBUTTONUP) on_command(1);
-        if (LOWORD(details) == WM_RBUTTONUP || LOWORD(details) == WM_CONTEXTMENU) {
+        const UINT event = LOWORD(details);
+        if (event == WM_LBUTTONUP || event == WM_LBUTTONDBLCLK || event == NIN_SELECT || event == NIN_KEYSELECT) {
+            const ULONGLONG now = GetTickCount64();
+            if (last_open == 0 || now - last_open >= 125) {
+                last_open = now;
+                on_command(1);
+            }
+        }
+        if (event == WM_CONTEXTMENU || (!version_four && event == WM_RBUTTONUP)) {
             HMENU menu = CreatePopupMenu();
             {
                 std::lock_guard<std::mutex> guard(captions_mutex);
@@ -85,7 +94,7 @@ extern "C" __declspec(dllexport) int sorter_tray_run(const char* icon, const cha
     notification.cbSize = sizeof(notification);
     notification.hWnd = window_handle;
     notification.uID = 1;
-    notification.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
+    notification.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP | NIF_SHOWTIP;
     notification.uCallbackMessage = tray_message;
     notification.hIcon = (HICON)LoadImageW(nullptr, wide(icon).c_str(), IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE);
     if (!notification.hIcon) notification.hIcon = LoadIconW(nullptr, IDI_APPLICATION);
@@ -94,6 +103,8 @@ extern "C" __declspec(dllexport) int sorter_tray_run(const char* icon, const cha
         wcsncpy_s(notification.szTip, title_text.c_str(), _TRUNCATE);
     }
     if (!Shell_NotifyIconW(NIM_ADD, &notification)) { DestroyWindow(window_handle); return 1; }
+    notification.uVersion = NOTIFYICON_VERSION_4;
+    version_four = Shell_NotifyIconW(NIM_SETVERSION, &notification) != FALSE;
     if (stopped) PostMessageW(window_handle, WM_CLOSE, 0, 0);
     MSG message;
     while (GetMessageW(&message, nullptr, 0, 0) > 0) { TranslateMessage(&message); DispatchMessageW(&message); }

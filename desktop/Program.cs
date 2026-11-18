@@ -1,5 +1,7 @@
 using Avalonia;
+using Microsoft.Win32.SafeHandles;
 using System.IO.Pipes;
+using System.Runtime.InteropServices;
 
 namespace SidebarSorter;
 
@@ -7,6 +9,10 @@ internal static class DesktopProgram
 {
     public static string[] Arguments { get; private set; } = [];
     private static CancellationTokenSource? ipcStopping;
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetNamedPipeServerProcessId(SafePipeHandle pipe, out uint processId);
 
     [STAThread]
     private static int Main(string[] arguments) => Run(arguments);
@@ -33,7 +39,6 @@ internal static class DesktopProgram
             worker.ReleaseMutex();
             return 0;
         }
-        BackgroundClient.EnsureRunningAsync().GetAwaiter().GetResult();
         return RunWindow(arguments);
     }
 
@@ -89,6 +94,8 @@ internal static class DesktopProgram
     {
         using var stream = new NamedPipeClientStream(".", name, PipeDirection.InOut, PipeOptions.Asynchronous);
         await stream.ConnectAsync(3000);
+        if (command == "show" && OperatingSystem.IsWindows() && GetNamedPipeServerProcessId(stream.SafePipeHandle, out uint processId))
+            IndependentLaunch.AllowSetForegroundWindow(processId);
         using var writer = new StreamWriter(stream, leaveOpen: true) { AutoFlush = true };
         await writer.WriteLineAsync(command);
         using var reader = new StreamReader(stream, leaveOpen: true);

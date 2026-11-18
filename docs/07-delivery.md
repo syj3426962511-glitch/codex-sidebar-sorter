@@ -35,7 +35,7 @@ The project **Research Plan** contains **Task 20**, **Task 2**, and **Task 10**.
 
 ## Background operation and preferences
 
-Closing the window leaves the worker and tray active. Use **Open Sidebar Sorter** to reopen the window. Select **Exit** to stop the companion. The worker waits for the client to become available after it closes. The companion's own preferences survive installation updates and removal.
+Closing the window leaves the worker and tray active. On Windows, click the tray icon or choose **Open Sidebar Sorter** to reopen the window. The window opens while the current refresh finishes. Select **Exit** to stop the companion. The worker waits for the client to become available after it closes. The companion's own preferences survive installation updates and removal.
 
 Select **Language** to switch from the default English interface. The installer, release notes, public screenshots, and examples use English by default.
 

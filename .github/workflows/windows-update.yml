@@ -22,7 +22,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path artifacts/previous -Force | Out-Null
-          curl.exe --fail --location --retry 2 --max-time 240 -o artifacts/previous/previous-setup.exe https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.3-preview/CodexSidebarSorter-1.4.3-Windows-Setup.exe
+          curl.exe --fail --location --retry 2 --max-time 240 -o artifacts/previous/previous-setup.exe https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/download/v1.4.4-preview/CodexSidebarSorter-1.4.4-Windows-Setup.exe
           if ($LASTEXITCODE -ne 0) { throw 'Preceding installer download failed.' }
       - name: Compile the current Windows installer
         shell: pwsh
