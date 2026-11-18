@@ -1,72 +1,27 @@
 # Validation record
 
-Updated on November 18, 2026.
+## Codex Sidebar Sorter 1.4.3
 
-## November 18 authenticated Linux acceptance
+| Check | Verified result |
+| --- | --- |
+| Shared core | 29 checks each on Windows x64, Ubuntu 26.04.1 x64, and macOS arm64 |
+| Desktop | All three jobs passed with 30 fictional projects and 360 chats. English first, twelve selectable languages, stale preview protection, saved recent order, and automatic sorting recovery were exercised |
+| Windows x64 installer | Published 1.4.2 replaced while running, 1.4.3 reopened, preferences retained, and ordinary removal passed |
+| Linux x64 installer | Installed and reopened at a Unicode path with spaces, retained preferences, and removed normally with fictional protocol data |
+| Intel Mac and Apple Silicon Mac | Both self-contained DMGs were installed, replaced, reopened, and removed with fictional protocol data |
+| Official Windows Codex 26.1111.9265.0 | The installed companion coexisted with signed-out Codex startup, ordinary close, full exit and reopening, Store update check, and removal. The app executable and archive matched. The Store reported no newer version |
+| Official Ubuntu Codex 26.1111.21308 | The published 1.4.2 Linux installer has signed-in ordering and lifecycle evidence from the prior release |
 
-The published 93,839,351-byte Linux installer passed on Ubuntu 26.04.1 x64 with official client 26.1111.21308. Two isolated local projects and six chats passed all seven ordering modes and saved-order read-back. The installed production application kept sorting renamed chats after its window closed, retained the same worker when the official client exited, recovered automatic ordering after client reopening, and uninstalled while the official client stayed running. The original client executable and application archive matched before and after the run. The terminal report records `fullAcceptancePassed=true` and the workflow completed successfully. Actual client version replacement remains open. [Authenticated Linux acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44125514300)
+[Core](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44215291003) · [Desktop](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44216250841) · [Windows installer](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44215290927) · [Unix installers](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44215291453) · [Official Windows](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44215787854) · [Official Linux 1.4.2](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44125514300)
 
-## November 18 Unix installation candidates
+The 1.4.3 installers contain binaries built from `121391d51d1b41e7c91c8355a059106c4d8175ea`. The final desktop test uses the same runtime sources with a corrected fixture check for equally sorted names. With the same case-insensitive sort key, ties retain their order in the sidebar.
 
-Self-contained Intel Mac and Linux x64 packages passed cloud installation, custom Unicode paths, bundled runtime and source, automatic sorting with fictional protocol fixtures, window close with continued background sorting, running replacement, preference retention, full exit and reopening, and removal. The packages were built from `291b894`. Their reports record `authenticatedOfficialClientSortingVerified=false`. The Apple Silicon installer job ended before any step ran because a hosted ARM64 runner could not be acquired. [Unix candidate packages and exact results](06-unix-installers.md)
+During the ten-second installed idle samples, every platform recorded zero ordering writes. Working sets were approximately 54 MiB on Windows, 160 MiB on Linux, 62 MiB on Intel Mac, and 106 MiB on Apple Silicon.
 
-## Current 1.4.2 cloud candidate
+Signed-in 1.4.3 client runs, an actual transition between distinct Codex client versions, and public Developer ID distribution for Mac remain open. The exact Mac installation status appears in the [compatibility matrix](04-compatibility.md).
 
-The 1.4.2 preview installer from `43ee877` includes the production changes from `fa6ec55`, which passed 26 core checks on each cloud platform and all three desktop jobs. Windows installed-upgrade acceptance passed for `43ee877`. The installer is 44,327,746 bytes. The six history-schema cases cover historical data generations, and the new regression checks missing-operation preflight before grouped mutations.
+## Prior release evidence
 
-Windows installed acceptance used the production executable with fictional native-protocol fixtures. It covered the normal entry point, custom Unicode paths, bundled runtime and source, automatic sorting, older preferences, closing the window while the worker keeps sorting, upgrades, uninstall, and retained preferences. An approximately ten-second idle sample recorded 71,782,400 working-set bytes, 312.5 ms accumulated CPU time, and zero sorting writes.
+The Linux 1.4.2 test used Ubuntu 26.04.1 x64 and official Codex 26.1111.21308. Two projects and six chats passed all seven modes with saved-order read-back. After the companion window closed it sorted renamed items, survived a complete Codex exit, recovered after reopening, and uninstalled while Codex remained open. The official executable and application archive matched before and after the run. [Prior Linux test](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/44125514300)
 
-[Core acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43888466005) · [Desktop acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43888466496) · [Windows installed-upgrade acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43888952292)
-
-The public Windows preview download returned HTTP 200 without authentication and the expected 44,327,746-byte content length. [Windows preview release](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-preview)
-
-The authorized local upgrade to `1.4.2+43ee877` completed with installer exit code 0 and retained companion settings. The existing Codex main window process remained alive. Local checks covered installed files and process state. Functional tests run in cloud hosts.
-
-## Earlier Windows 1.4.1 package
-
-The accepted installer is `CodexSidebarSorter-1.4.1-Windows-Setup.exe`, built from `036f029`, with a size of 44,062,557 bytes.
-
-Cloud acceptance covered a custom path containing Chinese characters and spaces, the bundled runtime and source, upgrades while an earlier worker was running, retained preferences, automatic name sorting, full exit and reopening, and uninstall.
-
-An approximately ten-second idle sample recorded 68.20 MiB working set, 218.75 ms accumulated CPU time, and zero sorting writes.
-
-The authorized local upgrade retained the companion's preferences and the existing Codex process set. Functional and client lifecycle tests were run in disposable cloud environments.
-
-[Windows installer acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43867345247)
-
-## Shared core and desktop
-
-Windows x64, macOS ARM64, and Linux x64 passed 21 shared-core checks per platform. Desktop acceptance used 30 fictional projects, 360 fictional chats, and attached-child fixtures.
-
-Coverage included twelve languages, Arabic right-to-left layout, settings persistence, automatic sorting after additions and renaming, pinned and custom-section chats, manual ordering, preview reset, unchanged submissions, closing the window, worker single instance, reopening, and safe exit.
-
-[Core acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43866519115) · [Desktop acceptance](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43867351898)
-
-## Official client evidence
-
-Windows client `26.1111.2228.0` passed ordinary window close, complete exit, reopening, companion independence, and startup after an update check. The main program and app archive hashes matched before and after the run. The cloud profile was signed out. An actual replacement with a different client version remains pending.
-
-macOS granted Accessibility permission and returned 218 actual controls from the login screen. Frontmost application and pointer coordinates matched before and after the read, and client file hashes matched. Background sorting after authentication remains pending. Earlier local-tool requests were rejected with `untrusted-code-signing-identity`.
-
-The later authenticated Mac session reached the project pages and created two Accessibility test projects. The latest downloaded report has `desktopSignInRequired=false` and `fullAcceptancePassed=false`. Its project views still showed no chats. Full background sorting and its production integration remain open. The temporary session has ended. [Authenticated Mac session](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43897768093)
-
-The earlier signed-out Linux probe returned its catalog and timed out during list calls. The November 18 authenticated Linux run and published-installer checks passed as recorded above.
-
-[Windows lifecycle](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43854854495) · [Mac Accessibility probe](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/actions/runs/43864624646)
-
-## Current follow-up work
-
-- Authenticated real-client sorting acceptance.
-- Background macOS ordering through an accepted interface.
-- Actual client version replacement and subsequent cold startup.
-- macOS consumer installer and production Accessibility integration. Additional Linux distributions and client builds need separate acceptance.
-- A verified paid-buyer transaction and licensed Agensi MCP delivery.
-- Full parameter and response negotiation, signed adapter updates, and automated new-build validation.
-
-Cloud execution resumed after source publication. The current candidate results appear above. The locally installed companion is now 1.4.2, and functional tests continue on disposable cloud hosts.
-
-## Marketplace status
-
-The Windows preview installer is public, and the Agensi companion skill is live as v1.4.2 at USD 9.50 one-time. The listing explains the purchase contents, supported scope, remaining real-client acceptance, and planned adaptation mechanisms. The November 17 compatibility review records the exact evidence and remaining per-build work. [Compatibility review](04-compatibility.md#compatibility-review-on-november-17-2026)
-
-[Agensi delivery](../agensi/README.md)
+The earlier Windows 26.1111.2228.0 lifecycle run used a signed-out profile. The Windows installed-upgrade fixtures and historical schema tests are recorded in [the 1.4.2 release](https://github.com/syj3426962511-glitch/codex-sidebar-sorter/releases/tag/v1.4.2-preview).

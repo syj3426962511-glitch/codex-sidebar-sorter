@@ -136,7 +136,7 @@ A release watcher compares official client distribution metadata once daily and 
 | --- | --- | --- |
 | 1 | Independent worker, tray, runtime, preferences, endpoint discovery | Implemented |
 | 2 | Historical read-only field negotiation | Implemented in 1.4.2, 26 core checks passed on three cloud platforms |
-| 3 | Full tool descriptors, consumed-contract matching, per-scope preflight | Operation-name preflight implemented for grouped submissions, full descriptor and schema matching planned |
+| 3 | Full tool descriptors, consumed-contract matching, per-scope preflight | Grouped submissions preflight operation names, current scope membership and supported input-schema fields when advertised. Full contract negotiation remains planned |
 | 4 | Shared adapter boundary and verified platform Accessibility routes | Planned, macOS read probe available |
 | 5 | Signed data-only adapter updates with atomic activation | Planned |
 | 6 | Automated official-build detection and real-client regression matrix | Planned, existing cloud workflows provide the starting point |
