@@ -9,7 +9,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-15
+          - os: macos-15-intel
             rid: osx-arm64
           - os: macos-15-intel
             rid: osx-x64
@@ -33,15 +33,35 @@ jobs:
       - name: Build self-contained platform installer
         run: python packaging/build-unix.py ${{ matrix.rid }}
       - name: Build the installed acceptance driver
+        if: matrix.rid != 'osx-arm64'
         run: dotnet publish tests/UnixInstalledAcceptance.csproj -c Release -r ${{ matrix.rid }} --self-contained true -o artifacts/installed-driver
       - name: Install and replace the macOS application
-        if: runner.os == 'macOS'
+        if: matrix.rid == 'osx-x64'
         run: |
           mkdir -p "$RUNNER_TEMP/sorter-candidate-mount"
           hdiutil attach artifacts/unix-package/*.dmg -nobrowse -readonly -mountpoint "$RUNNER_TEMP/sorter-candidate-mount"
           artifacts/installed-driver/UnixInstalledAcceptance "$RUNNER_TEMP/sorter-candidate-mount/Install Codex Sidebar Sorter.command" artifacts/unix-installed
           hdiutil detach "$RUNNER_TEMP/sorter-candidate-mount"
-      - name: Verify and stage the cross-built Apple Silicon application`n        if: matrix.rid == 'osx-arm64'`n        run: |`n          set -euo pipefail`n          mount=$(mktemp -d "$RUNNER_TEMP/sorter-arm-candidate.XXXXXX")`n          hdiutil attach artifacts/unix-package/*.dmg -nobrowse -readonly -mountpoint "$mount"`n          trap 'hdiutil detach "$mount"; rmdir "$mount"' EXIT`n          prefix="$RUNNER_TEMP/Apple Silicon Install Test.app"`n          bash "$mount/Install Codex Sidebar Sorter.command" --prefix "$prefix" --no-launch`n          mkdir -p artifacts/unix-installed`n          {`n            for filename in SidebarSorter libcoreclr.dylib libsorter_tray.dylib; do`n              binary="$prefix/Contents/MacOS/$filename"`n              lipo -verify_arch arm64 "$binary"`n              file "$binary"`n            done`n            codesign --verify --deep --strict "$prefix"`n            printf '%s\n' 'Cross-built bundle, installation copy and signature check passed.'`n          } | tee artifacts/unix-installed/apple-silicon-cross-build.log`n      - name: Install and replace the Linux application
+      - name: Verify and stage the cross-built Apple Silicon application
+        if: matrix.rid == 'osx-arm64'
+        run: |
+          set -euo pipefail
+          mount=$(mktemp -d "$RUNNER_TEMP/sorter-arm-candidate.XXXXXX")
+          hdiutil attach artifacts/unix-package/*.dmg -nobrowse -readonly -mountpoint "$mount"
+          trap 'hdiutil detach "$mount"; rmdir "$mount"' EXIT
+          prefix="$RUNNER_TEMP/Apple Silicon Install Test.app"
+          bash "$mount/Install Codex Sidebar Sorter.command" --prefix "$prefix" --no-launch
+          mkdir -p artifacts/unix-installed
+          {
+            for filename in SidebarSorter libcoreclr.dylib libsorter_tray.dylib; do
+              binary="$prefix/Contents/MacOS/$filename"
+              lipo -verify_arch arm64 "$binary"
+              file "$binary"
+            done
+            codesign --verify --deep --strict "$prefix"
+            printf '%s\n' 'Cross-built bundle, installation copy and signature check passed.'
+          } | tee artifacts/unix-installed/apple-silicon-cross-build.log
+      - name: Install and replace the Linux application
         if: runner.os == 'Linux'
         run: dbus-run-session -- xvfb-run -a -s '-screen 0 1440x1000x24' artifacts/installed-driver/UnixInstalledAcceptance "$(realpath artifacts/unix-package/*.run)" artifacts/unix-installed
       - uses: actions/upload-artifact@v4
