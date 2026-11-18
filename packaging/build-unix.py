@@ -53,7 +53,8 @@ shutil.copy2("packaging/install-unix.sh", installer)
 installer.chmod(0o755)
 
 if is_mac:
-    run("clang", "-O2", "-fobjc-arc", "-dynamiclib", "-framework", "Cocoa",
+    architecture = {"osx-arm64": "arm64", "osx-x64": "x86_64"}[rid]
+    run("clang", "-arch", architecture, "-O2", "-fobjc-arc", "-dynamiclib", "-framework", "Cocoa",
         "desktop/NativeTray/macos.m", "-o", str(program / "libsorter_tray.dylib"))
     icons = work / "Sorter.iconset"
     icons.mkdir(exist_ok=True)
