@@ -23,7 +23,7 @@ internal sealed class WorkspacePreview
 {
     public List<ProjectGroup> Groups { get; private set; } = [];
     public List<SortRow> LooseChats { get; private set; } = [];
-    public Dictionary<string, string> Problems { get; private set; } = new();
+    public Dictionary<string, Exception> Problems { get; private set; } = new();
     private List<string> originalProjectIds = [];
     private List<SortRow> originalLooseChats = [];
 

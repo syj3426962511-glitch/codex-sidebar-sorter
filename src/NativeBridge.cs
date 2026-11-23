@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using System.Globalization;
 using System.IO.Pipes;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
@@ -9,8 +11,16 @@ namespace SidebarSorter;
 
 internal enum ClientSystem { Windows, MacOS, Linux }
 
+internal sealed class CodexRateLimitException(DateTimeOffset retryAt) : IOException(CodexRateLimitException.StatusText)
+{
+    public const string StatusText = "Codex is limiting requests. Wait a moment and refresh.";
+    public DateTimeOffset RetryAt { get; } = retryAt;
+}
+
 internal sealed class NativeBridge : IDisposable
 {
+    private const string SidebarScope = "sidebar";
+    private static readonly ConcurrentDictionary<string, DateTimeOffset> RetryTimes = new(StringComparer.Ordinal);
     private const int MaximumFrameBytes = 8 * 1024 * 1024;
     private readonly Stream stream;
     private readonly string callerThreadId;
@@ -45,6 +55,7 @@ internal sealed class NativeBridge : IDisposable
     {
         ClientSystem target = system ?? CurrentSystem;
         if (target != CurrentSystem) throw new InvalidOperationException(LocalSystemPrompt());
+        RequireAvailable(SidebarScope);
         string caller = FindCallerThread();
         string[] candidates = FindEndpoints(target);
         Exception? lastError = null;
@@ -78,6 +89,11 @@ internal sealed class NativeBridge : IDisposable
                     throw new InvalidDataException(Localization.Text("The Codex tool catalog is missing list access."));
                 return bridge;
             }
+            catch (CodexRateLimitException)
+            {
+                stream?.Dispose();
+                throw;
+            }
             catch (Exception error) when (error is IOException or InvalidDataException or TimeoutException or SocketException
                 or OperationCanceledException or InvalidOperationException)
             {
@@ -104,6 +120,11 @@ internal sealed class NativeBridge : IDisposable
     public async Task<JsonObject> CallAsync(string tool, JsonObject arguments)
     {
         RequireArguments(tool, arguments);
+        string scope = tool == "list_threads" && TextValue(arguments["mode"]) == "history"
+            ? HistoryScope(TextValue(arguments["source"]), TextValue(arguments["hostId"]))
+            : SidebarScope;
+        RequireAvailable(SidebarScope);
+        RequireAvailable(scope);
 
         JsonObject response = await RequestAsync("tools/call", new JsonObject
         {
@@ -115,7 +136,7 @@ internal sealed class NativeBridge : IDisposable
             ["tool"] = tool,
             ["turnId"] = "mcp-turn-" + Guid.NewGuid(),
             ["hostId"] = "local"
-        });
+        }, scope);
         string detail = response["contentItems"] is JsonArray content
             ? string.Join("\n", content.OfType<JsonObject>().Where(item => TextValue(item["type"]) == "inputText")
                 .Select(item => TextValue(item["text"])).Where(value => value != null))
@@ -123,7 +144,7 @@ internal sealed class NativeBridge : IDisposable
         if (response["success"] is not JsonValue success || !success.TryGetValue(out bool succeeded))
             throw InvalidResponse();
         if (!succeeded)
-            throw new InvalidOperationException(detail.Length > 0 ? detail : Localization.Text("The Codex operation failed."));
+            throw OperationFailure(detail, response, scope);
         return ParseObject(detail);
     }
 
@@ -196,6 +217,43 @@ internal sealed class NativeBridge : IDisposable
 
     private static string? TextValue(JsonNode? node) => node is JsonValue value && value.TryGetValue(out string? text) ? text : null;
 
+    private static string HistoryScope(string? source, string? host)
+        => source is null or "codex" ? "history:codex:" + (host ?? "local") : "history:" + source;
+
+    internal static void RequireHistoryAvailable(string source, string host) => RequireAvailable(HistoryScope(source, host));
+
+    private static void RequireAvailable(string scope)
+    {
+        if (RetryTimes.TryGetValue(scope, out DateTimeOffset retryAt) && retryAt > DateTimeOffset.UtcNow)
+            throw new CodexRateLimitException(retryAt);
+    }
+
+    private static Exception OperationFailure(string? message, JsonObject error, string scope)
+    {
+        JsonObject data = error["data"] as JsonObject ?? error;
+        if (message?.TrimStart().StartsWith('{') == true)
+        {
+            try { data = JsonNode.Parse(message) as JsonObject ?? data; }
+            catch (JsonException) { }
+        }
+
+        if (!IsRateLimitMessage(message) && !IsRateLimitMessage(TextValue(data["detail"]))
+            && error["code"]?.ToString() != "429" && data["status"]?.ToString() != "429"
+            && data["statusCode"]?.ToString() != "429")
+            return new InvalidOperationException(string.IsNullOrEmpty(message) ? Localization.Text("The Codex operation failed.") : message);
+
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        string? retryAfter = (data["Retry-After"] ?? data["retryAfter"] ?? error["retryAfter"])?.ToString();
+        DateTimeOffset retryAt = int.TryParse(retryAfter, NumberStyles.None, CultureInfo.InvariantCulture, out int seconds)
+            ? now.AddSeconds(Math.Max(1, seconds))
+            : DateTimeOffset.TryParseExact(retryAfter, "r", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out DateTimeOffset date) && date > now
+                ? date : now.AddSeconds(30);
+        return new CodexRateLimitException(RetryTimes.AddOrUpdate(scope, retryAt, (_, previous) => previous > retryAt ? previous : retryAt));
+    }
+
+    private static bool IsRateLimitMessage(string? value) =>
+        string.Equals(value?.Trim(), "Too many requests", StringComparison.OrdinalIgnoreCase);
+
     private static InvalidDataException InvalidResponse() => new(Localization.Text("The sorting result from Codex could not be read."));
 
     private static JsonObject ParseObject(string text)
@@ -204,7 +262,7 @@ internal sealed class NativeBridge : IDisposable
         catch (JsonException error) { throw new InvalidDataException(Localization.Text("The sorting result from Codex could not be read."), error); }
     }
 
-    private async Task<JsonObject> RequestAsync(string method, JsonObject parameters)
+    private async Task<JsonObject> RequestAsync(string method, JsonObject parameters, string scope = SidebarScope)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(TimeSpan.FromSeconds(20));
@@ -228,7 +286,7 @@ internal sealed class NativeBridge : IDisposable
             if (message["id"] is not JsonValue id || !id.TryGetValue(out int number) || number != requestId)
                 throw new InvalidDataException(Localization.Text("The Codex response has an unexpected request ID."));
             if (message["error"] is JsonObject error)
-                throw new InvalidOperationException(TextValue(error["message"]) ?? Localization.Text("The Codex operation failed."));
+                throw OperationFailure(TextValue(error["message"]), error, scope);
             return message["result"] as JsonObject ?? throw new InvalidDataException(Localization.Text("The Codex response is missing a result."));
         }
         catch (OperationCanceledException error) when (!cancellationToken.IsCancellationRequested)

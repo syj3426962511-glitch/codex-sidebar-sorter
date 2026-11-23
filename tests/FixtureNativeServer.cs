@@ -29,6 +29,8 @@ internal sealed class FixtureNativeServer : IDisposable
     public int WriteCount { get; private set; }
     public string? UnavailableTool { get; set; }
     public bool IncludePagedHistory { get; set; }
+    public bool LimitHistoryAfterFirstPage { get; set; }
+    public int HistoryRequests { get; private set; }
 
     public FixtureNativeServer()
     {
@@ -190,7 +192,13 @@ internal sealed class FixtureNativeServer : IDisposable
                 }
                 if (IncludePagedHistory && args["mode"]?.GetValue<string>() == "history")
                 {
-                    value = ReadHistoryPage(args);
+                    HistoryRequests++;
+                    if (LimitHistoryAfterFirstPage && args["cursor"] != null)
+                    {
+                        success = false;
+                        value = new JsonObject { ["detail"] = "Too many requests", ["Retry-After"] = "5" };
+                    }
+                    else value = ReadHistoryPage(args);
                     break;
                 }
                 value = new JsonObject

@@ -17,7 +17,7 @@ internal sealed record SortScope(string Kind, string Id, string Label, string Ho
 
 internal sealed record SortRow(string Id, string Title, long? UpdatedAt = null, string Source = "codex", string HostId = "local", string Status = "unknown", bool IsPinned = false);
 internal sealed record CatalogChat(SortRow Row, string? ProjectId);
-internal sealed record CatalogResult(List<CatalogChat> Chats, Dictionary<string, string> Problems);
+internal sealed record CatalogResult(List<CatalogChat> Chats, Dictionary<string, Exception> Problems);
 internal sealed record ProjectChatPlan(SortScope Scope, List<SortRow> Rows);
 
 internal sealed class SorterService(CancellationToken cancellationToken = default, ClientSystem? system = null)
@@ -116,8 +116,9 @@ internal sealed class SorterService(CancellationToken cancellationToken = defaul
     }
 
     private readonly Dictionary<string, List<JsonObject>> historyMetadata = new();
+    private readonly Dictionary<string, (List<JsonObject> Metadata, Exception? Problem)> chatGptHistory = new();
 
-    public async Task<CatalogResult> ReadCatalogAsync()
+    public async Task<CatalogResult> ReadCatalogAsync(bool refreshChatGptHistory = true)
     {
         var sources = Projects.Select(project => (
             Source: project["projectKind"]?.GetValue<string>() == "chatgpt" ? "chatgpt" : "codex",
@@ -127,23 +128,38 @@ internal sealed class SorterService(CancellationToken cancellationToken = defaul
             sources.Add((item!["kind"]?.GetValue<string>() ?? "codex", item["hostId"]?.GetValue<string>() ?? "local"));
 
         var chats = new Dictionary<string, CatalogChat>(StringComparer.Ordinal);
-        var problems = new Dictionary<string, string>();
+        var problems = new Dictionary<string, Exception>();
         foreach ((string source, string host) in sources.Distinct())
         {
             string key = source + ":" + host;
-            try
+            bool isChatGpt = source == "chatgpt";
+            List<JsonObject> metadata = [];
+            Exception? problem = null;
+            if (isChatGpt && chatGptHistory.TryGetValue(key, out var previous))
+                (metadata, problem) = previous;
+
+            if (!isChatGpt || refreshChatGptHistory)
             {
-                await GetHistoryAsync(source, host);
-                foreach (JsonObject item in historyMetadata[key])
+                try
                 {
-                    SortRow row = ReadRow(item, source, host);
-                    chats.TryAdd(RowKey(row), new CatalogChat(row, item["projectId"]?.GetValue<string>()));
+                    await GetHistoryAsync(source, host);
+                    metadata = historyMetadata[key];
+                    problem = null;
                 }
+                catch (Exception error) when (error is IOException or InvalidDataException or InvalidOperationException or OperationCanceledException)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    // An automatic pass retries eligible Codex data after the cooldown.
+                    if (!refreshChatGptHistory && error is CodexRateLimitException) throw;
+                    problem = error;
+                }
+                if (isChatGpt) chatGptHistory[key] = (metadata, problem);
             }
-            catch (Exception error) when (error is IOException or InvalidDataException or InvalidOperationException or OperationCanceledException)
+            if (problem != null) problems[key] = problem;
+            foreach (JsonObject item in metadata)
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                problems[key] = error.Message;
+                SortRow row = ReadRow(item, source, host);
+                chats.TryAdd(RowKey(row), new CatalogChat(row, item["projectId"]?.GetValue<string>()));
             }
         }
         foreach (JsonNode? item in Snapshot["pinnedThreads"]!.AsArray())
@@ -200,6 +216,7 @@ internal sealed class SorterService(CancellationToken cancellationToken = defaul
             }
             else
             {
+                NativeBridge.RequireHistoryAvailable(source, host);
                 using var bridge = await NativeBridge.ConnectAsync(cancellationToken, system);
                 string? cursor = null;
                 var visited = new HashSet<string>(StringComparer.Ordinal);

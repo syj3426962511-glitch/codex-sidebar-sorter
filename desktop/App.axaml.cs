@@ -38,7 +38,7 @@ internal sealed partial class DesktopApp : Application
                     if (exiting) return;
                     Status = status.Message;
                     window?.SetStatus(Status, status.Error);
-                    if (Settings.AutomaticNameSorting && window?.IsVisible == true) await window.RefreshAsync();
+                    if (Settings.AutomaticNameSorting && window?.IsVisible == true) await window.RefreshAsync(refreshChatGptHistory: false);
                 });
             });
             observer.Completed += error =>

@@ -295,7 +295,54 @@ internal sealed partial class DesktopWindow
                 SaveScreenshot(Path.Combine(output, "desktop-paged-history.png"));
             }
             finally { search.Text = ""; }
+
+            int completeHistoryReads = server.HistoryRequests;
+            await RunAsync(async () =>
+            {
+                await AutomaticSorter.SynchronizeByNameAsync(new SorterService());
+            });
+            await RefreshAsync(refreshChatGptHistory: false);
+            DesktopSmokeTests.Require(server.HistoryRequests == completeHistoryReads && workspace!.ChatCount >= FixtureNativeServer.HistoryChatCount
+                && workspace.Groups.Single(group => group.Scope.Id == FixtureNativeServer.HistoryProjectId).Chats.Count == FixtureNativeServer.HistoryChatCount,
+                "Automatic sorting and passive refresh keep complete history without fetching it again.");
+            report["automaticPassesSkipChatGptHistory"] = true;
+
+            server.LimitHistoryAfterFirstPage = true;
+            int previousWrites = server.WriteCount;
+            await RefreshAsync();
+            var limit = workspace!.Problems["chatgpt:local"] as CodexRateLimitException;
+            DesktopSmokeTests.Require(limit != null && Label("StatusText").Text == CodexRateLimitException.StatusText,
+                "A paginated rate limit shows a friendly status instead of the JSON payload.");
+            history = workspace.Groups.Single(group => group.Scope.Id == FixtureNativeServer.HistoryProjectId);
+            DesktopSmokeTests.Require(!history.IsLoaded && history.Chats.Count == FixtureNativeServer.HistoryChatCount,
+                "An incomplete page sequence retains the last complete history and marks it unavailable for sorting.");
+            int limitedHistoryReads = server.HistoryRequests;
+            await RefreshAsync();
+            await RefreshAsync(refreshChatGptHistory: false);
+            DesktopSmokeTests.Require(server.HistoryRequests == limitedHistoryReads && server.WriteCount == previousWrites,
+                "Refresh during the cooldown sends no repeated history requests and commits no sidebar operations.");
+            SaveScreenshot(Path.Combine(output, "desktop-rate-limited.png"));
+
+            var freshService = new SorterService();
+            await freshService.RefreshAsync();
+            CatalogResult partial = await freshService.ReadCatalogAsync();
+            DesktopSmokeTests.Require(partial.Problems["chatgpt:local"] is CodexRateLimitException
+                && partial.Chats.All(chat => chat.Row.Source != "chatgpt"),
+                "A first refresh during cooldown omits unavailable history rather than reporting it complete.");
+
+            server.LimitHistoryAfterFirstPage = false;
+            await Task.Delay(TimeSpan.FromMilliseconds(Math.Max(0, (limit!.RetryAt - DateTimeOffset.UtcNow).TotalMilliseconds) + 100));
+            await RefreshAsync();
+            history = workspace!.Groups.Single(group => group.Scope.Id == FixtureNativeServer.HistoryProjectId);
+            DesktopSmokeTests.Require(history.IsLoaded && history.Chats.Select(row => row.Id).SequenceEqual(expected) &&
+                workspace.Problems.Count == 0 && server.HistoryRequests > limitedHistoryReads,
+                "A refresh after the cooldown reads every history page and clears the limit status.");
+            report["rateLimitPreservesHistoryAndRecovers"] = true;
         }
-        finally { server.IncludePagedHistory = false; }
+        finally
+        {
+            server.LimitHistoryAfterFirstPage = false;
+            server.IncludePagedHistory = false;
+        }
     }
 }

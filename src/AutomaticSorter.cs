@@ -103,6 +103,13 @@ internal sealed class AutomaticSorter : IAsyncDisposable
                 await Task.Delay(800, stopping.Token);
                 while (requests.Reader.TryRead(out _)) { }
                 try { await synchronize(); connectionFailures = 0; Completed?.Invoke(null); }
+                catch (CodexRateLimitException error)
+                {
+                    Completed?.Invoke(error);
+                    double seconds = (error.RetryAt - DateTimeOffset.UtcNow).TotalSeconds;
+                    await Task.Delay(TimeSpan.FromSeconds(Math.Clamp(seconds, 0, 86400)), stopping.Token);
+                    Request();
+                }
                 catch (Exception error)
                 {
                     Completed?.Invoke(error);
@@ -122,9 +129,9 @@ internal sealed class AutomaticSorter : IAsyncDisposable
     {
         List<SortScope> scopes = await service.RefreshAsync();
         List<SortRow> projects = await service.GetRowsAsync(scopes[0]);
-        CatalogResult catalog = await service.ReadCatalogAsync();
-        if (catalog.Problems.TryGetValue("codex:local", out string? historyProblem))
-            throw new IOException(historyProblem);
+        CatalogResult catalog = await service.ReadCatalogAsync(refreshChatGptHistory: false);
+        if (catalog.Problems.TryGetValue("codex:local", out Exception? historyProblem))
+            throw new IOException(historyProblem.Message, historyProblem);
         WorkspacePreview preview = WorkspacePreview.Create(service.Projects, projects, catalog);
         preview.SortProjects(0);
         preview.SortChats(0);

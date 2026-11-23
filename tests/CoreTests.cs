@@ -128,7 +128,8 @@ internal static class CoreTests
             Require(rejected && stream.Length == 0, "Missing capabilities must be detected before a request is written.");
             bridge.RequireTools("reorder_sidebar_projects");
         });
-        await Check("native-pipe-framing-and-split-response", VerifyPipeAsync);
+        await Check("native-pipe-framing-and-split-response", () => VerifyPipeAsync());
+        await Check("native-rate-limit-status-and-retry-after", () => VerifyPipeAsync(rateLimited: true));
         await CheckAction("changed-native-argument-contract-is-rejected", () =>
         {
             using var stream = new MemoryStream();
@@ -177,6 +178,7 @@ internal static class CoreTests
         await Check("automatic-watch-coalesces-writes-and-idles", () => VerifyAutomaticWatchAsync(Path.Combine(temporary, "automatic")));
         await Check("automatic-detects-returning-client-without-history-write", () => VerifyAutomaticReconnectAsync(Path.Combine(temporary, "reconnect")));
         await Check("automatic-stop-waits-for-current-operation", () => VerifyAutomaticStopAsync(Path.Combine(temporary, "automatic-stop")));
+        await Check("automatic-rate-limit-deadline-survives-new-events", () => VerifyRateLimitBackoffAsync(Path.Combine(temporary, "automatic-limit")));
         Directory.CreateDirectory(Path.GetDirectoryName(report)!);
         string json = JsonSerializer.Serialize(new
         {
@@ -318,7 +320,32 @@ internal static class CoreTests
         Require(Convert.ToBase64String(File.ReadAllBytes(databaseFile)) == before, "History bytes stay read-only.");
     }
 
-    private static async Task VerifyPipeAsync()
+    private static async Task VerifyRateLimitBackoffAsync(string root)
+    {
+        Directory.CreateDirectory(root);
+        var limited = new TaskCompletionSource<DateTimeOffset>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var recovered = new TaskCompletionSource<DateTimeOffset>(TaskCreationOptions.RunContinuationsAsynchronously);
+        int attempts = 0;
+        await using var sorter = new AutomaticSorter(root, () =>
+        {
+            if (Interlocked.Increment(ref attempts) == 1)
+                return Task.FromException(new CodexRateLimitException(DateTimeOffset.UtcNow.AddSeconds(2)));
+            recovered.TrySetResult(DateTimeOffset.UtcNow);
+            return Task.CompletedTask;
+        });
+        sorter.Completed += error =>
+        {
+            if (error is CodexRateLimitException rateLimit) limited.TrySetResult(rateLimit.RetryAt);
+        };
+        DateTimeOffset until = await limited.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        sorter.Request();
+        sorter.Request();
+        await Task.Delay(1100);
+        Require(Volatile.Read(ref attempts) == 1, "File changes must not retry before the cooldown expires.");
+        Require(await recovered.Task.WaitAsync(TimeSpan.FromSeconds(5)) >= until, "Automatic sorting resumes after the cooldown.");
+    }
+
+    private static async Task VerifyPipeAsync(bool rateLimited = false)
     {
         string pipeName = "sst-" + Guid.NewGuid().ToString("N")[..12];
         await using var server = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
@@ -336,20 +363,45 @@ internal static class CoreTests
         JsonObject parsed = JsonNode.Parse(request)!.AsObject();
         Require(parsed["method"]!.GetValue<string>() == "tools/call", "Native tool entry point.");
         Require(parsed["params"]?["tool"]?.GetValue<string>() == "list_projects", "Native tool name.");
-        byte[] response = Encoding.UTF8.GetBytes(new JsonObject
-        {
-            ["id"] = parsed["id"]!.DeepClone(), ["jsonrpc"] = "2.0",
-            ["result"] = new JsonObject
+        var reply = new JsonObject { ["id"] = parsed["id"]!.DeepClone(), ["jsonrpc"] = "2.0" };
+        if (rateLimited)
+            reply["error"] = new JsonObject
+            {
+                ["code"] = 429, ["message"] = "Rate limited", ["data"] = new JsonObject { ["retryAfter"] = 6 }
+            };
+        else
+            reply["result"] = new JsonObject
             {
                 ["success"] = true,
                 ["contentItems"] = new JsonArray(new JsonObject { ["type"] = "inputText", ["text"] = "{\"projects\":[]}" })
-            }
-        }.ToJsonString());
+            };
+        DateTimeOffset sentAt = DateTimeOffset.UtcNow;
+        byte[] response = Encoding.UTF8.GetBytes(reply.ToJsonString());
         await server.WriteAsync(BitConverter.GetBytes(response.Length).AsMemory(0, 2));
         await server.WriteAsync(BitConverter.GetBytes(response.Length).AsMemory(2, 2));
         await server.WriteAsync(response.AsMemory(0, 3));
         await server.WriteAsync(response.AsMemory(3));
-        Require((await call)["projects"]!.AsArray().Count == 0, "Split native response.");
+        if (!rateLimited)
+        {
+            Require((await call)["projects"]!.AsArray().Count == 0, "Split native response.");
+            return;
+        }
+        DateTimeOffset retryAt;
+        try { await call; throw new Exception("The server's rate limit must be reported."); }
+        catch (CodexRateLimitException error)
+        {
+            retryAt = error.RetryAt;
+            Require(retryAt >= sentAt.AddSeconds(6) && retryAt <= DateTimeOffset.UtcNow.AddSeconds(6),
+                "Honor the server's suggested wait.");
+        }
+        using var unopened = new MemoryStream();
+        using var nextConnection = new NativeBridge(unopened, "fixture-caller");
+        nextConnection.Tools.Add("list_projects");
+        try { await nextConnection.CallAsync("list_projects", new JsonObject()); throw new Exception("Cooldown must apply to a fresh connection."); }
+        catch (CodexRateLimitException error)
+        {
+            Require(error.RetryAt == retryAt && unopened.Length == 0, "Return the original deadline before sending another request.");
+        }
     }
 
     [DllImport("winsqlite3.dll", EntryPoint = "sqlite3_open_v2", CallingConvention = CallingConvention.Cdecl)]

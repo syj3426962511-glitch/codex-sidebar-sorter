@@ -191,13 +191,13 @@ internal sealed partial class DesktopWindow : Window
         this.FindControl<ItemsControl>("Changes")!.ItemsSource = null;
     }
 
-    public Task RefreshAsync() => RunAsync(async () =>
+    public Task RefreshAsync(bool refreshChatGptHistory = true) => RunAsync(async () =>
     {
         needsRefresh = true;
         SortScope? selected = loadedScope;
         scopes = await service.RefreshAsync();
         List<SortRow> projects = await service.GetRowsAsync(scopes[0]);
-        workspace = WorkspacePreview.Create(service.Projects, projects, await service.ReadCatalogAsync());
+        workspace = WorkspacePreview.Create(service.Projects, projects, await service.ReadCatalogAsync(refreshChatGptHistory));
         updating = true;
         Box("ScopeBox").ItemsSource = scopes;
         Box("ScopeBox").SelectedIndex = Math.Max(0, scopes.FindIndex(scope =>
@@ -212,7 +212,7 @@ internal sealed partial class DesktopWindow : Window
             Render();
         }
         if (workspace.Problems.Count > 0)
-            SetStatus(string.Join("\n", workspace.Problems.Values.Distinct()), true);
+            SetStatus(string.Join("\n", workspace.Problems.Values.Select(error => Localization.Text(error.Message)).Distinct()), true);
         else
             SetStatus(app.Status.Length > 0 ? app.Status : Localization.Text("Connected"));
     });
@@ -375,7 +375,7 @@ internal sealed partial class DesktopWindow : Window
         Label("Pending").Text = changes.Count + Localization.Text(" pending changes");
         Label("ReadCheck").Text = workspace.Groups.Count + Localization.Text(" projects") + " · " + workspace.ChatCount + Localization.Text(" chats");
         if (workspace.Problems.Count > 0)
-            Label("ReadCheck").Text += " · " + Localization.Text("Some chats are temporarily unavailable. Refresh the list.");
+            Label("ReadCheck").Text += " · " + Localization.Text("Some chat history could not be refreshed.");
         Label("PlanCheck").Text = Scope?.ToString() ?? "";
         this.FindControl<ItemsControl>("Changes")!.ItemsSource = changes.Select(change => change.Title + "  " + change.Before + " → " + change.After).ToList();
         Check("ApplyChatsBox").IsVisible = Scope?.Kind == "projects";
