@@ -321,7 +321,15 @@ internal sealed partial class DesktopWindow
             await RefreshAsync(refreshChatGptHistory: false);
             DesktopSmokeTests.Require(server.HistoryRequests == limitedHistoryReads && server.WriteCount == previousWrites,
                 "Refresh during the cooldown sends no repeated history requests and commits no sidebar operations.");
-            SaveScreenshot(Path.Combine(output, "desktop-rate-limited.png"));
+            search.Text = history.Row.Title;
+            try
+            {
+                await Task.Delay(200);
+                DesktopSmokeTests.Require(RowList.Items.Count == FixtureNativeServer.HistoryChatCount + 1,
+                    "The complete cached history remains visible in the limited preview.");
+                SaveScreenshot(Path.Combine(output, "desktop-rate-limited.png"));
+            }
+            finally { search.Text = ""; }
 
             var freshService = new SorterService();
             await freshService.RefreshAsync();
